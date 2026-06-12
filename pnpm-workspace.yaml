@@ -3,3 +3,9 @@
 allowBuilds:
   esbuild: true
   sharp: true
+
+# Force a patched yaml everywhere. The only vulnerable copy (GHSA-48c2-rrv3-qjmp,
+# stack overflow on deeply nested YAML) arrives transitively under the
+# @astrojs/check dev type-checker, so it never ships, but keep the tree clean.
+overrides:
+  yaml: ">=2.8.3"
