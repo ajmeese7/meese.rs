@@ -1,0 +1,29 @@
+<!-- @dsCard group="Brand" viewport="700x190" name="Logo & wordmark" subtitle="Concept-graph monogram + meese.rs lockup; the .rs in ember" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 28px; background: var(--bg-void); display: flex; align-items: center; gap: 44px; }
+  .lockup { display: flex; align-items: center; gap: 14px; }
+  .word { font-family: var(--font-display); font-weight: 600; font-size: 34px; letter-spacing: -.02em; color: var(--ink-1); }
+  .word .rs { color: var(--ember); }
+  .word .dot { color: var(--ember); }
+  .stack { display: flex; flex-direction: column; gap: 18px; }
+  .mini { display: flex; align-items: center; gap: 9px; }
+  .mini .word { font-size: 18px; }
+  .tag { font-family: var(--font-mono); font-size: 10px; color: var(--ink-4); letter-spacing: .1em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+  <div class="lockup">
+    <img src="../assets/favicon.svg" width="56" height="56" alt="meese.rs mark">
+    <span class="word">meese<span class="dot">.</span><span class="rs">rs</span></span>
+  </div>
+  <div class="stack">
+    <div class="mini"><img src="../assets/logomark.svg" width="26" height="26" alt=""><span class="word">meese<span class="dot">.</span><span class="rs">rs</span></span></div>
+    <div class="mini"><img src="../assets/logomark.svg" width="34" height="34" alt=""><span class="tag">glyph only</span></div>
+  </div>
+</body>
+</html>

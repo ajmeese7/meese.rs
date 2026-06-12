@@ -1,0 +1,50 @@
+<!-- @dsCard group="Components" viewport="700x590" name="Content — PostCard · NoteCard · ReviewCard · Callout" subtitle="Feed cards for long & short writing, software reviews, and the MDX callout" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg-base); }
+  .stack { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+  <script src="../../_ds_bundle.js"></script>
+  <script type="text/babel" data-presets="react">
+    const { PostCard, NoteCard, ReviewCard, Callout } = window.MeeseRsDesignSystem_ed1971;
+    function Demo() {
+      return (
+        <div className="stack">
+          <PostCard
+            type="guide" featured
+            title="Getting an Expo SDK 56 App Running on a Real Device"
+            description="Modernizing an old app to the newest SDK turns up a few gotchas the docs never connect for you."
+            date="2026-06-08" updated="2026-06-11" readingTime="7 min"
+            topics={['react-native','expo','mobile-dev']}
+          />
+          <NoteCard
+            title="Expo Go version mismatch is still a bad failure mode"
+            body="SDK/runtime mismatch errors remain more confusing than they need to be — the message points at the wrong layer."
+            date="2026-06-09"
+          />
+          <ReviewCard
+            subject="Bun" version="v1.2"
+            oneLiner="A genuinely fast all-in-one runtime that collapses three tools into one — with a few rough edges you'll still feel in production."
+            score={4.2} verdict="caveats" date="2026-06-10"
+            topics={['runtime','javascript','devtools']}
+          />
+          <Callout type="warning" title="Watch for SDK/runtime mismatch">
+            Expo Go may not support the newest SDK immediately depending on release timing. Pin a dev client if you need the bleeding edge.
+          </Callout>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+  </script>
+</body>
+</html>

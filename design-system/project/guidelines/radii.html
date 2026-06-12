@@ -1,0 +1,21 @@
+<!-- @dsCard group="Spacing" viewport="700x150" name="Radii" subtitle="Sharp & engineered — xs 3px → lg 12px, pill" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg-base); display: flex; gap: 18px; align-items: center; }
+  .u { text-align: center; }
+  .box { width: 76px; height: 64px; background: var(--surface-2); border: 1px solid var(--line-2); }
+  .lbl { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); display: block; margin-top: 9px; }
+</style>
+</head>
+<body>
+  <div class="u"><div class="box" style="border-radius:var(--radius-xs)"></div><span class="lbl">xs · 3</span></div>
+  <div class="u"><div class="box" style="border-radius:var(--radius-sm)"></div><span class="lbl">sm · 5</span></div>
+  <div class="u"><div class="box" style="border-radius:var(--radius-md)"></div><span class="lbl">md · 8</span></div>
+  <div class="u"><div class="box" style="border-radius:var(--radius-lg)"></div><span class="lbl">lg · 12</span></div>
+  <div class="u"><div class="box" style="border-radius:var(--radius-pill)"></div><span class="lbl">pill</span></div>
+</body>
+</html>

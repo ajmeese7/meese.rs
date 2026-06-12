@@ -1,0 +1,32 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Ink & Lines" subtitle="Text hierarchy and hairline borders" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 22px; background: var(--bg-base); display: flex; gap: 28px; align-items: center; }
+  .col { flex: 1; }
+  .ink { font-family: var(--font-body); font-size: 17px; line-height: 1.7; }
+  .tag { font-family: var(--font-mono); font-size: 10px; color: var(--ink-4); letter-spacing: .08em; }
+  .lines { display: flex; flex-direction: column; gap: 14px; }
+  .lrow { display: flex; align-items: center; gap: 12px; }
+  .bar { flex: 1; height: 0; }
+  .lbl { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); width: 92px; letter-spacing: .06em; }
+</style>
+</head>
+<body>
+  <div class="col">
+    <div class="ink" style="color:var(--ink-1)">Primary ink <span class="tag">ink-1</span></div>
+    <div class="ink" style="color:var(--ink-2)">Body secondary <span class="tag">ink-2</span></div>
+    <div class="ink" style="color:var(--ink-3)">Muted metadata <span class="tag">ink-3</span></div>
+    <div class="ink" style="color:var(--ink-4)">Faint / disabled <span class="tag">ink-4</span></div>
+  </div>
+  <div class="col lines">
+    <div class="lrow"><span class="lbl">line-faint</span><span class="bar" style="border-top:1px solid var(--line-faint)"></span></div>
+    <div class="lrow"><span class="lbl">line-1</span><span class="bar" style="border-top:1px solid var(--line-1)"></span></div>
+    <div class="lrow"><span class="lbl">line-2</span><span class="bar" style="border-top:1px solid var(--line-2)"></span></div>
+    <div class="lrow"><span class="lbl">line-3</span><span class="bar" style="border-top:1px solid var(--line-3)"></span></div>
+  </div>
+</body>
+</html>

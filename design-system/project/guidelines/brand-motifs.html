@@ -1,0 +1,38 @@
+<!-- @dsCard group="Brand" viewport="700x190" name="Motifs" subtitle="System grid backdrop, reticle corner ticks, mono labels" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg-base); display: flex; gap: 20px; align-items: stretch; }
+  /* reticle panel */
+  .panel { position: relative; flex: 1; background: var(--surface-1); border: 1px solid var(--line-1); border-radius: var(--radius-md); padding: 20px; }
+  .panel::before, .panel::after, .tick::before, .tick::after {
+    content: ""; position: absolute; width: 12px; height: 12px; border: 1.5px solid var(--cyan-deep);
+  }
+  .panel::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+  .panel::after { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
+  .tick::before { bottom: 8px; left: 8px; border-right: 0; border-top: 0; }
+  .tick::after { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+  .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--cyan); }
+  .ptitle { font-family: var(--font-display); font-size: 18px; color: var(--ink-1); margin-top: 10px; font-weight: 600; }
+  .ptext { font-family: var(--font-body); font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+  /* grid swatch */
+  .grid { flex: 1; border: 1px solid var(--line-1); border-radius: var(--radius-md);
+    background-color: var(--bg-void);
+    background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 24px 24px; display: flex; align-items: flex-end; padding: 14px; }
+  .grid span { font-family: var(--font-mono); font-size: 10px; color: var(--ink-4); letter-spacing: .1em; }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="tick"></div>
+    <div class="label">// reticle frame</div>
+    <div class="ptitle">Featured entry</div>
+    <div class="ptext">Corner ticks mark elevated / featured surfaces.</div>
+  </div>
+  <div class="grid"><span>32px system grid · blueprint backdrop</span></div>
+</body>
+</html>

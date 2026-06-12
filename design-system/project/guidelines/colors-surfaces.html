@@ -1,0 +1,26 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Surfaces" subtitle="Cool blue-black elevation scale — void → overlay" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 22px; background: var(--bg-void); }
+  .row { display: flex; gap: 10px; }
+  .sw { flex: 1; }
+  .chip { height: 64px; border-radius: var(--radius-md); border: 1px solid var(--line-1); }
+  .name { font: var(--label-system); color: var(--ink-2); margin-top: 8px; display: block; text-transform: none; letter-spacing: var(--tracking-wide); }
+  .hex { font-family: var(--font-mono); font-size: 11px; color: var(--ink-4); display: block; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="sw"><div class="chip" style="background:var(--bg-void)"></div><span class="name">bg-void</span><span class="hex">#06080C</span></div>
+    <div class="sw"><div class="chip" style="background:var(--bg-base)"></div><span class="name">bg-base</span><span class="hex">#0A0D13</span></div>
+    <div class="sw"><div class="chip" style="background:var(--surface-1)"></div><span class="name">surface-1</span><span class="hex">#0F131B</span></div>
+    <div class="sw"><div class="chip" style="background:var(--surface-2)"></div><span class="name">surface-2</span><span class="hex">#151A24</span></div>
+    <div class="sw"><div class="chip" style="background:var(--surface-3)"></div><span class="name">surface-3</span><span class="hex">#1B2230</span></div>
+    <div class="sw"><div class="chip" style="background:var(--surface-inset)"></div><span class="name">inset/well</span><span class="hex">#080A0F</span></div>
+  </div>
+</body>
+</html>

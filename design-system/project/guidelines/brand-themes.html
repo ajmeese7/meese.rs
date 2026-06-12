@@ -1,0 +1,33 @@
+<!-- @dsCard group="Brand" viewport="700x200" name="Accent themes" subtitle="Swap data-theme on <html> to retheme the single accent" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 22px; background: var(--bg-base); }
+  .lead { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 14px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .sw { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line-1); border-radius: var(--radius-md); background: var(--surface-1); }
+  .dot { width: 20px; height: 20px; border-radius: 999px; flex: none; }
+  .meta { min-width: 0; }
+  .nm { font-family: var(--font-mono); font-size: 12px; color: var(--ink-1); }
+  .val { font-family: var(--font-mono); font-size: 10px; color: var(--ink-4); }
+</style>
+</head>
+<body>
+  <div class="lead">// data-theme — default: neon-violet</div>
+  <div class="grid" id="grid"></div>
+  <script>
+    const THEMES = [
+      ['neon-violet','#9A7CFF'], ['acid-green','#84F24B'], ['neon-lime','#CCFF42'],
+      ['neon-mint','#35F0A2'], ['neon-cyan','#29E7F2'], ['electric-blue','#5391FF'],
+      ['hot-magenta','#FF3DA1'], ['neon-pink','#FF73B6'], ['coral','#FF5E73'],
+    ];
+    document.getElementById('grid').innerHTML = THEMES.map(([n,c]) =>
+      `<div class="sw"><span class="dot" style="background:${c};box-shadow:0 0 10px -1px ${c}"></span>
+        <span class="meta"><span class="nm">${n}</span><br><span class="val">${c}</span></span></div>`
+    ).join('');
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="meese.rs">
+  
+  <line x1="8" y1="22" x2="16" y2="9" stroke="#30353C" stroke-width="1.5"></line>
+  <line x1="16" y1="9" x2="24" y2="19" stroke="#30353C" stroke-width="1.5"></line>
+  <line x1="8" y1="22" x2="24" y2="19" stroke="#30353C" stroke-width="1.5"></line>
+  <circle cx="16" cy="9" r="3.4" fill="#9A7CFF"></circle>
+  <circle cx="8" cy="22" r="2.6" fill="#B7A2FF"></circle>
+  <circle cx="24" cy="19" r="2.8" fill="#767D85"></circle>
+</svg>

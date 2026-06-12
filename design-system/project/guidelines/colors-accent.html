@@ -1,0 +1,28 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Accent ramp" subtitle="The single neon signal (default violet) — themeable via data-theme" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 22px; background: var(--bg-base); }
+  .lead { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+  .lead b { color: var(--accent); }
+  .row { display: flex; gap: 10px; }
+  .sw { flex: 1; text-align: center; }
+  .chip { height: 52px; border-radius: var(--radius-sm); }
+  .name { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); display: block; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <div class="lead">Accent <b>// neon-violet (default)</b> — links · primary · focus · brand</div>
+  <div class="row">
+    <div class="sw"><div class="chip" style="background:var(--accent-dim)"></div><span class="name">dim</span></div>
+    <div class="sw"><div class="chip" style="background:var(--accent-deep)"></div><span class="name">deep / press</span></div>
+    <div class="sw"><div class="chip" style="background:var(--accent)"></div><span class="name">accent</span></div>
+    <div class="sw"><div class="chip" style="background:var(--accent-bright)"></div><span class="name">bright / hover</span></div>
+    <div class="sw"><div class="chip" style="background:var(--accent-wash)"></div><span class="name">wash</span></div>
+    <div class="sw"><div class="chip" style="background:var(--bg-base);box-shadow:var(--glow-soft);border:1px solid var(--accent-deep)"></div><span class="name">glow</span></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Status & Graph hues" subtitle="Semantic states and the categorical graph palette" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 22px; background: var(--bg-base); }
+  .lead { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 9px; }
+  .row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .pill { flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--line-1); }
+  .dot { width: 12px; height: 12px; border-radius: 999px; flex: none; }
+  .nm { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+  .hrow { display: flex; gap: 8px; }
+  .hue { flex: 1; height: 30px; border-radius: var(--radius-xs); }
+</style>
+</head>
+<body>
+  <div class="lead">Status</div>
+  <div class="row">
+    <div class="pill" style="background:var(--status-ok-bg)"><span class="dot" style="background:var(--green)"></span><span class="nm">ok</span></div>
+    <div class="pill" style="background:var(--status-warn-bg)"><span class="dot" style="background:var(--gold)"></span><span class="nm">warn</span></div>
+    <div class="pill" style="background:var(--status-danger-bg)"><span class="dot" style="background:var(--red)"></span><span class="nm">danger</span></div>
+    <div class="pill" style="background:var(--status-info-bg)"><span class="dot" style="background:var(--cyan)"></span><span class="nm">info</span></div>
+  </div>
+  <div class="lead">Graph / topic categorical</div>
+  <div class="hrow">
+    <div class="hue" style="background:var(--hue-cyan)"></div>
+    <div class="hue" style="background:var(--hue-ember)"></div>
+    <div class="hue" style="background:var(--hue-violet)"></div>
+    <div class="hue" style="background:var(--hue-green)"></div>
+    <div class="hue" style="background:var(--hue-gold)"></div>
+    <div class="hue" style="background:var(--hue-rose)"></div>
+    <div class="hue" style="background:var(--hue-slate)"></div>
+  </div>
+</body>
+</html>

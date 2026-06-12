@@ -1,0 +1,52 @@
+<!-- @dsCard group="Website" viewport="1200x780" name="meese.rs — reading site" subtitle="Interactive: system-index home → post → graph → search (⌘K)" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meese.rs — reading site</title>
+<link rel="icon" href="../../assets/favicon.svg">
+<link rel="stylesheet" href="../../styles.css">
+<script>
+  // apply persisted theme before paint (default neon-violet)
+  try { document.documentElement.dataset.theme = localStorage.getItem('meeders-theme') || 'neon-violet'; }
+  catch (e) { document.documentElement.dataset.theme = 'neon-violet'; }
+</script>
+<style>
+  html, body { height: 100%; }
+  body { margin: 0; }
+  #root { min-height: 100%; }
+  /* lucide icons sized via parent font-size */
+  svg[class*="lucide"] { width: 1em; height: 1em; display: block; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + Babel (pinned) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+  <!-- Lucide icons (CDN — the brand icon set) -->
+  <script src="https://unpkg.com/lucide@0.456.0/dist/umd/lucide.min.js" crossorigin></script>
+
+  <!-- Design system bundle (compiled at end of turn; fallbacks used until then) -->
+  <script src="../../_ds_bundle.js"></script>
+
+  <!-- plain data + primitive resolver -->
+  <script src="data.js"></script>
+  <script src="kit-primitives.js"></script>
+
+  <!-- screens (JSX) -->
+  <script type="text/babel" data-presets="react" src="Chrome.jsx"></script>
+  <script type="text/babel" data-presets="react" src="Home.jsx"></script>
+  <script type="text/babel" data-presets="react" src="PostView.jsx"></script>
+  <script type="text/babel" data-presets="react" src="ReviewView.jsx"></script>
+  <script type="text/babel" data-presets="react" src="ReviewsView.jsx"></script>
+  <script type="text/babel" data-presets="react" src="ListView.jsx"></script>
+  <script type="text/babel" data-presets="react" src="TopicsView.jsx"></script>
+  <script type="text/babel" data-presets="react" src="GraphView.jsx"></script>
+  <script type="text/babel" data-presets="react" src="SearchOverlay.jsx"></script>
+  <script type="text/babel" data-presets="react" src="app.jsx"></script>
+</body>
+</html>

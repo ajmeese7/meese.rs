@@ -1,0 +1,59 @@
+/* ============================================================
+   meese.rs — Effects: radii, borders, shadows, glow, motion
+   ------------------------------------------------------------
+   Precise & technical: small radii, hairline borders, restrained
+   elevation. Depth comes from surface-lightening + a faint cyan
+   glow on focus/active — never from heavy drop shadows.
+   ============================================================ */
+
+:root {
+  /* ---- Radii (sharp, engineered) ---- */
+  --radius-xs:   3px;    /* badges, tags, inputs                 */
+  --radius-sm:   5px;    /* buttons, small controls              */
+  --radius-md:   8px;    /* cards, panels                        */
+  --radius-lg:   12px;   /* large surfaces, dialogs              */
+  --radius-pill: 999px;  /* pills, avatars                       */
+
+  /* ---- Border widths ---- */
+  --border-hair:  1px;
+  --border-thick: 1.5px;
+
+  /* ---- Shadows (low, cool, used sparingly) ---- */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 12px 34px rgba(0, 0, 0, 0.55);
+
+  /* ---- Glows / signal lighting ---- */
+  --glow-accent:  0 0 0 1px var(--cyan-deep), 0 0 18px -2px var(--cyan-glow);
+  --glow-soft:    0 0 22px -6px var(--cyan-glow);
+  --glow-ember:   0 0 18px -4px var(--accent-glow);   /* legacy alias → accent glow */
+
+  /* ---- Focus ring (2px offset, accessible) ---- */
+  --ring:        0 0 0 2px var(--bg-base), 0 0 0 4px var(--cyan);
+  --ring-inset:  inset 0 0 0 1px var(--cyan);
+
+  /* ---- Backdrop blur ---- */
+  --blur-overlay: blur(10px) saturate(120%);   /* @kind other */
+
+  /* ---- Motion: restrained, no bounce ---- */
+  --ease-out:   cubic-bezier(0.22, 0.61, 0.30, 1);   /* @kind other */
+  --ease-in:    cubic-bezier(0.55, 0.06, 0.68, 0.19);  /* @kind other */
+  --ease-mono:  cubic-bezier(0.33, 0, 0.20, 1);   /* @kind other */
+  --dur-1:      120ms;   /* @kind other */
+  --dur-2:      180ms;   /* @kind other */
+  --dur-3:      260ms;   /* @kind other */
+  --dur-4:      420ms;   /* @kind other */
+
+  /* ---- Z-index ladder ---- */
+  --z-base:     0;     /* @kind other */
+  --z-raised:   10;    /* @kind other */
+  --z-sticky:   100;   /* @kind other */
+  --z-header:   200;   /* @kind other */
+  --z-overlay:  900;   /* @kind other */
+  --z-modal:    1000;  /* @kind other */
+  --z-toast:    1100;  /* @kind other */
+
+  /* ---- Signature backdrop: faint system grid ---- */
+  --grid-line:  rgba(150, 160, 175, 0.04);
+  --grid-size:  32px;   /* @kind other */
+}

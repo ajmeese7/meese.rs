@@ -1,0 +1,67 @@
+<!-- @dsCard group="Components" viewport="700x320" name="Core — Button · Badge · Tag · Input" subtitle="Buttons, type/status badges, tags, and the search input" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg-base); }
+  .lead { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px; }
+  .grp + .grp { margin-top: 22px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+  <script src="../../_ds_bundle.js"></script>
+  <script type="text/babel" data-presets="react">
+    const { Button, Badge, Tag, Input } = window.MeeseRsDesignSystem_ed1971;
+    function Demo() {
+      return (
+        <div>
+          <div className="grp">
+            <p className="lead">Button — variants</p>
+            <div className="row">
+              <Button variant="primary">Read guide</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="ghost">Ghost</Button>
+              <Button variant="accent">Accent</Button>
+              <Button variant="danger">Deprecate</Button>
+              <Button variant="secondary" disabled>Disabled</Button>
+            </div>
+          </div>
+          <div className="grp">
+            <p className="lead">Button — sizes</p>
+            <div className="row">
+              <Button size="sm" variant="primary">Small</Button>
+              <Button size="md" variant="primary">Medium</Button>
+              <Button size="lg" variant="primary">Large</Button>
+            </div>
+          </div>
+          <div className="grp">
+            <p className="lead">Badge — post types &amp; status</p>
+            <div className="row">
+              <Badge type="guide" /><Badge type="note" /><Badge type="devlog" />
+              <Badge type="essay" /><Badge type="lab" /><Badge type="reference" />
+              <Badge status="updated" /><Badge status="deprecated" /><Badge status="pinned" />
+            </div>
+          </div>
+          <div className="grp">
+            <p className="lead">Tag &amp; Input</p>
+            <div className="row" style={{marginBottom:12}}>
+              <Tag href="#">react-native</Tag><Tag href="#">expo</Tag><Tag active href="#">eas</Tag><Tag href="#">pagefind</Tag>
+            </div>
+            <div className="row">
+              <div style={{width:300}}><Input variant="search" placeholder="Search the index…" /></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+  </script>
+</body>
+</html>
