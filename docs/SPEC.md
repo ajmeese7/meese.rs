@@ -25,6 +25,16 @@ The production domain is:
 meese.rs
 ```
 
+## 1.5 Known Gaps
+
+The site is built and runs. Three things the rest of this spec describes are not fully in place yet:
+
+* **Search filters:** only the type filter exists. Topic and tag filters are not built (§23).
+* **No test harness:** content integrity is covered by `scripts/validate-content.ts` and `astro check`; there are no unit tests (§38).
+* **CSP:** not enabled yet, pending a Cloudflare preview pass; Google Fonts is the one external origin to account for (§31).
+
+Everything else in this document describes the shipped system.
+
 ## 2. Non-Goals
 
 Do not build or prioritize:
@@ -93,41 +103,17 @@ readable
 distinctive
 ```
 
-The visual identity should lean toward a **custom cybersecurity UX design kit**: precise, technical, polished, and distinctive without sacrificing the reading experience.
+The visual identity is a **custom cybersecurity UX design kit**: precise, technical, polished, and distinctive without sacrificing the reading experience. It is the source of truth for anything visual. It lives in `design-system/` (tokens, components, the website UI kit, and brand assets; see `design-system/project/README.md`) and is ported into `src/styles/` as the semantic token layer (`src/styles/tokens/*.css`) plus a static-CSS port of the UI-kit components (`src/styles/base.css`, `components.css`, `graph.css`).
 
-The coding agent must not invent the final brand system. Placeholder styling is acceptable during implementation, but final colors, typography, spacing, gradients, borders, iconography, and interaction states require human approval.
+The system is dark, technical, and restrained over a graphite blueprint-grid foundation. Components reference semantic CSS variables (`--text-body`, `--surface-card`, `--accent`, `--border-default`, the categorical `--hue-*` set), never raw palette values.
 
-### Human input required
+The accent is the one moving part:
 
-The human owner must provide one of the following before final visual implementation:
+* It is themeable at runtime via `data-theme` on `<html>`, with a nine-option dark switcher in the header (violet, acid green, lime, mint, cyan, blue, magenta, pink, coral). The default is `neon-violet`.
+* The choice is persisted in `localStorage` and re-applied pre-paint by an inline script in `BaseLayout` to avoid an accent flash.
+* The palette is dark only; there is no light mode.
 
-* screenshots of the intended cybersecurity UX design kit
-* CSS variables from an existing design implementation
-* a Figma/design reference
-* links to an existing repo/page using the desired custom visual system
-* a written style guide
-* explicit approval to create a new custom visual system from scratch
-
-Until then, use neutral placeholder tokens and clearly mark them as placeholders.
-
-Example placeholder tokens:
-
-```css
-:root {
-  --color-bg: #080b10;
-  --color-surface: #101620;
-  --color-surface-elevated: #151d2a;
-  --color-text: #e8eef8;
-  --color-text-muted: #9aa8ba;
-  --color-border: #263244;
-  --color-accent: #7cc7ff;
-  --color-accent-secondary: #b18cff;
-  --color-danger: #ff6b6b;
-  --color-warning: #ffc857;
-}
-```
-
-These are placeholders only. Replace them when the final custom visual direction is provided or approved.
+Do not reinvent or fork the visual system. Extend it from the existing tokens and components.
 
 ## 6. Architecture
 
@@ -136,12 +122,15 @@ Use a static-first architecture.
 Recommended stack:
 
 ```txt
-Astro
-MDX
-Astro Content Collections
+Astro 6
+MDX (@astrojs/mdx)
+Astro Content Collections (glob loader)
 Pagefind
-Cloudflare Pages
+@astrojs/sitemap
+@astrojs/rss
+Cloudflare Pages (wrangler static-assets)
 TypeScript
+pnpm
 ```
 
 Core principles:
@@ -198,83 +187,74 @@ Suggested build settings:
 
 ```txt
 Framework preset: Astro
-Build command: npm run build
+Build command: pnpm build
 Output directory: dist
-Node version: current LTS
+Node version: 24 (pinned via .node-version)
+Production branch: master
 ```
+
+Deployment also carries a `wrangler.jsonc` with a static-assets config so the Cloudflare deploy resolves `dist/` without going through the dashboard onboarding flow.
 
 ## 9. Package Manager
 
-Preferred package manager:
+Package manager: **pnpm**, pinned to `pnpm@11.2.2` via the `packageManager` field in `package.json`. Per-project pnpm config (overrides, allowed build scripts) lives in `pnpm-workspace.yaml`, since pnpm 11 ignores the `package.json` "pnpm" field.
 
-```txt
-pnpm
-```
-
-If the existing environment does not use `pnpm`, use `npm` instead.
-
-### Initial setup command
-
-```bash
-pnpm create astro@latest meese.rs
-cd meese.rs
-pnpm astro add mdx
-pnpm add pagefind
-```
-
-If using npm:
-
-```bash
-npm create astro@latest meese.rs
-cd meese.rs
-npx astro add mdx
-npm install pagefind
-```
-
-## 10. Suggested File Structure
+## 10. File Structure
 
 ```txt
 meese.rs/
 ├── AGENTS.md
 ├── README.md
 ├── astro.config.mjs
+├── wrangler.jsonc
 ├── package.json
+├── pnpm-workspace.yaml
 ├── tsconfig.json
+├── .node-version
+├── design-system/               approved visual system (handoff bundle)
+├── docs/
+│   ├── SPEC.md                   this document
+│   └── CONTENT.md                writer reference: type/status/verdict/topic-tag
 ├── public/
 │   ├── AGENTS.md
 │   ├── llms.txt
 │   ├── robots.txt
 │   ├── _headers
 │   ├── favicon.svg
-│   └── graph.json
+│   ├── logomark.svg
+│   └── graph.json               generated snapshot (also built live for /graph)
 ├── scripts/
+│   ├── validate-content.ts
 │   ├── generate-graph.ts
-│   ├── generate-backlinks.ts
-│   └── validate-content.ts
+│   └── lib/
+│       └── frontmatter.ts        shared MDX frontmatter loader (build-time)
 ├── src/
 │   ├── content.config.ts
 │   ├── content/
-│   │   └── posts/
-│   │       ├── example-guide.mdx
-│   │       ├── example-note.mdx
-│   │       └── example-devlog.mdx
+│   │   └── posts/                *.mdx, one file per entry (11 at last count)
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── SiteHeader.astro
+│   │   │   ├── SiteHeader.astro   wordmark, nav, theme switcher, ⌘K trigger
 │   │   │   ├── SiteFooter.astro
-│   │   │   └── BaseHead.astro
+│   │   │   ├── BaseHead.astro
+│   │   │   ├── BackLink.astro     follows the reader's navigation source
+│   │   │   ├── Icon.astro         inline Lucide SVGs
+│   │   │   └── SectionLabel.astro
 │   │   ├── posts/
 │   │   │   ├── PostCard.astro
-│   │   │   ├── NoteCard.astro
-│   │   │   ├── PostMeta.astro
-│   │   │   ├── TableOfContents.astro
-│   │   │   ├── RelatedPosts.astro
-│   │   │   ├── Backlinks.astro
-│   │   │   └── UpdateNotice.astro
+│   │   │   ├── NoteCard.astro     compact variant
+│   │   │   ├── ReviewCard.astro
+│   │   │   ├── FeedList.astro     renders the right card per type
+│   │   │   ├── Badge.astro        type + status badges
+│   │   │   ├── Tag.astro
+│   │   │   ├── Stars.astro        review score
+│   │   │   ├── Reticle.astro      featured-card framing
+│   │   │   └── PagefindMeta.astro per-page search metadata
 │   │   ├── graph/
 │   │   │   └── GraphViewer.astro
 │   │   ├── search/
-│   │   │   └── SearchUI.astro
+│   │   │   ├── SearchUI.astro     ⌘K overlay shell
+│   │   │   └── SearchPanel.astro  shared panel (overlay + /search page)
 │   │   └── mdx/
 │   │       ├── Callout.astro
 │   │       ├── Aside.astro
@@ -283,12 +263,15 @@ meese.rs/
 │   │       └── CodeCaption.astro
 │   ├── layouts/
 │   │   ├── BaseLayout.astro
-│   │   └── PostLayout.astro
+│   │   ├── PostLayout.astro
+│   │   └── ReviewLayout.astro
 │   ├── pages/
 │   │   ├── index.astro
 │   │   ├── latest.astro
 │   │   ├── guides.astro
 │   │   ├── notes.astro
+│   │   ├── reviews/
+│   │   │   └── index.astro
 │   │   ├── topics/
 │   │   │   ├── index.astro
 │   │   │   └── [topic].astro
@@ -297,21 +280,28 @@ meese.rs/
 │   │   ├── posts/
 │   │   │   └── [slug].astro
 │   │   ├── feed.xml.ts
-│   │   ├── feed.json.ts
-│   │   └── sitemap.xml.ts
+│   │   └── feed.json.ts
+│   ├── scripts/
+│   │   └── search.ts             client-side Pagefind wiring
 │   ├── styles/
-│   │   ├── global.css
-│   │   ├── tokens.css
-│   │   ├── typography.css
-│   │   └── graph.css
+│   │   ├── global.css            entry point (imports the rest)
+│   │   ├── base.css
+│   │   ├── components.css
+│   │   ├── graph.css
+│   │   └── tokens/
+│   │       ├── colors.css
+│   │       ├── effects.css
+│   │       ├── fonts.css
+│   │       ├── spacing.css
+│   │       └── typography.css
 │   └── utils/
 │       ├── posts.ts
 │       ├── dates.ts
 │       ├── topics.ts
+│       ├── backlinks.ts
 │       ├── graph.ts
 │       └── seo.ts
-└── tests/
-    └── content-schema.test.ts
+└── (no tests/ directory, see §38)
 ```
 
 ## 11. Routes
@@ -330,6 +320,9 @@ Required routes:
 
 /notes
   Short notes only.
+
+/reviews
+  Software/library review index, with aggregate score and a score/recency sort.
 
 /topics
   Topic index.
@@ -352,8 +345,8 @@ Required routes:
 /feed.json
   JSON feed.
 
-/sitemap.xml
-  Sitemap.
+/sitemap-index.xml
+  Sitemap (generated by @astrojs/sitemap; see §33).
 
 /robots.txt
   Crawler instructions.
@@ -375,42 +368,53 @@ Use this main nav:
 Latest
 Guides
 Notes
+Reviews
 Topics
 Graph
-Search
 ```
 
 Do not add nav links for features that do not exist yet.
+
+Search is **not** a top-nav link. It is a ⌘K overlay reachable from a header button (and a search tile on the homepage), with `/search` as the no-JS fallback page. The header also carries the theme switcher (§5). The wordmark links home.
 
 ## 13. Homepage Requirements
 
 The homepage should feel like a system index, but lead with latest writing.
 
-Recommended homepage order:
+A two-column system index that leads with identity and latest writing. There are no separate "featured guides" or "recent notes" strips: those types flow through the unified writing feed. Reviews get their own slot because they sit off the main writing feed (§18).
 
 ```txt
-1. compact hero / site identity
-2. latest writing
-3. featured guides
-4. active topics
-5. recent notes
-6. graph entry
-7. search entry
+identity band
+  1. site identity (// system index label, headline, blurb)
+  2. index-status panel (entries / topics / last-write counters, reticle framing)
+
+main column
+  3. latest review (one card, only if a review exists)
+  4. latest writing (the unified feed, reviews excluded)
+
+sidebar
+  5. active topics (top 6, colored dots + counts)
+  6. graph entry (teaser canvas linking to /graph)
+  7. search entry (tile that opens the ⌘K overlay)
 ```
 
 The homepage must not be a generic marketing landing page.
 
-### Hero copy placeholder
+### Hero copy (shipped placeholder)
+
+The design-approved placeholder currently in `src/pages/index.astro`:
 
 ```txt
-meese.rs
+// system index
+Practical writing on software, AI/devtools, and systems-building.
 
-Practical writing on software, AI/devtools, implementation work, and systems-building.
+Tactical guides, dev logs, short notes, labs, and references, long and short in
+one feed. Built things, learned the tradeoffs, wrote them down.
 ```
 
 ### Human input required
 
-The human owner should approve or rewrite the homepage hero copy before launch.
+The human owner should approve or rewrite the homepage hero copy before launch. It is marked as a placeholder in the page source.
 
 ## 14. Content Types
 
@@ -425,7 +429,10 @@ devlog
 essay
 lab
 reference
+review
 ```
+
+`review` is a first-class type: software/library reviews are a major use case and carry their own structured frontmatter, layout, and index. The full writer-facing reference for all seven types (icon, hue, update policy) and the other label systems is `docs/CONTENT.md`.
 
 Definitions:
 
@@ -450,6 +457,11 @@ lab
 
 reference
   Durable explainer or glossary-style page.
+
+review
+  Software/library review. Carries a structured `review:` block (score,
+  verdict, criteria, pros/cons, links); prose verdict in the MDX body.
+  Has its own layout (ReviewLayout), card (ReviewCard), and /reviews index.
 ```
 
 ## 15. Content Update Policy
@@ -474,6 +486,9 @@ Labs:
 
 References:
   update in place.
+
+Reviews:
+  update the score/verdict if the subject changes materially; record the revision.
 ```
 
 Visible status labels are not required by default.
@@ -496,10 +511,10 @@ Define a posts collection in `src/content.config.ts`.
 Required frontmatter fields:
 
 ```yaml
-title: string
-description: string
+title: string          # non-empty
+description: string     # non-empty
 date: date
-type: guide | note | devlog | essay | lab | reference
+type: guide | note | devlog | essay | lab | reference | review
 topics: string[]
 tags: string[]
 draft: boolean
@@ -522,46 +537,80 @@ supersededBy: string
 canonicalUrl: string
 externalUrl: string
 hideFromFeed: boolean
+review:                 # required when type: review (see below)
+  subject: string
+  version: string
+  score: number         # 0..5
+  verdict: recommended | caveats | watch | skip
+  verdictLabel: string  # free text actually shown, e.g. "One to watch"
+  tagline: string
+  links:
+    - { label: string, href: url }
+  meta:
+    - { key: string, value: string }
+  criteria:
+    - { name: string, score: number, note: string }
+  pros: string[]
+  cons: string[]
+  bottomLine: string
 ```
 
-Recommended TypeScript/Zod structure:
+The shipped schema (`src/content.config.ts`, abbreviated). Title/description are non-empty, and a `.refine()` makes the `review` block mandatory on review entries:
 
 ```ts
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro:schema';
 import { glob } from 'astro/loaders';
 
+export const POST_TYPES = [
+  'guide', 'note', 'devlog', 'essay', 'lab', 'reference', 'review',
+] as const;
+
+const reviewSchema = z.object({
+  subject: z.string(),
+  version: z.string().optional(),
+  score: z.number().min(0).max(5),
+  verdict: z.enum(['recommended', 'caveats', 'watch', 'skip']),
+  verdictLabel: z.string(),
+  tagline: z.string().optional(),
+  links: z.array(z.object({ label: z.string(), href: z.string().url() })).default([]),
+  meta: z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  criteria: z
+    .array(z.object({ name: z.string(), score: z.number().min(0).max(5), note: z.string() }))
+    .default([]),
+  pros: z.array(z.string()).default([]),
+  cons: z.array(z.string()).default([]),
+  bottomLine: z.string().optional(),
+});
+
 const posts = defineCollection({
-  loader: glob({
-    pattern: '**/*.{md,mdx}',
-    base: './src/content/posts',
-  }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    date: z.coerce.date(),
-    updated: z.coerce.date().optional(),
-    type: z.enum(['guide', 'note', 'devlog', 'essay', 'lab', 'reference']),
-    topics: z.array(z.string()).default([]),
-    tags: z.array(z.string()).default([]),
-    draft: z.boolean().default(false),
-    summary: z.string().optional(),
-    featured: z.boolean().default(false),
-    pinned: z.boolean().default(false),
-    series: z.string().optional(),
-    related: z
-      .array(
-        z.object({
-          slug: z.string(),
-          reason: z.string(),
-        })
-      )
-      .default([]),
-    supersedes: z.array(z.string()).default([]),
-    supersededBy: z.string().optional(),
-    canonicalUrl: z.string().url().optional(),
-    externalUrl: z.string().url().optional(),
-    hideFromFeed: z.boolean().default(false),
-  }),
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
+  schema: z
+    .object({
+      title: z.string().min(1),
+      description: z.string().min(1),
+      date: z.coerce.date(),
+      updated: z.coerce.date().optional(),
+      type: z.enum(POST_TYPES),
+      topics: z.array(z.string()).default([]),
+      tags: z.array(z.string()).default([]),
+      draft: z.boolean().default(false),
+      summary: z.string().optional(),
+      featured: z.boolean().default(false),
+      pinned: z.boolean().default(false),
+      series: z.string().optional(),
+      related: z.array(z.object({ slug: z.string(), reason: z.string() })).default([]),
+      supersedes: z.array(z.string()).default([]),
+      supersededBy: z.string().optional(),
+      canonicalUrl: z.string().url().optional(),
+      externalUrl: z.string().url().optional(),
+      hideFromFeed: z.boolean().default(false),
+      review: reviewSchema.optional(),
+    })
+    .refine((d) => d.type !== 'review' || d.review !== undefined, {
+      message: "Posts with type 'review' must include a `review:` block.",
+      path: ['review'],
+    }),
 });
 
 export const collections = { posts };
@@ -632,9 +681,45 @@ draft: false
 ---
 ```
 
+### Review
+
+```yaml
+---
+title: "Claude Code, four months in"
+description: "The agentic CLI that actually stuck. Where it earns its keep and where it doesn't."
+date: 2026-06-10
+type: review
+topics:
+  - ai-devtools
+  - agents
+tags:
+  - claude-code
+  - cli
+draft: false
+review:
+  subject: "Claude Code"
+  version: "4.6"
+  score: 4.6
+  verdict: recommended
+  verdictLabel: "Recommended"
+  tagline: "The agentic CLI that actually stuck."
+  criteria:
+    - { name: "Autonomy", score: 4.5, note: "Handles multi-step work with little babysitting." }
+    - { name: "Ergonomics", score: 4.7, note: "Terminal-native, fits existing workflows." }
+  pros:
+    - "Strong multi-file edits"
+    - "Good at staying on task"
+  cons:
+    - "Occasionally over-eager"
+  bottomLine: "The first agent CLI I reach for by default."
+---
+```
+
+See `src/content/posts/review-*.mdx` for the complete, working review examples (Claude Code, Bun, Paseo).
+
 ## 18. Feed Behavior
 
-The main feed must include all public content types unless `hideFromFeed: true`.
+The main feed includes all public content types unless `hideFromFeed: true`, **with one deliberate exception**: reviews. Reviews are excluded from the homepage "latest writing" column and have their own `/reviews` index (so the writing feed stays writing, and reviews get the score/verdict treatment they need). Reviews *do* still appear in `/latest`, the RSS/JSON feeds, the sitemap, and the graph. The split is enforced in `src/utils/posts.ts`: `getWriting()` (feed minus reviews) drives the homepage; `getFeedPosts()` (everything but `hideFromFeed`) drives `/latest` and the feeds.
 
 Sort order:
 
@@ -645,7 +730,7 @@ then newest date first
 
 If `updated` exists, display it on the card and post page, but do not use `updated` for default feed sorting unless the owner later requests it.
 
-Notes should appear inline in the main feed, but with a more compact card style.
+Notes appear inline in the main feed, with a more compact card style. The `/reviews` index additionally offers a client-side newest / highest-rated sort toggle.
 
 ## 19. Post Card Requirements
 
@@ -663,7 +748,7 @@ reading time if practical
 
 Guide/devlog/essay/lab/reference cards can be larger.
 
-Note cards should be compact.
+Note cards should be compact. `FeedList` picks the card per type: `NoteCard` for notes, `ReviewCard` for reviews, `PostCard` for the rest. Featured entries get reticle-tick framing.
 
 ## 20. Post Page Requirements
 
@@ -683,6 +768,14 @@ related posts
 backlinks
 correction/update/deprecation banner when relevant
 ```
+
+Implementation notes:
+
+* Two layouts. `PostLayout` for the six writing types; `ReviewLayout` for reviews (it renders the score band, criteria table, pros/cons, verdict panel, and links above/around the prose). `/posts/[slug]` picks the layout by `type`.
+* The table of contents is built from `h2` headings only, shown only when there is more than one, with scroll-spy highlighting via an `IntersectionObserver`. No separate `TableOfContents` component; it is inlined in `PostLayout`.
+* Status banner precedence is superseded, then updated (deprecated/corrected are manual/editorial). See `docs/CONTENT.md` §2.
+* Backlinks render in three buckets: related, mentioned by, same topic (§25).
+* Posts with `externalUrl` set get no local page at all; they link straight out from cards and feeds.
 
 Do not include comments.
 
@@ -798,18 +891,12 @@ Use Pagefind.
 Requirements:
 
 * index static generated HTML
-* expose `/search`
+* expose `/search` (plus a ⌘K overlay; both share `SearchPanel`)
 * search by full text
 * show result title, excerpt, type, date, and topics
-* support filters for:
+* filters: **type only**. The panel shows one row of type chips (all seven types). Topic and tag filters are **not** built. The per-page metadata to support them is already emitted (below), so adding them later is UI work, not a re-index.
 
-  * type
-  * topic
-  * tag
-
-Pages should include Pagefind metadata attributes where needed.
-
-Example page metadata attributes:
+Pages emit Pagefind metadata via the `PagefindMeta` component, and the post body is marked `data-pagefind-body`. Example metadata attributes:
 
 ```html
 <meta data-pagefind-meta="type" content="guide" />
@@ -817,15 +904,13 @@ Example page metadata attributes:
 <meta data-pagefind-meta="tags" content="pagefind,cloudflare-pages" />
 ```
 
-Build script should generate the Pagefind index after Astro build.
-
-Suggested package scripts:
+The build generates the Pagefind index after the Astro build. The shipped scripts also fold content validation and the graph snapshot into `build`, so a single `pnpm build` does the whole pipeline (and CI just runs it):
 
 ```json
 {
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && pagefind --site dist",
+    "build": "pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",
     "preview": "astro preview",
     "check": "astro check",
     "validate:content": "tsx scripts/validate-content.ts",
@@ -884,16 +969,15 @@ If none is provided, the coding agent may infer topics from initial posts, but s
 
 ## 25. Backlinks
 
-Backlinks should be generated at build time.
+Backlinks are computed in `src/utils/backlinks.ts` as `PostLayout` renders each page. Astro builds these pages statically, so the result is build-time static HTML with no separate script or JSON artifact. Shared tags are deliberately not a source: too noisy, and topics already cover the "related subject" case.
 
 Sources of backlinks:
 
 ```txt
 manual frontmatter related links
-internal Markdown/MDX links
+internal /posts/<slug> links in the body
 supersedes/supersededBy fields
-shared topics
-shared tags
+shared topics (capped, ranked by overlap)
 ```
 
 Post pages should show:
@@ -928,36 +1012,40 @@ Also emit machine-readable graph data at:
 /graph.json
 ```
 
-The graph should be easy to find from the top nav.
+The graph is reachable from the top nav and from a homepage teaser. It is a discovery feature, not the homepage.
 
-The graph is a discovery feature, not the homepage.
+### Implementation
+
+No graph library. `GraphViewer.astro` renders the graph server-side as a styled SVG, so it works as a static diagram with no JS; a small vanilla-JS island layers hover-to-trace-edges, click-to-select, and a detail panel. The graph data (nodes, edges, deterministic layout) is built by `src/utils/graph.ts#buildGraph`, shared by both the live `/graph` page and the `generate-graph.ts` snapshot, so they never drift.
+
+Layout is deterministic (seeded by a hash of each id): topics sit on an inner ring, posts orbit the centroid of their topics. That keeps `graph.json` reproducible across builds.
 
 ### Graph node types
 
+Two node families: **topic** nodes and **post** nodes (a post's node `type` is its content type, e.g. `guide`/`note`/`review`). No tag nodes.
+
 ```txt
-post
-guide
-note
-devlog
-essay
-lab
-reference
 topic
-tag
+guide | note | devlog | essay | lab | reference | review   (one per post)
 ```
+
+Topic node ids are namespaced `topic:<slug>` to avoid colliding with a post slug.
 
 ### Graph edge types
 
 ```txt
-topic
-tag
-related
-mentions
+topic          post -> topic membership
+related        manual related links
+mentions       internal body links
 supersedes
 superseded_by
 ```
 
+The `tag` edge type is defined in the types but not emitted (no tag nodes exist to connect).
+
 ### Example `graph.json`
+
+The shipped artifact also carries layout coordinates (`x`, `y` normalized 0..1), a node radius `r`, and a resolved `color`, so a consumer can render it without recomputing the layout:
 
 ```json
 {
@@ -966,30 +1054,32 @@ superseded_by
       "id": "expo-sdk-56-real-device",
       "type": "guide",
       "title": "Getting an Expo SDK 56 App Running on a Real Device",
-      "url": "/posts/expo-sdk-56-real-device"
+      "url": "/posts/expo-sdk-56-real-device/",
+      "color": "#6FA8D6",
+      "x": 0.61,
+      "y": 0.42,
+      "r": 9
     },
     {
-      "id": "expo",
+      "id": "topic:expo",
       "type": "topic",
-      "title": "Expo",
-      "url": "/topics/expo"
+      "title": "expo",
+      "url": "/topics/expo/",
+      "color": "#9A7CFF",
+      "x": 0.5,
+      "y": 0.2,
+      "r": 15
     }
   ],
   "edges": [
-    {
-      "source": "expo-sdk-56-real-device",
-      "target": "expo",
-      "type": "topic"
-    }
+    { "source": "expo-sdk-56-real-device", "target": "topic:expo", "type": "topic" }
   ]
 }
 ```
 
 ### Human input required
 
-The human owner must approve the graph’s visual style after an initial prototype.
-
-The first graph implementation can be simple, but it should not look like an unstyled default visualization.
+The branded graph style (blueprint grid, reticle frame, legend, accent-on-focus) is implemented; owner sign-off on the final look is the one remaining step.
 
 ## 27. Root-Level Public Files
 
@@ -1005,11 +1095,13 @@ Include:
 Also generate:
 
 ```txt
-/sitemap.xml
+/sitemap-index.xml   (+ /sitemap-0.xml, via @astrojs/sitemap)
 /feed.xml
 /feed.json
 /graph.json
 ```
+
+`/AGENTS.md` and `/llms.txt` are served from `public/` as static files (the public `AGENTS.md` is distinct from the repo-root one; see §28).
 
 ## 28. `AGENTS.md`
 
@@ -1076,16 +1168,17 @@ Suggested content:
 
 ## Sections
 
-- /latest — mixed chronological writing feed
-- /guides — tactical guides
-- /notes — short notes
-- /topics — topic index
-- /graph — visual content graph
-- /search — site search
+- /latest, mixed chronological writing feed
+- /guides, tactical guides
+- /notes, short notes
+- /reviews, software & library reviews
+- /topics, topic index
+- /graph, visual content graph
+- /search, site search
 
 ## Machine-readable resources
 
-- /sitemap.xml
+- /sitemap-index.xml
 - /feed.xml
 - /feed.json
 - /graph.json
@@ -1107,7 +1200,7 @@ Simple v0:
 User-agent: *
 Allow: /
 
-Sitemap: https://meese.rs/sitemap.xml
+Sitemap: https://meese.rs/sitemap-index.xml
 ```
 
 If later the owner wants stricter bot rules, adjust after launch.
@@ -1116,9 +1209,7 @@ Do not spend significant implementation time on crawler-control logic during v0.
 
 ## 31. Cloudflare Pages `_headers`
 
-Create `/public/_headers`.
-
-Initial strict static-site headers:
+`/public/_headers`, a security baseline plus cache-control for the immutable build assets and the search index:
 
 ```txt
 /*
@@ -1126,11 +1217,15 @@ Initial strict static-site headers:
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   X-Frame-Options: DENY
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/pagefind/*
+  Cache-Control: public, max-age=86400
 ```
 
-Add CSP after confirming all scripts, fonts, images, and graph dependencies.
-
-Possible CSP starting point:
+CSP is **not enabled yet**. Before it can ship, the policy has to account for three things the build relies on: the inline pre-paint theme-apply script in `<head>` (needs a hash or `'unsafe-inline'`), the Google Fonts CDN (`fonts.googleapis.com` + `fonts.gstatic.com`, until fonts are self-hosted), and the Pagefind index fetched by search (`connect-src`). A workable target once fonts are self-hosted and the inline script is hashed:
 
 ```txt
 /*
@@ -1139,9 +1234,7 @@ Possible CSP starting point:
 
 ### Human input required
 
-The human owner or coding agent must test CSP in production preview before enabling a strict final policy.
-
-If Pagefind, graph libraries, fonts, images, or analytics require additional directives, update the CSP accordingly.
+Test CSP in a Cloudflare production preview before enabling a strict final policy. Icons are inline SVG (no icon-font request); fonts are the one external dependency to resolve.
 
 ## 32. Feeds
 
@@ -1152,41 +1245,33 @@ Generate both:
 /feed.json
 ```
 
+`feed.xml` uses `@astrojs/rss`; `feed.json` is a hand-built JSON Feed route. Both pull from `getFeedPosts()`.
+
 Feed requirements:
 
 * include all non-draft posts unless `hideFromFeed: true`
-* include notes
-* include guides
-* include dev logs
-* include essays/labs/references
+* include notes, guides, dev logs, essays/labs/references, **and reviews**
 * sort by `date`, newest first
-* include title, description, canonical URL, date, and type
+* include title, description, canonical URL (or `externalUrl`), date, and type
+* type and topics are emitted as feed categories
 
 ## 33. Sitemap
 
-Generate:
-
-```txt
-/sitemap.xml
-```
+Generated by `@astrojs/sitemap`, served as `/sitemap-index.xml` (which points at `/sitemap-0.xml`).
 
 Include:
 
 * homepage
 * latest page
-* guide index
-* notes index
+* guide / notes / reviews indexes
 * topic index
 * topic pages
-* graph
-* search
 * all public posts
 
 Exclude:
 
-* drafts
-* hidden posts
-* dev-only pages
+* drafts and hidden posts (they never become routes; see §37)
+* `/search` and `/graph` (the `astro.config.mjs` filter drops them: JS-driven discovery surfaces with no standalone indexable content)
 
 ## 34. SEO Requirements
 
@@ -1282,20 +1367,21 @@ Implementation can allow drafts in local development.
 
 ## 38. Content Validation
 
-Add a validation script to catch:
+`scripts/validate-content.ts` (over a shared frontmatter loader, `scripts/lib/frontmatter.ts`) catches the cross-file and content mistakes the per-file Zod schema cannot see, and exits non-zero on any:
 
 ```txt
-missing required frontmatter
-invalid type
-invalid date
+missing/empty title
+missing/empty description
+missing type / invalid type
+missing date / invalid date
+invalid updated date
 duplicate slug
 related slug does not exist
-supersededBy slug does not exist
 supersedes slug does not exist
-empty title
-empty description
-draft accidentally included in production output
+supersededBy slug does not exist
 ```
+
+It also reports the draft count (drafts are excluded from the production build by the query layer, §37, so this is informational, not a failure).
 
 Command:
 
@@ -1303,7 +1389,9 @@ Command:
 pnpm validate:content
 ```
 
-This should run in CI before build.
+This runs in CI and at the head of `pnpm build`.
+
+> **Gap:** there is no test harness (no Vitest, no `tests/`). Content integrity is covered by this validation script plus `astro check`; there are no unit tests. Wiring up a test runner is the first thing to do if one is wanted.
 
 ## 39. CI Requirements
 
@@ -1319,7 +1407,7 @@ build site
 verify Pagefind index was generated
 ```
 
-Suggested GitHub Actions flow:
+Shipped workflow (`.github/workflows/ci.yml`). Actions are pinned to current majors, pnpm is resolved from the `packageManager` pin (no hard-coded version), Node is 24, and the primary branch is `master`:
 
 ```yaml
 name: CI
@@ -1328,28 +1416,28 @@ on:
   pull_request:
   push:
     branches:
+      - master
       - main
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm validate:content
-      - run: pnpm astro check
+      - run: pnpm check
       - run: pnpm build
+      - name: Verify Pagefind index was generated
+        run: test -f dist/pagefind/pagefind.js
 ```
 
-Adjust Node/pnpm versions if needed.
+`pnpm build` already runs `validate:content` and `generate:graph` internally; the explicit `validate:content` step just fails faster with a clearer message before the full build.
 
 ## 40. Deployment Requirements
 
@@ -1358,10 +1446,10 @@ Deploy from the public repository to Cloudflare Pages.
 Production branch:
 
 ```txt
-main
+master
 ```
 
-Preview deployments should be enabled for pull requests if available.
+A `wrangler.jsonc` with a static-assets config is committed so the Cloudflare deploy resolves `dist/` directly instead of dropping into the dashboard onboarding flow. Preview deployments should be enabled for pull requests if available.
 
 ### Human input required
 
@@ -1369,44 +1457,44 @@ The human owner must connect the repository to Cloudflare Pages and configure th
 
 ## 41. Launch Checklist
 
-Before launch:
+Before launch (status as of 2026-06):
 
 ```txt
-[ ] Astro project created
-[ ] MDX enabled
-[ ] content collection schema implemented
-[ ] sample guide created
-[ ] sample note created
-[ ] sample devlog created
-[ ] homepage implemented
-[ ] latest feed implemented
-[ ] guides page implemented
-[ ] notes page implemented
-[ ] topics index implemented
-[ ] topic detail pages implemented
-[ ] post layout implemented
-[ ] post cards implemented
-[ ] note card compact style implemented
-[ ] update/correction/deprecated banners implemented
-[ ] related posts implemented
-[ ] backlinks implemented
-[ ] Pagefind search implemented
-[ ] graph.json generated
-[ ] /graph implemented
-[ ] RSS feed generated
-[ ] JSON feed generated
-[ ] sitemap generated
-[ ] robots.txt added
-[ ] llms.txt added
-[ ] AGENTS.md added
-[ ] _headers added
-[ ] CI passes
-[ ] Cloudflare Pages deploy works
-[ ] production domain points to Cloudflare Pages
-[ ] mobile layout tested
-[ ] accessibility basics checked
-[ ] graph page has fallback text
-[ ] no draft posts in production
+[x] Astro project created
+[x] MDX enabled
+[x] content collection schema implemented (incl. review block)
+[x] sample guide / note / devlog created (11 sample posts, all types + 3 reviews)
+[x] homepage implemented
+[x] latest feed implemented
+[x] guides page implemented
+[x] notes page implemented
+[x] reviews page implemented
+[x] topics index implemented
+[x] topic detail pages implemented
+[x] post layout implemented (PostLayout + ReviewLayout)
+[x] post cards implemented
+[x] note card compact style implemented
+[x] update/superseded banners implemented (corrected/deprecated are manual)
+[x] related posts implemented
+[x] backlinks implemented
+[x] Pagefind search implemented (type filter only; topic/tag deferred)
+[x] graph.json generated
+[x] /graph implemented (custom SVG, no library)
+[x] theme switcher implemented (9 dark accents)
+[x] RSS feed generated
+[x] JSON feed generated
+[x] sitemap generated (@astrojs/sitemap -> /sitemap-index.xml)
+[x] robots.txt added
+[x] llms.txt added
+[x] AGENTS.md added (root + public)
+[x] _headers added (CSP still deferred)
+[x] CI passes
+[ ] Cloudflare Pages deploy works            (owner)
+[ ] production domain points to Cloudflare Pages   (owner)
+[~] mobile layout tested                     (built mobile-first; needs a device pass)
+[x] accessibility basics checked (skip link, focus states, graph fallback)
+[x] graph page has fallback text
+[x] no draft posts in production
 ```
 
 ## 42. Human Input Checklist
@@ -1414,15 +1502,15 @@ Before launch:
 The coding agent must ask for or wait on human input for:
 
 ```txt
-[ ] final cybersecurity UX design kit references or approval to create a custom visual system
-[ ] final homepage hero copy
-[ ] initial canonical topic list
-[ ] first real posts to migrate/add
-[ ] final favicon/logo direction
-[ ] graph visual style approval
-[ ] Cloudflare account/project setup
-[ ] DNS/domain setup
-[ ] CSP production testing
+[x] cybersecurity UX design kit / custom visual system   (delivered + approved, design-system/)
+[ ] final homepage hero copy                             (placeholder shipped, owner to confirm)
+[~] initial canonical topic list                         (inferred from posts; owner to finalize)
+[ ] first real posts to migrate/add                      (11 sample posts seed the build)
+[x] favicon/logo direction                               (logomark.svg + favicon.svg in place)
+[~] graph visual style approval                          (style built; owner sign-off pending)
+[ ] Cloudflare account/project setup                     (owner)
+[ ] DNS/domain setup                                     (owner)
+[ ] CSP production testing                               (owner/agent; see §31)
 ```
 
 The coding agent should not block the initial scaffold on these items. Use placeholders where possible and mark them clearly.
@@ -1518,7 +1606,7 @@ Acceptance criteria:
 ```txt
 Manual related links work.
 Internal backlinks work.
-Graph page renders from graph.json.
+Graph page renders (live build via buildGraph; graph.json is a parallel snapshot).
 Graph page is linked in top nav.
 ```
 
@@ -1527,7 +1615,7 @@ Graph page is linked in top nav.
 ```txt
 Generate feed.xml.
 Generate feed.json.
-Generate sitemap.xml.
+Generate the sitemap (@astrojs/sitemap -> /sitemap-index.xml).
 Add robots.txt.
 Add llms.txt.
 Add public AGENTS.md.
@@ -1567,19 +1655,21 @@ Feeds and sitemap work.
 `meese.rs` v0 is done when:
 
 ```txt
-- The site is publicly deployed at meese.rs.
-- The homepage is a latest-writing-first system index.
-- Guides, notes, and dev logs can be authored in MDX.
-- Short notes appear in the main feed.
-- Posts are statically rendered.
-- Search works without a backend.
-- Topics work.
-- Backlinks work.
-- The graph is available at /graph.
-- Root public files exist.
-- No comments, CMS, database, SSH, or terminal-first features exist.
-- The repository is public and safe to inspect.
+- The site is publicly deployed at meese.rs.          (owner: connect CF Pages + domain)
+- The homepage is a latest-writing-first system index.   done
+- Guides, notes, dev logs, essays, labs, references, and reviews author in MDX.  done
+- Short notes appear in the main feed.                   done
+- Posts are statically rendered.                         done
+- Search works without a backend (type filter; topic/tag deferred).  done w/ caveat
+- Topics work.                                           done
+- Backlinks work.                                        done
+- The graph is available at /graph.                      done
+- Root public files exist.                               done
+- No comments, CMS, database, SSH, or terminal-first features exist.  held
+- The repository is public and safe to inspect.          held
 ```
+
+Everything except the deploy line is built. Deploy is the one owner-side step (connect the repo to Cloudflare Pages and point the domain). The one functional shortfall against this list is topic/tag search filters (§23).
 
 ## 45. Guidance for Coding Agent
 
@@ -1592,8 +1682,8 @@ Follow these rules:
 4. Do not build an admin panel.
 5. Do not add terminal UX as a primary feature.
 6. Do not expose per-post raw MDX links by default.
-7. Do not invent the final custom visual system.
-8. Use placeholder design tokens until real visual references are provided or creation of a new custom system is explicitly approved.
+7. Do not reinvent or fork the custom visual system; extend it from `design-system/` and `src/styles/tokens/`.
+8. Reference the design system's semantic tokens, never raw palette values.
 9. Keep the homepage focused on latest writing first.
 10. Keep notes in the main feed.
 11. Prioritize readability over visual novelty.
@@ -1604,17 +1694,14 @@ Follow these rules:
 
 ## 46. Open Questions
 
-These should be resolved during implementation, not before scaffolding:
+Still owner-side. Placeholders are in place, so none of these block anything:
 
 ```txt
-1. What exact cybersecurity UX design kit references should be used, or should a new custom visual system be created?
-2. What should the final homepage hero copy say?
-3. What are the initial canonical topics?
-4. What existing posts should be migrated first?
-5. What favicon/logo mark should represent meese.rs?
-6. What graph visualization library should be used?
-7. Should the graph support filtering by post type/topic in v0 or v1?
-8. Should the site support light mode at launch or after launch?
+- Final homepage hero copy (a design-approved placeholder ships now; §13).
+- Canonical topic list (inferred from posts, with a curated hue map in
+  src/utils/topics.ts; §24).
+- Which existing posts to migrate first (11 sample posts seed the build today).
+- Final favicon/logo mark (a logomark.svg + favicon.svg are in place).
 ```
 
-Do not allow these open questions to block v0 scaffolding.
+Possible v1 work, not in scope now: topic/tag search filters (§23), graph filtering by type/topic, self-hosting fonts so a strict CSP can ship (§31).
