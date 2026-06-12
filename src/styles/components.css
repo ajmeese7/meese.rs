@@ -1147,4 +1147,8 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   :root { --gutter: var(--space-4); }
   .identity { padding-top: 28px; }
   .identity__lead h1 { font-size: var(--text-2xl); }
+
+  /* The feed / sitemap / llms / AGENTS links wrap to a janky second line on a
+     phone and are the least-used links there; keep the footer to one brand line. */
+  .site-footer__links { display: none; }
 }
