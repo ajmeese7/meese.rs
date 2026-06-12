@@ -11,8 +11,9 @@ const since = posts.length
   ? posts.reduce((min, p) => Math.min(min, p.data.date.getFullYear()), Infinity)
   : new Date().getFullYear();
 
-// Owner-confirmed identity links (§13.5). `rel="me"` on the profile links
-// supports profile verification; no forced new tabs.
+// Owner-confirmed identity links (§13.5). External links open in a new tab so
+// the reader keeps the blog tab; `rel="me"` on the profile links supports
+// profile verification. Email is a mailto, so it stays in-tab.
 const LINKS = [
   { icon: "github", label: "GitHub", href: "https://github.com/ajmeese7", me: true },
   { icon: "arrow-up-right", label: "Portfolio", href: "https://meese.dev", me: true },
@@ -57,16 +58,23 @@ const person = {
         </div>
         <div class="about-links">
           {
-            LINKS.map((l) => (
-              <a
-                href={l.href}
-                class="about-link"
-                rel={l.me ? "me noopener" : undefined}
-              >
-                <Icon name={l.icon} size={15} color="var(--ink-3)" />
-                <span class="about-link__label">{l.label}</span>
-              </a>
-            ))
+            LINKS.map((l) => {
+              const external = l.href.startsWith("http");
+              const rel = [l.me && "me", external && "noopener noreferrer"]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <a
+                  href={l.href}
+                  class="about-link"
+                  target={external ? "_blank" : undefined}
+                  rel={rel || undefined}
+                >
+                  <Icon name={l.icon} size={15} color="var(--ink-3)" />
+                  <span class="about-link__label">{l.label}</span>
+                </a>
+              );
+            })
           }
         </div>
       </div>

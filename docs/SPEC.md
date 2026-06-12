@@ -481,7 +481,7 @@ X           https://x.com/ajmeese7
 Email       aaron@meese.dev   (mailto:)
 ```
 
-Render as a labeled link row/list with the matching `Icon.astro` (Lucide) glyph per link. Apply `rel="me"` on the identity links (GitHub, LinkedIn, X, portfolio) to support profile verification. Do not force `target="_blank"`.
+Render as a labeled link row/list with the matching `Icon.astro` (Lucide) glyph per link. Apply `rel="me"` on the identity links (GitHub, LinkedIn, X, portfolio) to support profile verification. External links open in a new tab (`target="_blank"` + `rel="noopener noreferrer"`) so the reader keeps the blog tab; the email `mailto:` stays in-tab.
 
 ### Bio copy
 
