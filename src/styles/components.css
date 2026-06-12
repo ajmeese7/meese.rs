@@ -91,6 +91,10 @@
   color: var(--hue);
   border: 1px solid color-mix(in srgb, var(--hue) 38%, transparent);
 }
+/* Type badges carry a leading icon; nudge the text in and stop the glyph from
+   shrinking. Status badges have no icon, so this is inert for them. */
+.badge--icon { gap: 5px; padding-left: 6px; }
+.badge--icon svg { flex: none; }
 .badge[data-type="guide"] { --hue: var(--hue-cyan); }
 .badge[data-type="note"] { --hue: var(--hue-slate); }
 .badge[data-type="devlog"] { --hue: var(--hue-green); }

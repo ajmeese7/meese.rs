@@ -1,5 +1,8 @@
 ---
-/** System-index type/status marker, e.g. `[ GUIDE ]`. */
+/** System-index marker. Type badges lead with an icon (e.g. a terminal glyph
+ *  + DEVLOG); status badges stay bracketed (e.g. `[ UPDATED ]`). */
+import Icon from "../layout/Icon.astro";
+
 interface Props {
   type?: string;
   status?: string;
@@ -18,6 +21,17 @@ const TYPE_LABELS: Record<string, string> = {
   reference: "REF",
   review: "REVIEW",
 };
+// One icon per type; the icon carries the "what kind of post" signal so type
+// badges no longer need brackets to distinguish them from verdicts/tags.
+const TYPE_ICONS: Record<string, string> = {
+  guide: "book-open",
+  note: "pencil",
+  devlog: "terminal",
+  essay: "feather",
+  lab: "flask-conical",
+  reference: "bookmark",
+  review: "star",
+};
 const STATUS_LABELS: Record<string, string> = {
   updated: "UPDATED",
   corrected: "CORRECTED",
@@ -30,11 +44,12 @@ const text =
   label ??
   (type ? TYPE_LABELS[type] : status ? STATUS_LABELS[status] : "") ??
   "";
-const display = bracketed ? `[ ${text} ]` : text;
+const icon = type ? TYPE_ICONS[type] : undefined;
+const display = icon ? text : bracketed ? `[ ${text} ]` : text;
 ---
 
 <span
-  class:list={["badge", cls]}
+  class:list={["badge", { "badge--icon": icon }, cls]}
   data-type={type}
-  data-status={status}>{display}</span
+  data-status={status}>{icon && <Icon name={icon} size={11} />}{display}</span
 >

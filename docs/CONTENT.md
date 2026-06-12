@@ -15,17 +15,19 @@ There are **four independent label systems**. They look similar (most are mono, 
 
 ## 1. Type
 
-One per post, set by `type:`. It is the post's primary identity and renders as the bracketed badge, e.g. `[ DEVLOG ]`. Each type has a fixed accent hue.
+One per post, set by `type:`. It is the post's primary identity and renders as a badge with a leading icon and an uppercase label (e.g. a terminal glyph + `DEVLOG`). Each type has a fixed icon and accent hue. Type badges deliberately have no brackets; that is what separates them at a glance from status badges (bracketed) and verdicts (plain pill).
 
-| `type:` | Badge | Hue | What it is | Update policy |
-|---|---|---|---|---|
-| `guide` | `[ GUIDE ]` | cyan | Tactical, practical "how to do X". | Update in place when facts, tooling, or recommendations change. |
-| `note` | `[ NOTE ]` | slate | Short observation or two-minute read. | Leave historical unless correcting an error. |
-| `devlog` | `[ DEVLOG ]` | green | Historical build/update log, a record of what happened. | Preserve historically; only clean up factual errors. |
-| `essay` | `[ ESSAY ]` | violet | Longer argument, opinion, or synthesis. | Preserve the original argument; add an update note if needed. |
-| `lab` | `[ LAB ]` | gold | Experiment, benchmark, reproduction, or investigation. | Preserve the original result; publish a new run if materially different. |
-| `reference` | `[ REF ]` | rose | Durable explainer or glossary-style page. | Update in place. |
-| `review` | `[ REVIEW ]` | accent | Software/library review. Gets the score band, criteria, and verdict treatment. | Update the score/verdict if the subject changes materially, and record the revision. |
+| `type:` | Icon | Label | Hue | What it is | Update policy |
+|---|---|---|---|---|---|
+| `guide` | book-open | GUIDE | cyan | Tactical, practical "how to do X". | Update in place when facts, tooling, or recommendations change. |
+| `note` | pencil | NOTE | slate | Short observation or two-minute read. | Leave historical unless correcting an error. |
+| `devlog` | terminal | DEVLOG | green | Historical build/update log, a record of what happened. | Preserve historically; only clean up factual errors. |
+| `essay` | feather | ESSAY | violet | Longer argument, opinion, or synthesis. | Preserve the original argument; add an update note if needed. |
+| `lab` | flask-conical | LAB | gold | Experiment, benchmark, reproduction, or investigation. | Preserve the original result; publish a new run if materially different. |
+| `reference` | bookmark | REF | rose | Durable explainer or glossary-style page. | Update in place. |
+| `review` | star | REVIEW | accent | Software/library review. Gets the score band, criteria, and verdict treatment. | Update the score/verdict if the subject changes materially, and record the revision. |
+
+Icons are Lucide glyphs from `src/components/layout/Icon.astro`; the type-to-icon map lives in `src/components/posts/Badge.astro`.
 
 `review` is a first-class type beyond the SPEC's base six, because reviews are a major use case and need their own layout and structured frontmatter (see §3).
 
@@ -61,7 +63,7 @@ A review carries a structured `review` block. The verdict is two fields working 
 | `watch` | accent | "One to watch" | Paseo, 3.9 |
 | `skip` | red | "Skip" | (none yet) |
 
-So `ONE TO WATCH` is a **review verdict**, not a content type. It reads like `DEVLOG` only because both are uppercase mono labels; they live on different axes. The rest of the review block (`score`, `criteria`, `pros`, `cons`, `bottomLine`, `links`, `meta`) is documented inline in `src/content.config.ts` and rendered by `ReviewLayout`/`ReviewCard`.
+So `ONE TO WATCH` is a **review verdict**, not a content type. They live on different axes, and the UI keeps them apart: the type badge carries a leading icon, the verdict is a plain pill with no icon. The rest of the review block (`score`, `criteria`, `pros`, `cons`, `bottomLine`, `links`, `meta`) is documented inline in `src/content.config.ts` and rendered by `ReviewLayout`/`ReviewCard`.
 
 ---
 
