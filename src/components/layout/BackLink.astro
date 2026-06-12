@@ -1,0 +1,49 @@
+---
+import Icon from "./Icon.astro";
+
+/** "Back" link that defaults to a fixed destination but, when JS is on, points
+ *  at the listing the reader actually arrived from (graph, a topic, a section).
+ *  The default href/label render server-side, so it works with JS disabled. */
+interface Props {
+  href: string;
+  label: string;
+}
+const { href, label } = Astro.props;
+---
+
+<a href={href} class="back-link" data-back-link>
+  <Icon name="arrow-left" size={13} /> <span data-back-label>back to {label}</span>
+</a>
+
+<script>
+  const link = document.querySelector<HTMLAnchorElement>("[data-back-link]");
+  const labelEl = link?.querySelector<HTMLElement>("[data-back-label]");
+  const ref = document.referrer;
+  if (link && labelEl && ref) {
+    try {
+      const from = new URL(ref);
+      const here = window.location;
+      const path = from.pathname.replace(/\/+$/, "") || "/";
+      // Only adapt when the reader came from another page on this site.
+      if (from.origin === here.origin && from.pathname !== here.pathname) {
+        const SECTIONS: Record<string, string> = {
+          "/": "index",
+          "/latest": "index",
+          "/graph": "graph",
+          "/guides": "guides",
+          "/notes": "notes",
+          "/reviews": "reviews",
+          "/topics": "topics",
+        };
+        const topic = path.match(/^\/topics\/([^/]+)$/);
+        const dest = SECTIONS[path] ?? (topic ? decodeURIComponent(topic[1]) : null);
+        if (dest) {
+          link.setAttribute("href", from.pathname);
+          labelEl.textContent = `back to ${dest}`;
+        }
+      }
+    } catch {
+      /* malformed referrer, keep the default */
+    }
+  }
+</script>

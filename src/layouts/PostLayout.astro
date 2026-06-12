@@ -3,6 +3,7 @@ import BaseLayout from "./BaseLayout.astro";
 import Badge from "../components/posts/Badge.astro";
 import Tag from "../components/posts/Tag.astro";
 import Icon from "../components/layout/Icon.astro";
+import BackLink from "../components/layout/BackLink.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
 import { isoDate } from "../utils/dates";
 import { readingTime, postUrl, type Post } from "../utils/posts";
@@ -55,9 +56,7 @@ if (supersededTarget) {
 >
   <article class="shell post" data-pagefind-body>
     <PagefindMeta post={post} />
-    <a href="/latest/" class="back-link">
-      <Icon name="arrow-left" size={13} /> back to index
-    </a>
+    <BackLink href="/latest/" label="index" />
 
     <header class="post__header">
       <div class="post__meta">
