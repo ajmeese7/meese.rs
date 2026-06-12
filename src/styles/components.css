@@ -249,6 +249,19 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 }
 .post-card:hover .post-card__title { color: var(--accent-bright); }
 .review-card:hover .post-card__title { color: var(--accent-bright); }
+/* The title is the card's primary link; its overlay makes the whole card
+   clickable without nesting anchors (the tags in the foot stay separate links). */
+.post-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+.post-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+}
 .post-card__desc {
   font-family: var(--font-body);
   font-size: var(--text-base);
@@ -259,6 +272,8 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   text-wrap: pretty;
 }
 .post-card__foot {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   flex-wrap: wrap;

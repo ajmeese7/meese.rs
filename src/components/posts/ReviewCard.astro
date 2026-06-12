@@ -15,14 +15,16 @@ const d = post.data;
 const r = d.review!;
 ---
 
-<a href={postUrl(post)} class="post-card review-card">
+<article class="post-card review-card">
   <div class="post-card__head">
     <Badge type="review" />
     <span class="verdict" data-verdict={r.verdict}>{r.verdictLabel}</span>
     <span class="post-card__date">{isoDate(d.date)}</span>
   </div>
   <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-    <h3 class="post-card__title">{r.subject}</h3>
+    <h3 class="post-card__title">
+      <a href={postUrl(post)} class="post-card__link">{r.subject}</a>
+    </h3>
     {r.version && <span class="review-card__version">{r.version}</span>}
   </div>
   <div class="review-card__score">
@@ -39,4 +41,4 @@ const r = d.review!;
       </div>
     )
   }
-</a>
+</article>

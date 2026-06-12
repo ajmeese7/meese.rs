@@ -16,8 +16,7 @@ const featured = d.featured || d.pinned;
 const rt = readingTime(post.body);
 ---
 
-<a
-  href={postUrl(post)}
+<article
   class:list={["post-card", { reticle: featured }]}
   data-featured={featured ? "true" : undefined}
 >
@@ -27,7 +26,9 @@ const rt = readingTime(post.body);
     {d.pinned && <Badge status="pinned" />}
     <span class="post-card__date">{isoDate(d.date)} · {rt}</span>
   </div>
-  <h3 class="post-card__title">{d.title}</h3>
+  <h3 class="post-card__title">
+    <a href={postUrl(post)} class="post-card__link">{d.title}</a>
+  </h3>
   <p class="post-card__desc">{d.summary ?? d.description}</p>
   {
     (d.topics.length > 0 || d.updated) && (
@@ -41,4 +42,4 @@ const rt = readingTime(post.body);
       </div>
     )
   }
-</a>
+</article>
