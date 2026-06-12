@@ -14,11 +14,11 @@ const since = posts.length
 // Owner-confirmed identity links (§13.5). `rel="me"` on the profile links
 // supports profile verification; no forced new tabs.
 const LINKS = [
-  { icon: "github", label: "GitHub", text: "ajmeese7", href: "https://github.com/ajmeese7", me: true },
-  { icon: "arrow-up-right", label: "Portfolio", text: "meese.dev", href: "https://meese.dev", me: true },
-  { icon: "linkedin", label: "LinkedIn", text: "aaronmeese", href: "https://www.linkedin.com/in/aaronmeese/", me: true },
-  { icon: "x-twitter", label: "X", text: "@ajmeese7", href: "https://x.com/ajmeese7", me: true },
-  { icon: "mail", label: "Email", text: "aaron@meese.dev", href: "mailto:aaron@meese.dev", me: false },
+  { icon: "github", label: "GitHub", href: "https://github.com/ajmeese7", me: true },
+  { icon: "arrow-up-right", label: "Portfolio", href: "https://meese.dev", me: true },
+  { icon: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/in/aaronmeese/", me: true },
+  { icon: "x-twitter", label: "X", href: "https://x.com/ajmeese7", me: true },
+  { icon: "mail", label: "Email", href: "mailto:aaron@meese.dev", me: false },
 ] as const;
 
 const person = {
@@ -65,7 +65,6 @@ const person = {
               >
                 <Icon name={l.icon} size={15} color="var(--ink-3)" />
                 <span class="about-link__label">{l.label}</span>
-                <span class="about-link__text">{l.text}</span>
               </a>
             ))
           }
