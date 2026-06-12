@@ -51,7 +51,41 @@
 .graph-legend span { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
 .graph-legend .dot { width: 8px; height: 8px; border-radius: 999px; }
 
-.graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* The text overlays sit above the canvas; let pointer gestures pass through
+   them to the graph so a drag/pinch starting over the title still works. */
+.graph-head,
+.graph-legend { pointer-events: none; }
+
+/* Touch gestures drive pan/zoom, so suppress the browser's own touch scroll. */
+.graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+
+.graph-zoom {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.graph-zoom button {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  backdrop-filter: var(--blur-overlay);
+  -webkit-backdrop-filter: var(--blur-overlay);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.graph-zoom button:hover { border-color: var(--line-3); color: var(--ink-1); }
+.graph-zoom button:active { transform: translateY(1px); }
 .graph-svg .edge { stroke: var(--line-2); stroke-width: 1; opacity: 0.6; transition: opacity var(--dur-3) var(--ease-out), stroke var(--dur-2) var(--ease-out); }
 .graph-svg.has-focus .edge { opacity: 0.18; }
 .graph-svg.has-focus .edge.on { opacity: 0.9; stroke: var(--accent-deep); stroke-width: 1.4; }

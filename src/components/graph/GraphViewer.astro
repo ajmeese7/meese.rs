@@ -1,5 +1,6 @@
 ---
 import { graphNodeHue, type Graph } from "../../utils/graph";
+import Icon from "../layout/Icon.astro";
 
 /** The branded concept graph. Renders the SVG server-side (works with no JS as
  *  a static diagram); a small island adds hover/select + a detail panel. */
@@ -45,8 +46,8 @@ const graphData = {
     <span class="sys-label">// concept graph</span>
     <h2>How the writing connects</h2>
     <p>
-      Posts, notes, and the topics that bind them. Hover a node to trace its
-      edges; click to inspect.
+      Posts, notes, and the topics that bind them. Drag to pan, pinch or scroll
+      to zoom, and tap a node to inspect.
     </p>
   </div>
 
@@ -67,6 +68,7 @@ const graphData = {
     preserveAspectRatio="xMidYMid meet"
     data-graph-svg
   >
+    <g data-graph-viewport>
     <g>
       {
         graph.edges.map((e) => {
@@ -111,7 +113,14 @@ const graphData = {
         ))
       }
     </g>
+    </g>
   </svg>
+
+  <div class="graph-zoom" data-graph-zoom>
+    <button type="button" data-zoom-in aria-label="Zoom in"><Icon name="plus" size={16} /></button>
+    <button type="button" data-zoom-out aria-label="Zoom out"><Icon name="minus" size={16} /></button>
+    <button type="button" data-zoom-reset aria-label="Reset view"><Icon name="refresh-cw" size={14} /></button>
+  </div>
 
   <div class="graph-detail" data-graph-detail hidden></div>
 
@@ -127,9 +136,11 @@ const graphData = {
   interface GNode { id: string; type: string; title: string; url: string }
   const stage = document.querySelector<HTMLElement>(".graph-stage");
   const svg = document.querySelector<SVGSVGElement>("[data-graph-svg]");
+  const viewport = document.querySelector<SVGGElement>("[data-graph-viewport]");
   const detail = document.querySelector<HTMLElement>("[data-graph-detail]");
   const json = document.querySelector<HTMLElement>("[data-graph-json]");
-  if (stage && svg && detail && json) {
+  const zoomWrap = document.querySelector<HTMLElement>("[data-graph-zoom]");
+  if (stage && svg && viewport && detail && json) {
     const data: { nodes: GNode[]; edges: [string, string][] } = JSON.parse(
       json.textContent || "{}",
     );
@@ -205,22 +216,163 @@ const graphData = {
         );
     }
 
+    // Hover-to-trace is a mouse nicety; node selection itself goes through the
+    // pointer-gesture handler below so a drag-to-pan never registers as a tap.
     for (const el of nodeEls) {
       const id = el.dataset.id!;
-      el.addEventListener("mouseenter", () => {
-        hovered = id;
-        paint();
-      });
-      el.addEventListener("mouseleave", () => {
-        hovered = null;
-        paint();
-      });
-      el.addEventListener("click", () => {
-        selected = id;
-        paint();
-        renderDetail();
-      });
+      el.addEventListener("mouseenter", () => { hovered = id; paint(); });
+      el.addEventListener("mouseleave", () => { hovered = null; paint(); });
     }
+
+    // ---- Pan / zoom: a single transformed <g> driven by Pointer Events. No
+    // library; works for mouse (drag + wheel) and touch (drag + pinch). ----
+    const MIN_SCALE = 0.35;
+    const MAX_SCALE = 8;
+    const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+    let scale = 1;
+    let tx = 0;
+    let ty = 0;
+
+    function applyTransform() {
+      viewport!.setAttribute("transform", `translate(${tx} ${ty}) scale(${scale})`);
+    }
+    // Map a client point into the SVG user (viewBox) space the transform lives in.
+    function toUser(cx: number, cy: number) {
+      const ctm = svg!.getScreenCTM();
+      if (!ctm) return { x: cx, y: cy };
+      const p = new DOMPoint(cx, cy).matrixTransform(ctm.inverse());
+      return { x: p.x, y: p.y };
+    }
+    // Zoom by `factor` while keeping the user-space point (vx,vy) pinned.
+    function zoomAt(vx: number, vy: number, factor: number) {
+      const next = clamp(scale * factor, MIN_SCALE, MAX_SCALE);
+      const k = next / scale;
+      tx = vx - k * (vx - tx);
+      ty = vy - k * (vy - ty);
+      scale = next;
+      applyTransform();
+    }
+    function panScreen(dx: number, dy: number) {
+      const a = svg!.getScreenCTM()?.a || 1;
+      tx += dx / a;
+      ty += dy / a;
+      applyTransform();
+    }
+
+    const isSmall = () => window.matchMedia("(max-width: 760px)").matches;
+    // Desktop keeps the approved full-fit view; a narrow screen opens zoomed in
+    // to fill the tall viewport (the content is wide, so it would be tiny at fit).
+    function initialView() {
+      scale = 1;
+      tx = 0;
+      ty = 0;
+      applyTransform();
+      if (!isSmall()) return;
+      const ctm = svg!.getScreenCTM();
+      if (!ctm) return;
+      const bb = viewport!.getBBox();
+      if (!bb.height) return;
+      const rect = svg!.getBoundingClientRect();
+      // Fill the tall viewport, but cap it: labels are tiny at base scale, so
+      // ~1.6-2.6x lands them at a readable size without over-cropping the width.
+      const k = clamp((rect.height * 0.9) / (bb.height * ctm.a), 1.6, 2.6);
+      const vc = toUser(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      scale = k;
+      tx = vc.x - k * (bb.x + bb.width / 2);
+      ty = vc.y - k * (bb.y + bb.height / 2);
+      applyTransform();
+    }
+
+    const active = new Map<number, { x: number; y: number }>();
+    let mode: "pan" | "pinch" | null = null;
+    let last: { x: number; y: number } | null = null;
+    let pinchDist = 0;
+    let downNodeId: string | null = null;
+    let moved = 0;
+    const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+      Math.hypot(a.x - b.x, a.y - b.y);
+
+    svg.addEventListener("pointerdown", (e) => {
+      active.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { svg!.setPointerCapture(e.pointerId); } catch {}
+      if (active.size === 1) {
+        mode = "pan";
+        last = { x: e.clientX, y: e.clientY };
+        moved = 0;
+        const n = (e.target as Element).closest?.(".node") as SVGGElement | null;
+        downNodeId = n?.dataset.id ?? null;
+      } else if (active.size === 2) {
+        mode = "pinch";
+        downNodeId = null;
+        const p = [...active.values()];
+        pinchDist = dist(p[0], p[1]);
+      }
+    });
+
+    svg.addEventListener("pointermove", (e) => {
+      if (!active.has(e.pointerId)) return;
+      active.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (mode === "pinch" && active.size >= 2) {
+        const p = [...active.values()];
+        const d = dist(p[0], p[1]);
+        const mid = { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 };
+        const v = toUser(mid.x, mid.y);
+        if (pinchDist > 0) zoomAt(v.x, v.y, d / pinchDist);
+        pinchDist = d;
+      } else if (mode === "pan" && last) {
+        const dx = e.clientX - last.x;
+        const dy = e.clientY - last.y;
+        moved += Math.hypot(dx, dy);
+        panScreen(dx, dy);
+        last = { x: e.clientX, y: e.clientY };
+      }
+    });
+
+    function endPointer(e: PointerEvent) {
+      if (!active.has(e.pointerId)) return;
+      const tap = mode === "pan" && moved < 6 && downNodeId;
+      active.delete(e.pointerId);
+      try { svg!.releasePointerCapture(e.pointerId); } catch {}
+      if (active.size === 1) {
+        // One finger left after a pinch: resume panning, don't count it as a tap.
+        mode = "pan";
+        const p = [...active.values()][0];
+        last = { x: p.x, y: p.y };
+        moved = 999;
+      } else if (active.size === 0) {
+        if (tap) {
+          selected = downNodeId;
+          paint();
+          renderDetail();
+        }
+        mode = null;
+        downNodeId = null;
+        last = null;
+      }
+    }
+    svg.addEventListener("pointerup", endPointer);
+    svg.addEventListener("pointercancel", endPointer);
+
+    svg.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        const v = toUser(e.clientX, e.clientY);
+        zoomAt(v.x, v.y, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+      },
+      { passive: false },
+    );
+
+    function zoomCenter(factor: number) {
+      const r = svg!.getBoundingClientRect();
+      const v = toUser(r.left + r.width / 2, r.top + r.height / 2);
+      zoomAt(v.x, v.y, factor);
+    }
+    zoomWrap?.querySelector("[data-zoom-in]")?.addEventListener("click", () => zoomCenter(1.3));
+    zoomWrap?.querySelector("[data-zoom-out]")?.addEventListener("click", () => zoomCenter(1 / 1.3));
+    zoomWrap?.querySelector("[data-zoom-reset]")?.addEventListener("click", () => initialView());
+
+    initialView();
     paint();
     renderDetail();
   }
