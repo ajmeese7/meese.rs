@@ -17,6 +17,9 @@ interface PagefindModule {
   options?: (o: Record<string, unknown>) => Promise<void>;
 }
 
+import { iconSvg } from "../utils/icons";
+import { TYPE_LABELS, TYPE_ICONS } from "../utils/post-types";
+
 let pagefind: PagefindModule | null = null;
 let loadFailed = false;
 
@@ -34,16 +37,6 @@ async function loadPagefind(): Promise<PagefindModule | null> {
     return null;
   }
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  guide: "GUIDE",
-  note: "NOTE",
-  devlog: "DEVLOG",
-  essay: "ESSAY",
-  lab: "LAB",
-  reference: "REF",
-  review: "REVIEW",
-};
 
 function escapeHtml(s: string): string {
   return s.replace(
@@ -109,8 +102,13 @@ export function initSearch(root: HTMLElement): SearchHandle {
     resultsEl.innerHTML = data
       .map((d) => {
         const type = d.meta.type || "";
+        // Match Badge.astro: type badges lead with an icon and an unbracketed
+        // label (brackets are reserved for status badges).
+        const icon = TYPE_ICONS[type];
         const badge = type
-          ? `<span class="badge" data-type="${escapeHtml(type)}">[ ${TYPE_LABELS[type] ?? type.toUpperCase()} ]</span>`
+          ? `<span class="badge${icon ? " badge--icon" : ""}" data-type="${escapeHtml(type)}">${
+              icon ? iconSvg(icon, 11) : ""
+            }${TYPE_LABELS[type] ?? type.toUpperCase()}</span>`
           : "";
         const date = d.meta.date
           ? `<span class="search-result__date">${escapeHtml(d.meta.date)}</span>`

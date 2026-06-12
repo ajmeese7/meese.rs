@@ -2,6 +2,7 @@
 /** System-index marker. Type badges lead with an icon (e.g. a terminal glyph
  *  + DEVLOG); status badges stay bracketed (e.g. `[ UPDATED ]`). */
 import Icon from "../layout/Icon.astro";
+import { TYPE_LABELS, TYPE_ICONS } from "../../utils/post-types";
 
 interface Props {
   type?: string;
@@ -12,26 +13,6 @@ interface Props {
 }
 const { type, status, label, bracketed = true, class: cls } = Astro.props;
 
-const TYPE_LABELS: Record<string, string> = {
-  guide: "GUIDE",
-  note: "NOTE",
-  devlog: "DEVLOG",
-  essay: "ESSAY",
-  lab: "LAB",
-  reference: "REF",
-  review: "REVIEW",
-};
-// One icon per type; the icon carries the "what kind of post" signal so type
-// badges no longer need brackets to distinguish them from verdicts/tags.
-const TYPE_ICONS: Record<string, string> = {
-  guide: "book-open",
-  note: "pencil",
-  devlog: "terminal",
-  essay: "feather",
-  lab: "flask-conical",
-  reference: "bookmark",
-  review: "star",
-};
 const STATUS_LABELS: Record<string, string> = {
   updated: "UPDATED",
   corrected: "CORRECTED",
