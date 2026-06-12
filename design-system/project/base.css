@@ -67,7 +67,7 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 
 /* ---- Selection ---- */
 ::selection {
-  background: var(--cyan-wash-2);
+  background: var(--accent-wash-2);
   color: var(--ink-1);
 }
 
@@ -100,7 +100,7 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 .prose h4 { font-size: var(--text-lg); margin-top: 1.3em; }
 .prose p  { color: var(--text-body); }
 .prose strong { color: var(--text-heading); font-weight: var(--weight-semibold); }
-.prose a { color: var(--link); text-decoration: underline; text-decoration-color: var(--cyan-dim); }
+.prose a { color: var(--link); text-decoration: underline; text-decoration-color: var(--accent-dim); }
 .prose a:hover { text-decoration-color: var(--link-hover); }
 
 .prose code {
@@ -122,19 +122,19 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   padding: var(--space-5);
   overflow-x: auto;
   /* left signal rail */
-  border-left: 2px solid var(--cyan-dim);
+  border-left: 2px solid var(--accent-dim);
 }
 .prose pre code { background: none; border: none; padding: 0; font-size: inherit; color: var(--ink-2); }
 
 .prose blockquote {
   margin: 0;
   padding-left: var(--space-5);
-  border-left: 2px solid var(--ember-deep);
+  border-left: 2px solid var(--accent-deep);
   color: var(--text-muted);
   font-style: italic;
 }
 .prose ul, .prose ol { padding-left: 1.3em; }
-.prose li::marker { color: var(--cyan-deep); }
+.prose li::marker { color: var(--accent-deep); }
 .prose hr { border: none; border-top: var(--border-hair) solid var(--border-default); margin: 2em 0; }
 
 .prose img { max-width: 100%; border-radius: var(--radius-md); border: var(--border-hair) solid var(--border-default); }

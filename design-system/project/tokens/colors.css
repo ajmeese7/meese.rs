@@ -3,8 +3,7 @@
    Swap the accent by setting data-theme on <html>:
      <html data-theme="acid-green">
    Default (no attribute) = neon-violet.
-   Components reference semantic + accent aliases only. Legacy
-   cyan/ember names are kept as aliases so they follow the theme.
+   Components reference semantic + accent aliases only.
    Themes: neon-violet acid-green neon-lime neon-mint neon-cyan
            electric-blue hot-magenta neon-pink coral */
 
@@ -37,7 +36,6 @@
   --hue-violet: #9A8BD8;
   --hue-gold: #C9A95E;
   --hue-rose: #CF8497;
-  --hue-ember: #C9A95E;
 
   /* Semantic status (muted, theme-independent) */
   --green: #57B58C;
@@ -59,20 +57,6 @@
   --accent-line: rgba(154, 124, 255, 0.42);
   --accent-glow: rgba(154, 124, 255, 0.55);
   --on-accent: #0A0814;
-
-  /* Legacy cyan/ember aliases (follow active accent) */
-  --cyan: var(--accent);
-  --cyan-bright: var(--accent-bright);
-  --cyan-deep: var(--accent-deep);
-  --cyan-dim: var(--accent-dim);
-  --cyan-wash: var(--accent-wash);
-  --cyan-wash-2: var(--accent-wash-2);
-  --cyan-glow: var(--accent-glow);
-  --ember: var(--accent);
-  --ember-bright: var(--accent-bright);
-  --ember-deep: var(--accent-deep);
-  --ember-dim: var(--accent-dim);
-  --ember-wash: var(--accent-wash);
 
   /* Semantic: surfaces */
   --color-bg: var(--bg-base);

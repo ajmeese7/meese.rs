@@ -1,4 +1,4 @@
-<!-- @dsCard group="Components" viewport="700x320" name="Core — Button · Badge · Tag · Input" subtitle="Buttons, type/status badges, tags, and the search input" -->
+<!-- @dsCard group="Components" viewport="700x380" name="Core — Button · Badge · Tag · Input · Icon" subtitle="Buttons, icon-led type badges, bracketed status, tags, search input, glyphs" -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +18,7 @@
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
   <script src="../../_ds_bundle.js"></script>
   <script type="text/babel" data-presets="react">
-    const { Button, Badge, Tag, Input } = window.MeeseRsDesignSystem_ed1971;
+    const { Button, Badge, Tag, Input, Icon } = window.MeeseRsDesignSystem_ed1971;
     function Demo() {
       return (
         <div>
@@ -42,11 +42,20 @@
             </div>
           </div>
           <div className="grp">
-            <p className="lead">Badge — post types &amp; status</p>
+            <p className="lead">Badge — icon-led types &amp; bracketed status</p>
             <div className="row">
               <Badge type="guide" /><Badge type="note" /><Badge type="devlog" />
-              <Badge type="essay" /><Badge type="lab" /><Badge type="reference" />
-              <Badge status="updated" /><Badge status="deprecated" /><Badge status="pinned" />
+              <Badge type="essay" /><Badge type="lab" /><Badge type="reference" /><Badge type="review" />
+            </div>
+            <div className="row" style={{marginTop:10}}>
+              <Badge status="updated" /><Badge status="corrected" /><Badge status="deprecated" /><Badge status="superseded" /><Badge status="pinned" />
+            </div>
+          </div>
+          <div className="grp">
+            <p className="lead">Icon — inline Lucide glyphs</p>
+            <div className="row" style={{color:'var(--ink-2)'}}>
+              <Icon name="search" /><Icon name="git-fork" /><Icon name="terminal" /><Icon name="book-open" />
+              <Icon name="star" /><Icon name="github" /><Icon name="arrow-up-right" /><Icon name="refresh-cw" />
             </div>
           </div>
           <div className="grp">

@@ -13,8 +13,20 @@
   };
   const STATUS = {
     updated: ['UPDATED', 'var(--green)'], corrected: ['CORRECTED', 'var(--gold)'],
-    deprecated: ['DEPRECATED', 'var(--red)'], pinned: ['PINNED', 'var(--ember)'],
+    deprecated: ['DEPRECATED', 'var(--red)'], superseded: ['SUPERSEDED', 'var(--hue-slate)'], pinned: ['PINNED', 'var(--accent)'],
   };
+
+  // Leading type-badge glyphs (the 7 post types), matching Icon.jsx geometry.
+  const TYPE_GLYPH = {
+    guide: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+    note: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+    devlog: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>',
+    essay: '<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" x2="2" y1="8" y2="22"/><line x1="17.5" x2="9" y1="15" y2="15"/>',
+    lab: '<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>',
+    reference: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+    review: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  };
+  const glyph = (type) => h('svg', { width: 13, height: 13, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', style: { display: 'block', flex: 'none' }, 'aria-hidden': true, dangerouslySetInnerHTML: { __html: TYPE_GLYPH[type] || '' } });
 
   const Fallback = {
     Button: ({ children, variant = 'secondary', size = 'md', style, ...p }) =>
@@ -22,29 +34,32 @@
         fontFamily: 'var(--font-mono)', fontSize: size === 'sm' ? 11 : 14, fontWeight: 500,
         height: size === 'sm' ? 30 : size === 'lg' ? 46 : 38, padding: '0 16px',
         borderRadius: 'var(--radius-sm)', cursor: 'pointer', letterSpacing: '.02em',
-        background: variant === 'primary' ? 'var(--cyan)' : variant === 'ghost' ? 'transparent' : 'var(--surface-2)',
+        background: variant === 'primary' ? 'var(--accent)' : variant === 'ghost' ? 'transparent' : 'var(--surface-2)',
         color: variant === 'primary' ? 'var(--ink-inverse)' : 'var(--ink-1)',
-        border: '1px solid ' + (variant === 'primary' ? 'var(--cyan)' : variant === 'ghost' ? 'transparent' : 'var(--line-2)'),
+        border: '1px solid ' + (variant === 'primary' ? 'var(--accent)' : variant === 'ghost' ? 'transparent' : 'var(--line-2)'),
         ...style }, ...p }, children),
-    Badge: ({ type, status, children, bracketed = true, color, style }) => {
+    Badge: ({ type, status, children, bracketed, color, icon = true, style }) => {
       const p = type ? TYPE[type] : status ? STATUS[status] : null;
       const hue = color || (p ? p[1] : 'var(--ink-3)');
       const label = children != null ? children : (p ? p[0] : '');
+      const showBracket = bracketed === undefined ? !type : bracketed;
+      const withIcon = icon && type;
       return h('span', { style: {
         fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, letterSpacing: '.1em',
-        height: 20, padding: '0 7px', display: 'inline-flex', alignItems: 'center',
+        gap: withIcon ? 5 : 0, height: 20, padding: withIcon ? '0 7px 0 6px' : '0 7px',
+        display: 'inline-flex', alignItems: 'center',
         borderRadius: 'var(--radius-xs)', color: hue, whiteSpace: 'nowrap',
         background: 'color-mix(in srgb, ' + hue + ' 12%, transparent)',
         border: '1px solid color-mix(in srgb, ' + hue + ' 38%, transparent)', ...style },
-      }, bracketed ? '[ ' + label + ' ]' : label);
+      }, withIcon ? glyph(type) : null, showBracket ? '[ ' + label + ' ]' : label);
     },
     Tag: ({ children, href, active, onClick, style }) =>
       h(href ? 'a' : 'span', { href, onClick, style: {
         fontFamily: 'var(--font-mono)', fontSize: 11, height: 22, padding: '0 8px',
         display: 'inline-flex', alignItems: 'center', gap: 2, textDecoration: 'none',
-        borderRadius: 'var(--radius-pill)', border: '1px solid ' + (active ? 'var(--cyan-deep)' : 'var(--line-1)'),
-        background: active ? 'var(--cyan-wash)' : 'transparent',
-        color: active ? 'var(--cyan-bright)' : 'var(--ink-3)', cursor: href || onClick ? 'pointer' : 'default', whiteSpace: 'nowrap', ...style },
+        borderRadius: 'var(--radius-pill)', border: '1px solid ' + (active ? 'var(--accent-deep)' : 'var(--line-1)'),
+        background: active ? 'var(--accent-wash)' : 'transparent',
+        color: active ? 'var(--accent-bright)' : 'var(--ink-3)', cursor: href || onClick ? 'pointer' : 'default', whiteSpace: 'nowrap', ...style },
       }, h('span', { style: { color: 'var(--ink-4)' } }, '#'), children),
     Input: ({ variant, placeholder, value, onChange, style, ...p }) =>
       h('div', { style: {
@@ -83,7 +98,7 @@
         title ? h('div', { style: { fontFamily: 'var(--font-display)', fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--ink-1)', marginBottom: 4 } }, title) : null,
         h('p', { style: { fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', color: 'var(--ink-2)', lineHeight: 1.55, margin: 0 } }, body)));
 
-  const CK = { note: ['NOTE', 'var(--cyan)'], tip: ['TIP', 'var(--green)'], warning: ['WARNING', 'var(--gold)'], danger: ['DANGER', 'var(--red)'], context: ['CONTEXT', 'var(--violet)'] };
+  const CK = { note: ['NOTE', 'var(--accent)'], tip: ['TIP', 'var(--green)'], warning: ['WARNING', 'var(--gold)'], danger: ['DANGER', 'var(--red)'], context: ['CONTEXT', 'var(--violet)'] };
   Fallback.Callout = ({ type = 'note', title, children }) => {
     const k = CK[type] || CK.note;
     return h('div', { style: {

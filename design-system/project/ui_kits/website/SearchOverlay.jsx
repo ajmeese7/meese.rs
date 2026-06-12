@@ -32,7 +32,7 @@
           {/* input row */}
           <div style={{ padding: 14, borderBottom: '1px solid var(--line-1)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 12px', background: 'var(--surface-well)', border: '1px solid var(--line-2)', borderRadius: 'var(--radius-md)' }}>
-              <span style={{ color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>/</span>
+              <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>/</span>
               <input id="kit-search-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search the index…"
                 style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-1)', fontFamily: 'var(--font-mono)', fontSize: 14 }} />
             </div>
@@ -93,7 +93,7 @@
     return (
       <p style={ex}>
         {text.slice(0, idx)}
-        <mark style={{ background: 'var(--cyan-wash-2)', color: 'var(--cyan-bright)', padding: '0 2px', borderRadius: 2 }}>{text.slice(idx, idx + term.length)}</mark>
+        <mark style={{ background: 'var(--accent-wash-2)', color: 'var(--accent-bright)', padding: '0 2px', borderRadius: 2 }}>{text.slice(idx, idx + term.length)}</mark>
         {text.slice(idx + term.length)}
       </p>
     );

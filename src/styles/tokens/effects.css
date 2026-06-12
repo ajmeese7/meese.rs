@@ -2,7 +2,7 @@
    meese.rs — Effects: radii, borders, shadows, glow, motion
    ------------------------------------------------------------
    Precise & technical: small radii, hairline borders, restrained
-   elevation. Depth comes from surface-lightening + a faint cyan
+   elevation. Depth comes from surface-lightening + a faint accent
    glow on focus/active — never from heavy drop shadows.
    ============================================================ */
 
@@ -24,13 +24,12 @@
   --shadow-3: 0 12px 34px rgba(0, 0, 0, 0.55);
 
   /* ---- Glows / signal lighting ---- */
-  --glow-accent:  0 0 0 1px var(--cyan-deep), 0 0 18px -2px var(--cyan-glow);
-  --glow-soft:    0 0 22px -6px var(--cyan-glow);
-  --glow-ember:   0 0 18px -4px var(--accent-glow);   /* legacy alias → accent glow */
+  --glow-accent:  0 0 0 1px var(--accent-deep), 0 0 18px -2px var(--accent-glow);
+  --glow-soft:    0 0 22px -6px var(--accent-glow);
 
   /* ---- Focus ring (2px offset, accessible) ---- */
-  --ring:        0 0 0 2px var(--bg-base), 0 0 0 4px var(--cyan);
-  --ring-inset:  inset 0 0 0 1px var(--cyan);
+  --ring:        0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent);
+  --ring-inset:  inset 0 0 0 1px var(--accent);
 
   /* ---- Backdrop blur ---- */
   --blur-overlay: blur(10px) saturate(120%);   /* @kind other */

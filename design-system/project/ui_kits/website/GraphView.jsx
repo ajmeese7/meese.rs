@@ -12,10 +12,10 @@
   GRAPH.nodes.forEach((n) => (adj[n.id] = new Set()));
   GRAPH.edges.forEach(([a, b]) => { adj[a] && adj[a].add(b); adj[b] && adj[b].add(a); });
 
-  function hueOf(n) { return n.kind === 'topic' ? 'var(--ember)' : (TYPE_HUE[n.kind] || 'var(--hue-slate)'); }
+  function hueOf(n) { return n.kind === 'topic' ? 'var(--accent)' : (TYPE_HUE[n.kind] || 'var(--hue-slate)'); }
 
   const LEGEND = [
-    ['topic', 'var(--ember)'], ['guide', 'var(--hue-cyan)'], ['devlog', 'var(--hue-green)'],
+    ['topic', 'var(--accent)'], ['guide', 'var(--hue-cyan)'], ['devlog', 'var(--hue-green)'],
     ['note', 'var(--hue-slate)'], ['essay', 'var(--hue-violet)'], ['lab', 'var(--hue-gold)'], ['reference', 'var(--hue-rose)'],
   ];
 
@@ -49,7 +49,7 @@
 
         {/* header */}
         <div style={{ position: 'absolute', top: 22, left: 26, zIndex: 3 }}>
-          <div className="sys-label" style={{ color: 'var(--cyan)' }}>// concept graph</div>
+          <div className="sys-label" style={{ color: 'var(--accent)' }}>// concept graph</div>
           <h2 style={{ fontSize: 'var(--text-2xl)', margin: '8px 0 0', letterSpacing: '-0.01em' }}>How the writing connects</h2>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--ink-3)', margin: '8px 0 0', maxWidth: '42ch' }}>
             Posts, notes, and the topics that bind them. Hover a node to trace its edges; click to inspect.
@@ -73,7 +73,7 @@
               if (!na || !nb) return null;
               const pa = px(na), pb = px(nb), on = edgeOn(a, b);
               return <line key={i} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
-                stroke={on && focus ? 'var(--cyan-deep)' : 'var(--line-2)'}
+                stroke={on && focus ? 'var(--accent-deep)' : 'var(--line-2)'}
                 strokeWidth={on && focus ? 1.4 : 1}
                 style={{ opacity: mounted ? (on ? 0.9 : 0.18) : 0, transition: 'opacity var(--dur-3) var(--ease-out), stroke var(--dur-2) var(--ease-out)' }} />;
             })}
@@ -108,7 +108,7 @@
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               {selNode.kind === 'topic'
-                ? <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--ember)', background: 'var(--ember-wash)', border: '1px solid color-mix(in srgb, var(--ember) 38%, transparent)', borderRadius: 'var(--radius-xs)', height: 20, padding: '0 7px', display: 'inline-flex', alignItems: 'center' }}>[ TOPIC ]</span>
+                ? <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--accent)', background: 'var(--accent-wash)', border: '1px solid color-mix(in srgb, var(--accent) 38%, transparent)', borderRadius: 'var(--radius-xs)', height: 20, padding: '0 7px', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', flex: 'none' }}>[ TOPIC ]</span>
                 : <Badge type={selNode.kind} />}
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-4)' }}>{selNeighbors.length} edges</span>
             </div>
@@ -142,7 +142,7 @@
   }
 
   function Corners() {
-    const c = { position: 'absolute', width: 16, height: 16, border: '1.5px solid var(--cyan-dim)', zIndex: 2 };
+    const c = { position: 'absolute', width: 16, height: 16, border: '1.5px solid var(--accent-dim)', zIndex: 2 };
     return (
       <>
         <span style={{ ...c, top: 14, left: 14, borderRight: 0, borderBottom: 0 }} />

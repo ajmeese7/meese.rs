@@ -6,7 +6,7 @@ import React from 'react';
  * Tinted well + left signal rail + mono label. No emoji.
  */
 const KIND = {
-  note:    { color: 'var(--cyan)',  label: 'NOTE' },
+  note:    { color: 'var(--accent)',  label: 'NOTE' },
   tip:     { color: 'var(--green)', label: 'TIP' },
   warning: { color: 'var(--gold)',  label: 'WARNING' },
   danger:  { color: 'var(--red)',   label: 'DANGER' },
