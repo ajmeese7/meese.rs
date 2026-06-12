@@ -16,11 +16,12 @@ computed at build time.
 - **Cloudflare Pages** for hosting (`meese.rs`)
 - **TypeScript**
 
-The visual system, tokens, components, the website UI kit, and brand assets , 
-is the approved "custom cybersecurity UX kit" in [`design-system/`](./design-system).
-It is dark, technical, restrained, with a single themeable neon accent (default
-neon-violet) over a graphite blueprint-grid foundation. Reading pages ship zero
-client JavaScript; search and the concept graph are progressively enhanced.
+The design system in [`design-system/`](./design-system) is the approved
+"custom cybersecurity UX kit": the visual system, tokens, components, the
+website UI kit, and brand assets. It is dark, technical, restrained, with a
+single themeable neon accent (default neon-violet) over a graphite
+blueprint-grid foundation. Reading pages ship zero client JavaScript;
+search and the concept graph are progressively enhanced.
 
 ## Develop
 
@@ -62,9 +63,10 @@ src/
 scripts/                  validate-content.ts · generate-graph.ts (build-time)
 public/                   robots.txt · llms.txt · AGENTS.md · _headers · assets
 design-system/            the approved Claude Design handoff bundle
-docs/SPEC.md              the product specification (source of truth)
-docs/CONTENT.md           writer reference: types, statuses, verdicts, topics/tags
-docs/DEPLOY.md            Cloudflare Pages deploy guide (setup, domain, rollback)
+docs/
+  SPEC.md                 the product specification (source of truth)
+  CONTENT.md              writer reference: types, statuses, verdicts, topics/tags
+  DEPLOY.md               Cloudflare Pages deploy guide (setup, domain, rollback)
 ```
 
 ## Deploy
