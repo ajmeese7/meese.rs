@@ -1046,6 +1046,20 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 .search-input-box input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--ink-1); font-family: var(--font-mono); font-size: 14px; }
 /* The box shows focus via :focus-within; suppress the input's own global ring. */
 .search-input-box input:focus-visible { box-shadow: none; }
+/* The native search clear button renders in the UA accent (blue on Chrome);
+   mask it into a palette-colored X drawn from the same Lucide `x` glyph. */
+.search-input-box input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+  background: var(--ink-4);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  transition: background-color 0.12s ease;
+}
+.search-input-box input::-webkit-search-cancel-button:hover { background: var(--ink-2); }
 .search-esc { font-family: var(--font-mono); font-size: 10px; color: var(--ink-4); background: var(--surface-2); border: 1px solid var(--line-1); border-radius: 3px; padding: 4px 7px; cursor: pointer; }
 .search-filters { padding: 12px 16px; border-bottom: 1px solid var(--line-1); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .search-results { max-height: 48vh; overflow-y: auto; }
