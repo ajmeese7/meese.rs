@@ -1,8 +1,10 @@
 # Allow these well-known native packages to run their build scripts.
-# (pnpm 11 blocks build scripts by default; Astro pulls in esbuild + sharp.)
+# (pnpm 11 blocks build scripts by default; Astro pulls in esbuild + sharp,
+# wrangler pulls in workerd.)
 allowBuilds:
   esbuild: true
   sharp: true
+  workerd: true
 
 # Force a patched yaml everywhere. The only vulnerable copy (GHSA-48c2-rrv3-qjmp,
 # stack overflow on deeply nested YAML) arrives transitively under the
