@@ -230,6 +230,7 @@ meese.rs/
 │       └── frontmatter.ts        shared MDX frontmatter loader (build-time)
 ├── src/
 │   ├── content.config.ts
+│   ├── assets/                   optimized images (author photo, etc.)
 │   ├── content/
 │   │   └── posts/                *.mdx, one file per entry (11 at last count)
 │   ├── components/
@@ -239,6 +240,7 @@ meese.rs/
 │   │   │   ├── BaseHead.astro
 │   │   │   ├── BackLink.astro     follows the reader's navigation source
 │   │   │   ├── Icon.astro         inline Lucide SVGs
+│   │   │   ├── AuthorByline.astro  name + avatar, links to /about (§20)
 │   │   │   └── SectionLabel.astro
 │   │   ├── posts/
 │   │   │   ├── PostCard.astro
@@ -275,6 +277,7 @@ meese.rs/
 │   │   ├── topics/
 │   │   │   ├── index.astro
 │   │   │   └── [topic].astro
+│   │   ├── about.astro
 │   │   ├── graph.astro
 │   │   ├── search.astro
 │   │   ├── posts/
@@ -336,6 +339,9 @@ Required routes:
 /search
   Static Pagefind search UI.
 
+/about
+  Author + site credibility hub (who writes this, what the site is). See §13.5.
+
 /posts/[slug]
   Canonical post pages.
 
@@ -362,7 +368,9 @@ Use `/posts/[slug]` rather than root-level post slugs to avoid future route coll
 
 ## 12. Main Navigation
 
-Use this main nav:
+The header nav is split into two intent groups rather than a flat list of content types.
+
+**Read group** (left, primary), where the writing and discovery surfaces live:
 
 ```txt
 Latest
@@ -373,9 +381,23 @@ Topics
 Graph
 ```
 
-Do not add nav links for features that do not exist yet.
+**Site group** (trailing the read group, set off by a thin `.nav-divider`), for pages *about* the site and its author rather than entries in it:
+
+```txt
+About
+```
+
+About is the first member of the site group; it is also where any future site-meta page (Now, Uses, Colophon) would go without crowding the content nav. The divider keeps the two groups visually distinct. The site group lives inside the same `<nav>` as the read group (not out in the right-side chrome) so it stays in the mobile disclosure drawer; on mobile the vertical divider becomes a horizontal rule between the two groups.
+
+Rationale: the nav was previously "one link per content type," which left no honest home for a page like About. Grouping by intent (things to *read* vs. pages *about the site*) keeps the content nav clean while giving About first-class visibility, per owner direction.
 
 Search is **not** a top-nav link. It is a ⌘K overlay reachable from a header button (and a search tile on the homepage), with `/search` as the no-JS fallback page. The header also carries the theme switcher (§5). The wordmark links home.
+
+Do not add nav links for features that do not exist yet.
+
+### Deferred: feed consolidation
+
+A larger reframe was considered and deferred: folding Latest/Guides/Notes into a single `Writing` destination with on-page type filters, shrinking the read group to Writing / Reviews / Topics / Graph. It conflicts with the per-type index routes (§11) and the deliberate Reviews separation (§18), so it is out of scope for the About change and is captured as a v1 option in §46.
 
 ## 13. Homepage Requirements
 
@@ -415,6 +437,65 @@ one feed. Built things, learned the tradeoffs, wrote them down.
 ### Human input required
 
 The human owner should approve or rewrite the homepage hero copy before launch. It is marked as a placeholder in the page source.
+
+## 13.5 About Page
+
+Route: `/about` (static page, `src/pages/about.astro`).
+
+Purpose: a single credibility hub that answers *who writes this site*, *what the site is*, and *why a reader should trust the judgment in it*. It is the destination for the post author byline (§20) and the nav "site" group (§12).
+
+It is **not** a résumé and **not** a marketing landing page. Per owner direction, credibility rests on two things: **proof-of-work writing** (the index itself is the evidence; the page points back into it) and **a clear explanation of what the site is** (§3, §4). Career history and an exhaustive project list are deliberately out of scope.
+
+### Layout
+
+A system-index profile, built from the existing identity-band and reticle vocabulary (§5, §13), not a new visual language:
+
+```txt
+identity card (reticle-framed)
+  - author photo (real asset, see below; not the logomark)
+  - name: Aaron Meese
+  - one-line descriptor (// about label, e.g. "builder · writes meese.rs")
+  - link row (see Links)
+
+bio prose
+  - readable body type (not monospace, §21), ~72ch column
+  - who Aaron is (brief), what meese.rs is, why it exists, what to expect
+  - points back into the index: /latest, /reviews, /topics as proof-of-work
+
+index stats (optional, reticle panel)
+  - mirrors the homepage index-status (entries / topics / writing since)
+  - reinforces the proof-of-work framing with live build-time counts
+```
+
+The author photo is a real asset the owner provides. Run it through image optimization (`astro:assets` `<Image>`) with descriptive alt text (§35). Suggested path: `src/assets/aaron-meese.{jpg,webp}`, falling back to `public/` only if optimization is skipped.
+
+### Links
+
+The hub surfaces these external profiles (owner-confirmed):
+
+```txt
+GitHub      https://github.com/ajmeese7
+Portfolio   https://meese.dev
+LinkedIn    https://www.linkedin.com/in/aaronmeese/
+X           https://x.com/ajmeese7
+Email       aaron@meese.dev   (mailto:)
+```
+
+Render as a labeled link row/list with the matching `Icon.astro` (Lucide) glyph per link. Apply `rel="me"` on the identity links (GitHub, LinkedIn, X, portfolio) to support profile verification. External links open in a new tab (`target="_blank"` + `rel="noopener noreferrer"`) so the reader keeps the blog tab; the email `mailto:` stays in-tab.
+
+### Bio copy
+
+The prose bio ships as an **owner-authored placeholder**, marked in the page source like the homepage hero (§13). Final copy is written in Aaron's voice (the `aaron-author-voice` workflow) before launch. Do not ship invented biographical claims; placeholder copy stays generic until the owner finalizes it.
+
+### SEO
+
+Standard public-page metadata (§34) applies. Add `Person` JSON-LD (`name`, `url`, `sameAs`: the link set above) so the page doubles as a structured identity record. The Open Graph image can reuse the author photo. Include `/about` in the sitemap (§33).
+
+### Human input required
+
+* Final bio copy (voice pass; placeholder ships first).
+* Author photo asset (owner provides; optimized, with alt text).
+* Confirm the link set and any handle changes before launch.
 
 ## 14. Content Types
 
@@ -776,6 +857,7 @@ Implementation notes:
 * Status banner precedence is superseded, then updated (deprecated/corrected are manual/editorial). See `docs/CONTENT.md` §2.
 * Backlinks render in three buckets: related, mentioned by, same topic (§25).
 * Posts with `externalUrl` set get no local page at all; they link straight out from cards and feeds.
+* An author byline (name + small avatar/logomark) links to `/about`, putting credibility at the point of reading (§13.5). It renders on both `PostLayout` and `ReviewLayout`. Keep it understated; it is a byline, not a bio.
 
 Do not include comments.
 
@@ -1264,6 +1346,7 @@ Include:
 * homepage
 * latest page
 * guide / notes / reviews indexes
+* about page
 * topic index
 * topic pages
 * all public posts
@@ -1471,6 +1554,7 @@ Before launch (status as of 2026-06):
 [x] reviews page implemented
 [x] topics index implemented
 [x] topic detail pages implemented
+[~] about page implemented                   (built; placeholder bio + owner photo pending)
 [x] post layout implemented (PostLayout + ReviewLayout)
 [x] post cards implemented
 [x] note card compact style implemented
@@ -1504,6 +1588,7 @@ The coding agent must ask for or wait on human input for:
 ```txt
 [x] cybersecurity UX design kit / custom visual system   (delivered + approved, design-system/)
 [ ] final homepage hero copy                             (placeholder shipped, owner to confirm)
+[ ] about page bio copy + author photo                   (placeholder/voice pass + owner photo; §13.5)
 [~] initial canonical topic list                         (inferred from posts; owner to finalize)
 [ ] first real posts to migrate/add                      (11 sample posts seed the build)
 [x] favicon/logo direction                               (logomark.svg + favicon.svg in place)
@@ -1702,6 +1787,7 @@ Still owner-side. Placeholders are in place, so none of these block anything:
   src/utils/topics.ts; §24).
 - Which existing posts to migrate first (11 sample posts seed the build today).
 - Final favicon/logo mark (a logomark.svg + favicon.svg are in place).
+- About page bio copy and author photo (placeholder ships; §13.5).
 ```
 
-Possible v1 work, not in scope now: topic/tag search filters (§23), graph filtering by type/topic, self-hosting fonts so a strict CSP can ship (§31).
+Possible v1 work, not in scope now: topic/tag search filters (§23), graph filtering by type/topic, self-hosting fonts so a strict CSP can ship (§31), and the nav feed-consolidation reframe (collapse Latest/Guides/Notes into one `Writing` destination with on-page type filters; §12).

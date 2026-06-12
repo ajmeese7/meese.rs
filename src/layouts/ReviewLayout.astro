@@ -4,6 +4,7 @@ import Badge from "../components/posts/Badge.astro";
 import Stars from "../components/posts/Stars.astro";
 import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
+import AuthorByline from "../components/layout/AuthorByline.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
 import { isoDate } from "../utils/dates";
 import { postUrl, type Post } from "../utils/posts";
@@ -50,6 +51,7 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
           {r.version && <span class="review__version">{r.version}</span>}
         </div>
         {r.tagline && <p class="review__tagline">{r.tagline}</p>}
+        <AuthorByline />
 
         <div class="score-band">
           <div class="score-band__num">
