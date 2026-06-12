@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" data-theme="neon-violet">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Taxonomy labels, visual experiment</title>
+    <!-- Pulls the real site tokens + components so chips render authentically.
+         This file is a standalone experiment; it is NOT wired into the site. -->
+    <link rel="stylesheet" href="../src/styles/global.css" />
+    <style>
+      .lab { max-width: 1040px; margin: 0 auto; padding: 48px 24px 96px; }
+      .lab h1 { font-family: var(--font-display); font-size: var(--text-3xl); margin: 0 0 6px; }
+      .lab .sub { color: var(--ink-3); margin: 0 0 8px; max-width: 64ch; }
+      .lab .warn {
+        font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--gold);
+        border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+        background: color-mix(in srgb, var(--gold) 10%, transparent);
+        padding: 8px 12px; border-radius: var(--radius-sm); display: inline-block; margin: 12px 0 8px;
+      }
+      .lab h2 { font-family: var(--font-display); font-size: var(--text-xl); margin: 48px 0 6px; }
+      .lab h2 .ax { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--ink-4); }
+      .lab p.note { color: var(--ink-3); font-size: var(--text-sm); max-width: 70ch; margin: 6px 0 18px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+      @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+      .panel {
+        background: var(--surface-1); border: 1px solid var(--line-1);
+        border-radius: var(--radius-md); padding: 18px;
+      }
+      .panel[data-good] { border-color: color-mix(in srgb, var(--green) 35%, var(--line-1)); }
+      .panel .cap {
+        font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--ink-4); margin-bottom: 14px; display: block;
+      }
+      .panel[data-good] .cap { color: var(--green); }
+      .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .card-title { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; margin: 12px 0 0; }
+      .date { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-3); }
+      .legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 28px; margin: 18px 0 8px; }
+      @media (max-width: 720px) { .legend { grid-template-columns: 1fr; } }
+      .legend .item { display: flex; gap: 12px; align-items: baseline; }
+      .legend .q { color: var(--ink-3); font-size: var(--text-sm); }
+      .legend .axname { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.08em; }
+
+      /* ---- Proposal A: verdict becomes a scored chip (dot + sentence case + score) ---- */
+      .mk-verdict {
+        --hue: var(--accent);
+        display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 10px;
+        font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: 500; line-height: 1;
+        border-radius: var(--radius-pill); color: var(--hue);
+        background: color-mix(in srgb, var(--hue) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--hue) 30%, transparent);
+      }
+      .mk-verdict .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hue); }
+      .mk-verdict .score { color: var(--ink-1); font-weight: 600; letter-spacing: 0.02em; }
+      .mk-verdict[data-verdict="recommended"] { --hue: var(--green); }
+      .mk-verdict[data-verdict="caveats"] { --hue: var(--gold); }
+      .mk-verdict[data-verdict="watch"] { --hue: var(--accent); }
+      .mk-verdict[data-verdict="skip"] { --hue: var(--red); }
+
+      /* ---- Proposal B: icon-prefixed type badges (types become an icon family) ---- */
+      .mk-badge {
+        --hue: var(--accent);
+        display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px;
+        font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: 600;
+        letter-spacing: 0.08em; line-height: 1; border-radius: var(--radius-xs);
+        color: var(--hue); background: color-mix(in srgb, var(--hue) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--hue) 38%, transparent);
+      }
+      .mk-badge svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .mk-badge[data-type="guide"] { --hue: var(--hue-cyan); }
+      .mk-badge[data-type="devlog"] { --hue: var(--hue-green); }
+      .mk-badge[data-type="review"] { --hue: var(--accent); }
+
+      /* ---- Proposal C: distinct geometry per axis ---- */
+      .mk-status {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--green); letter-spacing: 0.04em;
+      }
+      .mk-status .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+      .mk-verdict-loud {
+        --hue: var(--accent);
+        display: inline-flex; align-items: center; gap: 7px; height: 24px; padding: 0 11px;
+        font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: 600; line-height: 1;
+        border-radius: var(--radius-sm); color: var(--ink-inverse);
+        background: var(--hue); border: 1px solid var(--hue);
+      }
+      .mk-verdict-loud .score { opacity: 0.85; font-weight: 700; }
+      .mk-verdict-loud[data-verdict="watch"] { --hue: var(--accent); }
+      .mk-verdict-loud[data-verdict="recommended"] { --hue: var(--green); }
+
+      /* topics vs tags clarifier */
+      .ghost-tags { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-4); }
+    </style>
+  </head>
+  <body>
+    <div class="lab">
+      <h1>Taxonomy labels</h1>
+      <p class="sub">A side-by-side experiment for telling the four label systems apart in the feed. Everything here uses the live design tokens. See <code>docs/CONTENT.md</code> for the definitions.</p>
+      <span class="warn">// experiment only, not wired into the site</span>
+
+      <h2>The four axes <span class="ax">// what each label answers</span></h2>
+      <div class="legend">
+        <div class="item"><span class="badge" data-type="devlog">[ DEVLOG ]</span><span><span class="axname">type</span><br /><span class="q">What kind of writing is this?</span></span></div>
+        <div class="item"><span class="badge" data-status="updated">[ UPDATED ]</span><span><span class="axname">status</span><br /><span class="q">Where is it in its lifecycle?</span></span></div>
+        <div class="item"><span class="verdict" data-verdict="watch">ONE TO WATCH</span><span><span class="axname">verdict</span><br /><span class="q">(Reviews) How did it score?</span></span></div>
+        <div class="item"><span class="tag"><span class="hash">#</span>expo</span><span><span class="axname">topic</span><br /><span class="q">What subject does it cover?</span></span></div>
+      </div>
+
+      <h2>The collision <span class="ax">// current rendering</span></h2>
+      <p class="note">A devlog and a "watch" review sit next to each other in the feed. Both lead with an uppercase mono pill, and on a <code>watch</code> verdict both the <code>[ REVIEW ]</code> badge and the verdict are accent-colored, so the type axis and the verdict axis blur together.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">devlog post (current)</span>
+          <div class="row">
+            <span class="badge" data-type="devlog">[ DEVLOG ]</span>
+            <span class="date">2026-06-10</span>
+          </div>
+          <div class="card-title">Building meese.rs in public</div>
+        </div>
+        <div class="panel">
+          <span class="cap">review post (current)</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+        </div>
+      </div>
+
+      <h2>Proposal A <span class="ax">// verdict reads as a rating, not a category</span></h2>
+      <p class="note">Keep the type badge as the anchor. Reshape the verdict into a scored chip: a leading dot in the verdict hue, sentence case, and the score baked in. Pill geometry plus a number make it unmistakably a judgment, not a "kind of post".</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">before</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+        </div>
+        <div class="panel" data-good>
+          <span class="cap">after</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict" data-verdict="watch"><span class="dot"></span>One to watch <span class="score">3.9</span></span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+          <div class="row" style="margin-top:14px">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict" data-verdict="recommended"><span class="dot"></span>Recommended <span class="score">4.6</span></span>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict" data-verdict="caveats"><span class="dot"></span>With caveats <span class="score">4.2</span></span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Proposal B <span class="ax">// types become an icon family</span></h2>
+      <p class="note">Give every type badge a small leading icon (Lucide, inline SVG, matching the rest of the site). Presence of an icon marks the type axis; the verdict stays text-only. Brackets become redundant once there is an icon, so they drop.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">before</span>
+          <div class="row"><span class="badge" data-type="guide">[ GUIDE ]</span></div>
+          <div class="row" style="margin-top:10px"><span class="badge" data-type="devlog">[ DEVLOG ]</span></div>
+          <div class="row" style="margin-top:10px"><span class="badge" data-type="review">[ REVIEW ]</span> <span class="verdict" data-verdict="watch">ONE TO WATCH</span></div>
+        </div>
+        <div class="panel" data-good>
+          <span class="cap">after</span>
+          <div class="row">
+            <span class="mk-badge" data-type="guide">
+              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>GUIDE
+            </span>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="mk-badge" data-type="devlog">
+              <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>DEVLOG
+            </span>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="mk-badge" data-type="review">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>REVIEW
+            </span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Proposal C <span class="ax">// distinct geometry per axis</span></h2>
+      <p class="note">Push the axes apart by shape, not just color. Type keeps the hairline bracketed chip. Status drops to quiet dotted metadata (it is not a category). The verdict, the headline judgment of a review, goes loud: a solid filled pill with the score. Hard to mistake any one for another.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">before</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+            <span class="badge" data-status="updated">[ UPDATED ]</span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+        </div>
+        <div class="panel" data-good>
+          <span class="cap">after</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict-loud" data-verdict="watch">One to watch <span class="score">3.9</span></span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+          <div class="row" style="margin-top:10px">
+            <span class="mk-status"><span class="dot"></span>updated 2026-06-11</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Topics vs tags <span class="ax">// already separated, mostly a doc gap</span></h2>
+      <p class="note">Topics are the only ones rendered as pills, and they link to archives. Tags never appear as pills; they only power search. So the fix here is mostly the reference doc, but the experiment below shows the intended contrast.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">topics (navigable)</span>
+          <div class="row">
+            <span class="tag"><span class="hash">#</span>react-native</span>
+            <span class="tag"><span class="hash">#</span>expo</span>
+            <span class="tag"><span class="hash">#</span>mobile-development</span>
+          </div>
+        </div>
+        <div class="panel">
+          <span class="cap">tags (search only, not rendered)</span>
+          <div class="row"><span class="ghost-tags">eas, sdk-56, ios &nbsp;&rarr;&nbsp; surface only as search filters</span></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

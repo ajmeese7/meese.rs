@@ -43,6 +43,10 @@ Add an MDX file under `src/content/posts/`. Frontmatter schema lives in
 devlog, essay, lab, reference, and three reviews). Set `draft: true` to keep a
 post out of the production build, feeds, sitemap, search, and graph.
 
+[`docs/CONTENT.md`](./docs/CONTENT.md) is the writer reference for what every
+label means: the four label systems (type, status, verdict, topics/tags), which
+frontmatter field drives each, and how they differ.
+
 ## Structure
 
 ```
@@ -59,6 +63,8 @@ scripts/                  validate-content.ts · generate-graph.ts (build-time)
 public/                   robots.txt · llms.txt · AGENTS.md · _headers · assets
 design-system/            the approved Claude Design handoff bundle
 docs/SPEC.md              the product specification (source of truth)
+docs/CONTENT.md           writer reference: types, statuses, verdicts, topics/tags
+ux/                       standalone visual experiments (not wired into the site)
 ```
 
 ## Deploy
