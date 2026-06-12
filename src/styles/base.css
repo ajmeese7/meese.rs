@@ -10,8 +10,16 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+/* Main column grows to fill leftover height, pushing the footer down. */
+#main { flex: 1 0 auto; }
+
 body {
   margin: 0;
+  /* Full-viewport flex column so the footer stays pinned to the bottom on
+     short pages (Topics, Search, etc.) instead of riding up under the content. */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-bg);
   /* signature faint system grid, restrained, blueprint-like */
   background-image:
