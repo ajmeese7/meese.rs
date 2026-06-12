@@ -7,6 +7,8 @@ interface Props {
 }
 const { current } = Astro.props;
 
+// Read group: content + discovery surfaces. Site group: pages *about* the site,
+// set off by a divider (§12). About is the first site-group member.
 const NAV = [
   ["Latest", "/latest/", "latest"],
   ["Guides", "/guides/", "guides"],
@@ -15,6 +17,8 @@ const NAV = [
   ["Topics", "/topics/", "topics"],
   ["Graph", "/graph/", "graph"],
 ] as const;
+
+const SITE_NAV = [["About", "/about/", "about"]] as const;
 
 const THEMES: [string, string, string][] = [
   ["neon-violet", "Violet", "#9A7CFF"],
@@ -41,6 +45,18 @@ const THEMES: [string, string, string][] = [
         <a
           href={href}
           class="nav-link"
+          aria-current={current === key ? "page" : undefined}
+        >
+          {label}
+        </a>
+      ))
+    }
+    <span class="nav-divider" aria-hidden="true"></span>
+    {
+      SITE_NAV.map(([label, href, key]) => (
+        <a
+          href={href}
+          class="nav-link nav-link--site"
           aria-current={current === key ? "page" : undefined}
         >
           {label}

@@ -1,0 +1,117 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/layout/Icon.astro";
+import { getPosts } from "../utils/posts";
+import { getTopics } from "../utils/topics";
+
+const posts = await getPosts();
+const topics = await getTopics();
+// "writing since" = year of the oldest entry in the index.
+const since = posts.length
+  ? posts.reduce((min, p) => Math.min(min, p.data.date.getFullYear()), Infinity)
+  : new Date().getFullYear();
+
+// Owner-confirmed identity links (§13.5). `rel="me"` on the profile links
+// supports profile verification; no forced new tabs.
+const LINKS = [
+  { icon: "github", label: "GitHub", text: "ajmeese7", href: "https://github.com/ajmeese7", me: true },
+  { icon: "arrow-up-right", label: "Portfolio", text: "meese.dev", href: "https://meese.dev", me: true },
+  { icon: "linkedin", label: "LinkedIn", text: "aaronmeese", href: "https://www.linkedin.com/in/aaronmeese/", me: true },
+  { icon: "x-twitter", label: "X", text: "@ajmeese7", href: "https://x.com/ajmeese7", me: true },
+  { icon: "mail", label: "Email", text: "aaron@meese.dev", href: "mailto:aaron@meese.dev", me: false },
+] as const;
+
+const person = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Aaron Meese",
+  url: "https://meese.rs/about/",
+  sameAs: LINKS.filter((l) => l.me).map((l) => l.href),
+};
+---
+
+<BaseLayout
+  title="About"
+  description="Who writes meese.rs and why. Aaron Meese, a builder writing down what he learns shipping software, AI/devtools, and systems."
+  current="about"
+>
+  <div class="shell" style="padding-top:28px">
+    <a href="/" class="back-link"><Icon name="arrow-left" size={13} /> back to index</a>
+
+    <section class="about-head">
+      <div class="about-id reticle">
+        <span class="tick tl"></span><span class="tick tr"></span>
+        <span class="tick bl"></span><span class="tick br"></span>
+        {/* HUMAN INPUT: swap the placeholder for a real photo. Drop the file at
+            src/assets/aaron-meese.jpg and replace this block with astro:assets:
+              import { Image } from "astro:assets";
+              import photo from "../assets/aaron-meese.jpg";
+              <Image src={photo} alt="Aaron Meese" class="about-id__photo" width={96} height={96} /> */}
+        <div class="about-id__photo about-id__photo--placeholder" aria-hidden="true">
+          <img src="/logomark.svg" width="40" height="40" alt="" />
+        </div>
+        <div class="about-id__lead">
+          <span class="sys-label">// about</span>
+          <h1 class="about-id__name">Aaron Meese</h1>
+          <p class="about-id__role">Builder. Writes meese.rs.</p>
+        </div>
+        <div class="about-links">
+          {
+            LINKS.map((l) => (
+              <a
+                href={l.href}
+                class="about-link"
+                rel={l.me ? "me noopener" : undefined}
+              >
+                <Icon name={l.icon} size={15} color="var(--ink-3)" />
+                <span class="about-link__label">{l.label}</span>
+                <span class="about-link__text">{l.text}</span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="index-status reticle">
+        <span class="tick tl"></span><span class="tick tr"></span>
+        <span class="tick bl"></span><span class="tick br"></span>
+        <span class="sys-label">// index status</span>
+        <div class="index-status__row">
+          <span class="k">entries</span><span class="v">{String(posts.length).padStart(2, "0")}</span>
+        </div>
+        <div class="index-status__row">
+          <span class="k">topics</span><span class="v">{String(topics.length).padStart(2, "0")}</span>
+        </div>
+        <div class="index-status__row">
+          <span class="k">writing since</span><span class="v">{since}</span>
+        </div>
+      </div>
+    </section>
+
+    {/* HUMAN INPUT: placeholder bio, generic on purpose. Final copy gets a voice
+        pass (aaron-author-voice) before launch. Do not ship invented claims. */}
+    <div class="about-bio">
+      <p>
+        I'm Aaron Meese, a software engineer who builds things and writes down
+        what I learned doing it. <strong>meese.rs</strong> is the index of that
+        work: tactical guides, dev logs, short notes, labs, references, and the
+        occasional review of tools I actually run.
+      </p>
+      <p>
+        The writing is the proof. Everything here came out of shipping something
+        real and hitting the tradeoffs in person, not from reading a changelog.
+        If you want to judge whether my read on a tool or a technique is worth
+        trusting, the fastest way is to read a few entries and decide for
+        yourself.
+      </p>
+      <p>
+        Start with the <a href="/latest/">latest writing</a>, browse by
+        <a href="/topics/">topic</a>, or see what I think is worth running in
+        the <a href="/reviews/">reviews</a>. No newsletter funnel, no course, no
+        comment section. Just the work and the notes.
+      </p>
+    </div>
+  </div>
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(person)} />
+</BaseLayout>

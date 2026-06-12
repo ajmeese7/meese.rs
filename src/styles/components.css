@@ -1083,6 +1083,136 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 .search-empty { padding: 40px 16px; text-align: center; font-family: var(--font-mono); font-size: 13px; color: var(--ink-4); }
 
 /* ============================================================
+   Nav grouping, read group | site group (§12)
+   ============================================================ */
+.nav-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 7px 8px;
+  background: var(--line-2);
+}
+.nav-link--site { color: var(--ink-2); }
+
+/* ============================================================
+   Author byline, links to the About hub (§13.5, §20)
+   ============================================================ */
+.author-byline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 4px 9px 4px 4px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  width: fit-content;
+  transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.author-byline:hover { border-color: var(--line-3); background: var(--surface-2); }
+.author-byline__avatar { border-radius: 999px; flex: none; }
+.author-byline__by {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.author-byline__by strong { color: var(--ink-1); font-weight: 500; }
+
+/* ============================================================
+   About page, author + site credibility hub (§13.5)
+   ============================================================ */
+.about-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 28px;
+  align-items: start;
+  margin: 22px 0 8px;
+}
+.about-id {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px 20px;
+  padding: 26px;
+  background: var(--surface-1);
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+}
+.about-id__photo {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 1px solid var(--line-2);
+}
+.about-id__photo--placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+}
+.about-id__photo--placeholder img { opacity: 0.5; }
+.about-id__lead { align-self: center; }
+.about-id__lead .sys-label { color: var(--accent); display: block; margin-bottom: 8px; }
+.about-id__name {
+  font-size: var(--text-2xl);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.about-id__role {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin: 8px 0 0;
+}
+.about-links {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-faint);
+}
+.about-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.about-link:hover { border-color: var(--line-3); background: var(--surface-2); }
+.about-link__label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.about-link__text {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-4);
+  margin-left: auto;
+}
+.about-link:hover .about-link__text { color: var(--ink-2); }
+.about-bio {
+  max-width: 68ch;
+  margin: 30px 0 8px;
+}
+.about-bio p {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  color: var(--ink-2);
+  line-height: 1.7;
+  margin: 0 0 18px;
+}
+.about-bio a {
+  color: var(--accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ============================================================
    Responsive
    ------------------------------------------------------------
    Header chrome and content grids collapse at different widths
@@ -1096,6 +1226,9 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 @media (max-width: 980px) {
   .site-header { gap: 12px; }
   .nav-toggle { display: inline-flex; }
+
+  /* In the stacked drawer the group divider reads as a horizontal rule. */
+  .nav-divider { width: auto; height: 1px; margin: 8px 12px; }
 
   /* The inline nav becomes a disclosure drawer pinned under the header.
      visibility:hidden keeps the closed links out of the tab order. */
@@ -1141,6 +1274,7 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 @media (max-width: 880px) {
   .home-grid,
   .review-grid,
+  .about-head,
   .post__body-grid { grid-template-columns: minmax(0, 1fr); }
   .home-sidebar,
   .review-aside,

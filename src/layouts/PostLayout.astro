@@ -4,6 +4,7 @@ import Badge from "../components/posts/Badge.astro";
 import Tag from "../components/posts/Tag.astro";
 import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
+import AuthorByline from "../components/layout/AuthorByline.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
 import { isoDate } from "../utils/dates";
 import { readingTime, postUrl, type Post } from "../utils/posts";
@@ -66,6 +67,7 @@ if (supersededTarget) {
       </div>
       <h1 class="post__title">{d.title}</h1>
       <p class="post__lead">{d.description}</p>
+      <AuthorByline />
       <div class="post__topics">
         {d.topics.map((t) => <Tag name={t} href={topicUrl(t)} />)}
       </div>
