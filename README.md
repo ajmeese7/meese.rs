@@ -66,7 +66,6 @@ design-system/            the approved Claude Design handoff bundle
 docs/
   SPEC.md                 the product specification (source of truth)
   CONTENT.md              writer reference: types, statuses, verdicts, topics/tags
-  DEPLOY.md               Cloudflare Pages deploy guide (setup, domain, rollback)
 ```
 
 ## Deploy
