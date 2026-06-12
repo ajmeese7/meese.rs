@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import FeedList from "../components/posts/FeedList.astro";
+import Icon from "../components/layout/Icon.astro";
+import { getByType } from "../utils/posts";
+
+const posts = await getByType("note");
+---
+
+<BaseLayout
+  title="Notes"
+  description="Short observations and two-minute reads, in the main stream."
+  current="notes"
+>
+  <div class="shell" style="padding-top:28px">
+    <a href="/" class="back-link"><Icon name="arrow-left" size={13} /> back to index</a>
+    <h1 class="page-title">Notes</h1>
+    <p class="page-lead">
+      Short observations and two-minute reads, the small stuff worth writing
+      down.
+    </p>
+    <div class="count-rule">
+      <span class="rule"></span>
+      <span class="count">{String(posts.length).padStart(2, "0")} entries</span>
+    </div>
+    <FeedList posts={posts} emptyText="no notes published yet" />
+  </div>
+</BaseLayout>

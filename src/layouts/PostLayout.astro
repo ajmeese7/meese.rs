@@ -1,0 +1,191 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Badge from "../components/posts/Badge.astro";
+import Tag from "../components/posts/Tag.astro";
+import Icon from "../components/layout/Icon.astro";
+import PagefindMeta from "../components/posts/PagefindMeta.astro";
+import { isoDate } from "../utils/dates";
+import { readingTime, postUrl, type Post } from "../utils/posts";
+import { topicUrl } from "../utils/topics";
+import { getBacklinks } from "../utils/backlinks";
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+interface Props {
+  post: Post;
+  headings: Heading[];
+  allPosts: Post[];
+}
+const { post, headings, allPosts } = Astro.props;
+const d = post.data;
+const rt = readingTime(post.body);
+
+// TOC from h2s only, keeps it scannable on long posts.
+const toc = headings.filter((h) => h.depth === 2);
+const backlinks = getBacklinks(post, allPosts);
+
+// status banner: superseded wins over deprecated wins over updated
+const supersededTarget = d.supersededBy
+  ? allPosts.find((p) => p.id === d.supersededBy)
+  : undefined;
+let banner: { kind: string; note: string; href?: string } | null = null;
+if (supersededTarget) {
+  banner = {
+    kind: "superseded",
+    note: ",  a newer piece replaces this one.",
+    href: postUrl(supersededTarget),
+  };
+} else if (d.updated) {
+  banner = { kind: "updated", note: ",  revised since first publish." };
+}
+---
+
+<BaseLayout
+  title={d.title}
+  description={d.description}
+  type="article"
+  current={d.type === "guide" ? "guides" : d.type === "note" ? "notes" : undefined}
+  publishedTime={d.date}
+  modifiedTime={d.updated}
+  tags={d.tags}
+  topics={d.topics}
+>
+  <article class="shell post" data-pagefind-body>
+    <PagefindMeta post={post} />
+    <a href="/latest/" class="back-link">
+      <Icon name="arrow-left" size={13} /> back to index
+    </a>
+
+    <header class="post__header">
+      <div class="post__meta">
+        <Badge type={d.type} />
+        {d.updated && <Badge status="updated" />}
+        <span class="post__meta-date">{isoDate(d.date)} · {rt}</span>
+      </div>
+      <h1 class="post__title">{d.title}</h1>
+      <p class="post__lead">{d.description}</p>
+      <div class="post__topics">
+        {d.topics.map((t) => <Tag name={t} href={topicUrl(t)} />)}
+      </div>
+    </header>
+
+    <div class:list={["post__body-grid", { "no-toc": toc.length === 0 }]}>
+      {
+        toc.length > 0 && (
+          <nav class="toc" aria-label="On this page">
+            <span class="sys-label">// on this page</span>
+            <ul>
+              {toc.map((h) => (
+                <li>
+                  <a href={`#${h.slug}`} data-toc-link={h.slug}>
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+
+      <div>
+        {
+          banner && (
+            <div class="update-banner" data-kind={banner.kind}>
+              <Icon name="refresh-cw" size={15} />
+              <span>{banner.kind.toUpperCase()} {d.updated && isoDate(d.updated)}</span>
+              <span class="note">
+                {banner.href ? (
+                  <a href={banner.href}>{banner.note}</a>
+                ) : (
+                  banner.note
+                )}
+              </span>
+            </div>
+          )
+        }
+
+        <div class="prose">
+          <slot />
+        </div>
+
+        <section class="backlinks">
+          {
+            backlinks.related.length > 0 && (
+              <>
+                <span class="sys-label">// related</span>
+                <div class="related-grid">
+                  {backlinks.related.map(({ post: p, reason }) => (
+                    <a href={postUrl(p)} class="related-card">
+                      <Badge type={p.data.type} />
+                      <div class="t">{p.data.title}</div>
+                      <div class="reason">{reason}</div>
+                    </a>
+                  ))}
+                </div>
+              </>
+            )
+          }
+
+          {
+            backlinks.mentionedBy.length > 0 && (
+              <>
+                <span class="sys-label" style="margin:28px 0 12px">// mentioned by</span>
+                <div class="same-topic">
+                  {backlinks.mentionedBy.map((p) => (
+                    <a href={postUrl(p)}>
+                      <Badge type={p.data.type} />
+                      <span class="t">{p.data.title}</span>
+                      <span class="d">{isoDate(p.data.date)}</span>
+                    </a>
+                  ))}
+                </div>
+              </>
+            )
+          }
+
+          {
+            backlinks.sameTopic.length > 0 && (
+              <>
+                <span class="sys-label" style="margin:28px 0 12px">// same topic</span>
+                <div class="same-topic">
+                  {backlinks.sameTopic.map((p) => (
+                    <a href={postUrl(p)}>
+                      <Badge type={p.data.type} />
+                      <span class="t">{p.data.title}</span>
+                      <span class="d">{isoDate(p.data.date)}</span>
+                    </a>
+                  ))}
+                </div>
+              </>
+            )
+          }
+        </section>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<script>
+  // Highlight the TOC entry for the section currently in view.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-toc-link]")];
+  if (links.length) {
+    const bySlug = new Map(links.map((l) => [l.dataset.tocLink!, l]));
+    const heads = [...document.querySelectorAll<HTMLElement>(".prose h2[id]")];
+    const setActive = (slug: string) => {
+      for (const l of links) l.classList.toggle("is-active", l.dataset.tocLink === slug);
+    };
+    if (heads[0]) setActive(heads[0].id);
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting && bySlug.has(e.target.id)) setActive(e.target.id);
+        }
+      },
+      { rootMargin: "-80px 0px -70% 0px" },
+    );
+    heads.forEach((h) => obs.observe(h));
+  }
+</script>

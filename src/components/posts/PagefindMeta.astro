@@ -1,0 +1,25 @@
+---
+import { isoDate } from "../../utils/dates";
+import type { Post } from "../../utils/posts";
+
+/**
+ * Pagefind metadata + filters for a post. Must render INSIDE the
+ * `data-pagefind-body` region. Uses Pagefind's inline `key:value` syntax on
+ * empty elements so it sets meta/filters without adding to the indexed text or
+ * the result excerpt.
+ */
+interface Props {
+  post: Post;
+}
+const { post } = Astro.props;
+const d = post.data;
+---
+
+<div hidden aria-hidden="true">
+  <span data-pagefind-meta={`title:${d.title}`}></span>
+  <span data-pagefind-meta={`type:${d.type}`} data-pagefind-filter={`type:${d.type}`}></span>
+  <span data-pagefind-meta={`date:${isoDate(d.date)}`}></span>
+  {d.topics.length > 0 && <span data-pagefind-meta={`topics:${d.topics.join(",")}`}></span>}
+  {d.topics.map((t) => <span data-pagefind-filter={`topic:${t}`}></span>)}
+  {d.tags.map((t) => <span data-pagefind-filter={`tag:${t}`}></span>)}
+</div>

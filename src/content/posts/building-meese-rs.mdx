@@ -1,0 +1,50 @@
+---
+title: "Building the first version of meese.rs"
+description: "Initial architecture choices and tradeoffs for a static MDX writing system, why Astro, why Pagefind, and what I deliberately left out."
+date: 2026-06-11
+type: devlog
+topics:
+  - static-sites
+  - astro
+  - publishing
+  - ai-devtools
+tags:
+  - mdx
+  - pagefind
+  - cloudflare-pages
+draft: false
+featured: true
+related:
+  - slug: static-search-tradeoffs
+    reason: "The search decision behind this build, argued in full."
+  - slug: backlinks-at-build-time
+    reason: "How the backlink and graph pass actually works."
+---
+
+This site is a deliberate exercise in restraint: static-first, no server
+runtime, and as few moving parts as I could get away with. Here's the shape of
+v0 and the tradeoffs behind it.
+
+## The stack
+
+Astro for content collections, MDX for authoring, Pagefind for search,
+Cloudflare Pages for hosting. Everything that can be computed at build time is , 
+including the [build-time backlink pass](/posts/backlinks-at-build-time/).
+
+```bash
+astro build && pagefind --site dist
+```
+
+## What I left out, on purpose
+
+| Feature        | Decision                          |
+| -------------- | --------------------------------- |
+| Comments       | Out, no moderation surface       |
+| CMS            | Out, content is MDX in the repo  |
+| Runtime search | Out, static index instead        |
+
+<Figure caption="The build pipeline: content collection → static HTML → Pagefind index → graph.json." kind="diagram" />
+
+The [static-search tradeoff](/posts/static-search-tradeoffs/) is the one I
+expect to revisit first. The result is a site I can publish from a laptop and
+forget about until I have something to write.

@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import FeedList from "../components/posts/FeedList.astro";
+import Icon from "../components/layout/Icon.astro";
+import { getFeedPosts } from "../utils/posts";
+
+const posts = await getFeedPosts();
+---
+
+<BaseLayout
+  title="Latest"
+  description="Mixed chronological feed of all public writing on meese.rs, guides, notes, dev logs, labs, essays, references, and reviews."
+  current="latest"
+>
+  <div class="shell" style="padding-top:28px">
+    <a href="/" class="back-link"><Icon name="arrow-left" size={13} /> back to index</a>
+    <h1 class="page-title">Latest</h1>
+    <p class="page-lead">
+      Everything, newest first, long guides and two-minute notes in the same
+      stream. Pinned entries lead.
+    </p>
+    <div class="count-rule">
+      <span class="rule"></span>
+      <span class="count">{String(posts.length).padStart(2, "0")} entries</span>
+    </div>
+    <FeedList posts={posts} />
+  </div>
+</BaseLayout>

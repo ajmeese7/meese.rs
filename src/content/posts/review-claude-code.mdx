@@ -1,0 +1,77 @@
+---
+title: "Everything Claude Code"
+description: "The terminal-native coding agent that actually ships work, once you learn to scope it."
+date: 2026-05-26
+type: review
+topics:
+  - ai-devtools
+  - agents
+  - developer-experience
+tags:
+  - claude-code
+  - agents
+  - cli
+draft: false
+featured: true
+review:
+  subject: "Claude Code"
+  version: "v2"
+  score: 4.6
+  verdict: recommended
+  verdictLabel: "Recommended"
+  tagline: "A terminal-native AI coding agent that plans, edits across files, and runs your toolchain."
+  links:
+    - label: repo
+      href: "https://github.com/anthropics/claude-code"
+    - label: docs
+      href: "https://docs.claude.com"
+  meta:
+    - { key: "pricing", value: "usage-based" }
+    - { key: "runs in", value: "terminal" }
+    - { key: "first reviewed", value: "2026-02" }
+    - { key: "tested on", value: "macOS · Linux" }
+  criteria:
+    - name: "Autonomy"
+      score: 4.7
+      note: "Takes a vague task a long way before it needs you. The further it goes, the more scoping matters."
+    - name: "Output quality"
+      score: 4.6
+      note: "Edits stay coherent across files and it cleans up after itself more than most tools do."
+    - name: "Steerability"
+      score: 4.5
+      note: "Responds well to a tight spec and an AGENTS.md; flails on ambiguous ones."
+    - name: "Cost control"
+      score: 4.0
+      note: "Usage-based pricing rewards good scoping and quietly punishes letting it wander."
+    - name: "Ecosystem"
+      score: 4.2
+      note: "MCP, hooks, and skills make it composable; the surface area is still growing fast."
+  pros:
+    - "Genuinely ships multi-file work, not just snippets"
+    - "Composable via MCP, hooks, and skills"
+    - "Stays in the terminal where the tools already are"
+    - "Reads a repo carefully before it touches anything"
+  cons:
+    - "Costs scale with how loosely you scope it"
+    - "Long autonomous runs need review discipline"
+    - "Moves fast, workflows shift between versions"
+    - "Still rewards users who write good specs"
+  bottomLine: "The strongest terminal coding agent I have used. Treat it like a fast junior who needs a clear spec and a code review and it pays for itself; let it wander and it will cost you in tokens and cleanup."
+---
+
+## The pitch
+
+Claude Code lives in your terminal and treats the whole repo as context. Give it
+a scoped task and it plans, edits across files, runs your tests, and iterates , 
+closer to a junior engineer than an autocomplete.
+
+## Where it shines
+
+Migrations, refactors, and "wire this up end-to-end" tasks where the win is
+coordination across many files. An `AGENTS.md` and a tight prompt turn it from
+impressive to dependable.
+
+## Where it bites
+
+Hand it something vague and it will confidently go too far. The skill here is
+scoping and review, not prompting tricks, budget for both.

@@ -1,0 +1,23 @@
+---
+/** In-prose note/warning/danger/tip/context block with a mono `// LABEL`. */
+interface Props {
+  type?: "note" | "tip" | "warning" | "danger" | "context";
+  title?: string;
+}
+const { type = "note", title } = Astro.props;
+const LABELS: Record<string, string> = {
+  note: "NOTE",
+  tip: "TIP",
+  warning: "WARNING",
+  danger: "DANGER",
+  context: "CONTEXT",
+};
+---
+
+<div class="callout" data-type={type} role="note">
+  <div class="callout__head">
+    <span class="callout__label">{`// ${LABELS[type]}`}</span>
+    {title && <span class="callout__title">{title}</span>}
+  </div>
+  <div class="callout__body"><slot /></div>
+</div>

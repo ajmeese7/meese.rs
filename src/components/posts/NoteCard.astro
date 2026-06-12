@@ -1,0 +1,23 @@
+---
+import Badge from "./Badge.astro";
+import { isoDate } from "../../utils/dates";
+import { postUrl, type Post } from "../../utils/posts";
+
+/** Compact, log-line entry for short notes living inline in the feed. */
+interface Props {
+  post: Post;
+}
+const { post } = Astro.props;
+const d = post.data;
+---
+
+<a href={postUrl(post)} class="note-card">
+  <div class="note-card__rail">
+    <Badge type="note" />
+    <span class="note-card__date">{isoDate(d.date)}</span>
+  </div>
+  <div class="note-card__body">
+    <div class="note-card__title">{d.title}</div>
+    <p class="note-card__text">{d.summary ?? d.description}</p>
+  </div>
+</a>

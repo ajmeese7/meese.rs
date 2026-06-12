@@ -1,0 +1,170 @@
+---
+import Icon from "./Icon.astro";
+
+/** Sticky top chrome: wordmark, nav, theme switcher, ⌘K search trigger. */
+interface Props {
+  current?: string;
+}
+const { current } = Astro.props;
+
+const NAV = [
+  ["Latest", "/latest/", "latest"],
+  ["Guides", "/guides/", "guides"],
+  ["Notes", "/notes/", "notes"],
+  ["Reviews", "/reviews/", "reviews"],
+  ["Topics", "/topics/", "topics"],
+  ["Graph", "/graph/", "graph"],
+] as const;
+
+const THEMES: [string, string, string][] = [
+  ["neon-violet", "Violet", "#9A7CFF"],
+  ["acid-green", "Acid Green", "#84F24B"],
+  ["neon-lime", "Lime", "#CCFF42"],
+  ["neon-mint", "Mint", "#35F0A2"],
+  ["neon-cyan", "Cyan", "#29E7F2"],
+  ["electric-blue", "Blue", "#5391FF"],
+  ["hot-magenta", "Magenta", "#FF3DA1"],
+  ["neon-pink", "Pink", "#FF73B6"],
+  ["coral", "Coral", "#FF5E73"],
+];
+---
+
+<header class="site-header">
+  <a href="/" class="wordmark">
+    <img src="/logomark.svg" width="28" height="28" alt="" />
+    <span>meese<span class="rs">.rs</span></span>
+  </a>
+
+  <nav class="site-nav" aria-label="Primary">
+    {
+      NAV.map(([label, href, key]) => (
+        <a
+          href={href}
+          class="nav-link"
+          aria-current={current === key ? "page" : undefined}
+        >
+          {label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <span class="header-spacer"></span>
+
+  <div class="theme-switcher" data-theme-switcher>
+    <button
+      type="button"
+      class="theme-switcher__button"
+      aria-haspopup="listbox"
+      aria-expanded="false"
+      data-theme-toggle
+    >
+      <span class="theme-switcher__swatch" data-theme-swatch></span>
+      <span class="theme-switcher__name" data-theme-name>Violet</span>
+      <span class="theme-switcher__chevron"><Icon name="chevron-down" size={13} color="var(--ink-4)" /></span>
+    </button>
+    <ul class="theme-switcher__menu" role="listbox" hidden data-theme-menu>
+      {
+        THEMES.map(([value, label, color]) => (
+          <li>
+            <button
+              type="button"
+              class="theme-switcher__option"
+              role="option"
+              aria-selected="false"
+              data-theme-value={value}
+              data-theme-color={color}
+            >
+              <span class="dot" style={`background:${color}`} />
+              <span>{label}</span>
+              <span class="check"><Icon name="check" size={13} color="var(--accent)" /></span>
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <button type="button" class="header-search" data-search-open>
+    <Icon name="search" size={15} />
+    <span>Search</span>
+    <kbd>⌘K</kbd>
+  </button>
+</header>
+
+<script>
+  // Theme switcher: writes data-theme + persists. The pre-paint apply lives in
+  // BaseLayout's <head>; this only wires the dropdown.
+  const THEME_NAMES: Record<string, string> = {
+    "neon-violet": "Violet",
+    "acid-green": "Acid Green",
+    "neon-lime": "Lime",
+    "neon-mint": "Mint",
+    "neon-cyan": "Cyan",
+    "electric-blue": "Blue",
+    "hot-magenta": "Magenta",
+    "neon-pink": "Pink",
+    coral: "Coral",
+  };
+  const THEME_COLORS: Record<string, string> = {
+    "neon-violet": "#9A7CFF",
+    "acid-green": "#84F24B",
+    "neon-lime": "#CCFF42",
+    "neon-mint": "#35F0A2",
+    "neon-cyan": "#29E7F2",
+    "electric-blue": "#5391FF",
+    "hot-magenta": "#FF3DA1",
+    "neon-pink": "#FF73B6",
+    coral: "#FF5E73",
+  };
+
+  const root = document.documentElement;
+  const wrap = document.querySelector<HTMLElement>("[data-theme-switcher]");
+  const toggle = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+  const menu = document.querySelector<HTMLElement>("[data-theme-menu]");
+  const nameEl = document.querySelector<HTMLElement>("[data-theme-name]");
+  const swatchEl = document.querySelector<HTMLElement>("[data-theme-swatch]");
+
+  function current(): string {
+    return root.dataset.theme || "neon-violet";
+  }
+  function syncButton() {
+    const t = current();
+    if (nameEl) nameEl.textContent = THEME_NAMES[t] ?? "Violet";
+    if (swatchEl) {
+      const c = THEME_COLORS[t] ?? "#9A7CFF";
+      swatchEl.style.background = c;
+      swatchEl.style.boxShadow = `0 0 8px -1px ${c}`;
+    }
+    document.querySelectorAll<HTMLElement>("[data-theme-value]").forEach((opt) => {
+      opt.setAttribute("aria-selected", opt.dataset.themeValue === t ? "true" : "false");
+    });
+  }
+  function setOpen(open: boolean) {
+    if (!menu || !toggle) return;
+    menu.hidden = !open;
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function apply(theme: string) {
+    root.dataset.theme = theme;
+    try {
+      localStorage.setItem("meeders-theme", theme);
+    } catch {}
+    syncButton();
+    setOpen(false);
+  }
+
+  toggle?.addEventListener("click", () =>
+    setOpen(menu?.hidden ?? true ? true : false),
+  );
+  document.querySelectorAll<HTMLButtonElement>("[data-theme-value]").forEach((opt) => {
+    opt.addEventListener("click", () => apply(opt.dataset.themeValue!));
+  });
+  document.addEventListener("mousedown", (e) => {
+    if (wrap && !wrap.contains(e.target as Node)) setOpen(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setOpen(false);
+  });
+  syncButton();
+</script>

@@ -1,0 +1,31 @@
+---
+title: "Static search is a tradeoff, not a downgrade"
+description: "Why I shipped a build-time index instead of a search backend, and where that decision will eventually hurt."
+date: 2026-05-29
+type: essay
+topics:
+  - static-sites
+  - search
+tags:
+  - pagefind
+  - architecture
+draft: false
+---
+
+I shipped a build-time search index instead of a search backend. That's a
+tradeoff, not a downgrade, and it's worth being honest about where it will
+eventually hurt.
+
+> Static search is the right default until your corpus or your query patterns
+> outgrow it. Most sites never do.
+
+## Where it pays off
+
+No server to run, no index to keep warm, no query that can take the site down.
+The index ships with the deploy and works offline.
+
+## Where it will bite
+
+Large corpora and faceted, frequently-changing data are the failure cases. When
+I hit them, I'll add a backend for search alone and keep the reading path
+static.

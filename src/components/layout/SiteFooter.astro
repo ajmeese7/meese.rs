@@ -1,0 +1,19 @@
+---
+const links = [
+  ["/feed.xml", "feed.xml"],
+  ["/feed.json", "feed.json"],
+  ["/sitemap-index.xml", "sitemap.xml"],
+  ["/llms.txt", "llms.txt"],
+  ["/AGENTS.md", "AGENTS.md"],
+];
+---
+
+<footer class="site-footer">
+  <div class="site-footer__brand">
+    <img src="/logomark.svg" width="20" height="20" alt="" />
+    <span>meese.rs, field notes from a builder</span>
+  </div>
+  <div class="site-footer__links">
+    {links.map(([href, label]) => <a href={href}>/{label}</a>)}
+  </div>
+</footer>

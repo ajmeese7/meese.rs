@@ -1,0 +1,17 @@
+/* ============================================================
+   meese.rs, global stylesheet entry
+   ------------------------------------------------------------
+   Order: fonts -> tokens -> base layer -> components.
+   Tokens + base.css are lifted verbatim from the approved design
+   system (design-system/project/). Component styles below port the
+   UI-kit React primitives to static CSS (hover/focus in CSS, no JS).
+   ============================================================ */
+
+@import "./tokens/fonts.css";
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/effects.css";
+@import "./base.css";
+@import "./components.css";
+@import "./graph.css";

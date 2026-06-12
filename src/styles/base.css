@@ -1,0 +1,149 @@
+/* ============================================================
+   meese.rs — Base layer
+   ------------------------------------------------------------
+   Element resets, the signature grid backdrop, link & focus
+   styling, scrollbars, selection, and the .prose reading column.
+   Everything here uses the semantic tokens above.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  /* signature faint system grid — restrained, blueprint-like */
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: center top;
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- Headings ---- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-snug);
+  margin: 0;
+}
+
+/* ---- Links ---- */
+a {
+  color: var(--link);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color var(--dur-1) var(--ease-out);
+}
+a:hover { color: var(--link-hover); text-decoration: underline; }
+
+/* ---- Mono system label utility ---- */
+.sys-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---- Focus: visible, accessible ---- */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring), var(--glow-soft);
+  border-radius: var(--radius-xs);
+}
+
+/* ---- Selection ---- */
+::selection {
+  background: var(--cyan-wash-2);
+  color: var(--ink-1);
+}
+
+/* ---- Scrollbar (dark, thin) ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--line-3); background-clip: content-box; }
+
+/* ============================================================
+   .prose — the long-form reading column (~72ch)
+   ============================================================ */
+.prose {
+  max-width: var(--content-width);
+  color: var(--text-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+}
+.prose > * + * { margin-top: 1.15em; }
+.prose h2 { font-size: var(--text-2xl); margin-top: 2em; margin-bottom: 0.1em; }
+.prose h3 { font-size: var(--text-xl); margin-top: 1.6em; margin-bottom: 0.1em; }
+.prose h4 { font-size: var(--text-lg); margin-top: 1.3em; }
+.prose p  { color: var(--text-body); }
+.prose strong { color: var(--text-heading); font-weight: var(--weight-semibold); }
+.prose a { color: var(--link); text-decoration: underline; text-decoration-color: var(--cyan-dim); }
+.prose a:hover { text-decoration-color: var(--link-hover); }
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--surface-well);
+  border: var(--border-hair) solid var(--border-default);
+  border-radius: var(--radius-xs);
+  padding: 0.12em 0.4em;
+  color: var(--ink-1);
+}
+.prose pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  background: var(--surface-well);
+  border: var(--border-hair) solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  overflow-x: auto;
+  /* left signal rail */
+  border-left: 2px solid var(--cyan-dim);
+}
+.prose pre code { background: none; border: none; padding: 0; font-size: inherit; color: var(--ink-2); }
+
+.prose blockquote {
+  margin: 0;
+  padding-left: var(--space-5);
+  border-left: 2px solid var(--ember-deep);
+  color: var(--text-muted);
+  font-style: italic;
+}
+.prose ul, .prose ol { padding-left: 1.3em; }
+.prose li::marker { color: var(--cyan-deep); }
+.prose hr { border: none; border-top: var(--border-hair) solid var(--border-default); margin: 2em 0; }
+
+.prose img { max-width: 100%; border-radius: var(--radius-md); border: var(--border-hair) solid var(--border-default); }
+
+.prose table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.prose th, .prose td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--border-hair) solid var(--border-default); }
+.prose th { font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--text-muted); }
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

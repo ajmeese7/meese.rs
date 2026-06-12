@@ -1,0 +1,45 @@
+---
+import SearchPanel from "./SearchPanel.astro";
+
+/** Global ⌘K / Ctrl-K search overlay, mounted once in BaseLayout. */
+---
+
+<div class="search-overlay" data-search-overlay hidden>
+  <SearchPanel showEsc />
+</div>
+
+<script>
+  import { initSearch } from "../../scripts/search";
+
+  const overlay = document.querySelector<HTMLElement>("[data-search-overlay]");
+  if (overlay) {
+    const root = overlay.querySelector<HTMLElement>("[data-search-root]")!;
+    const handle = initSearch(root);
+
+    const open = () => {
+      overlay.hidden = false;
+      requestAnimationFrame(() => handle.focus());
+    };
+    const close = () => {
+      overlay.hidden = true;
+    };
+
+    document.querySelectorAll("[data-search-open]").forEach((b) =>
+      b.addEventListener("click", open),
+    );
+    overlay.querySelectorAll("[data-search-close]").forEach((b) =>
+      b.addEventListener("click", close),
+    );
+    // click on the backdrop (not the panel) closes
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) close();
+    });
+    document.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        overlay.hidden ? open() : close();
+      }
+      if (e.key === "Escape" && !overlay.hidden) close();
+    });
+  }
+</script>

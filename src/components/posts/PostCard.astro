@@ -1,0 +1,44 @@
+---
+import Badge from "./Badge.astro";
+import Tag from "./Tag.astro";
+import Reticle from "./Reticle.astro";
+import { isoDate } from "../../utils/dates";
+import { readingTime, postUrl, type Post } from "../../utils/posts";
+import { topicUrl } from "../../utils/topics";
+
+/** Standard feed entry for longer writing. Featured cards get reticle ticks. */
+interface Props {
+  post: Post;
+}
+const { post } = Astro.props;
+const d = post.data;
+const featured = d.featured || d.pinned;
+const rt = readingTime(post.body);
+---
+
+<a
+  href={postUrl(post)}
+  class:list={["post-card", { reticle: featured }]}
+  data-featured={featured ? "true" : undefined}
+>
+  {featured && <Reticle />}
+  <div class="post-card__head">
+    <Badge type={d.type} />
+    {d.pinned && <Badge status="pinned" />}
+    <span class="post-card__date">{isoDate(d.date)} · {rt}</span>
+  </div>
+  <h3 class="post-card__title">{d.title}</h3>
+  <p class="post-card__desc">{d.summary ?? d.description}</p>
+  {
+    (d.topics.length > 0 || d.updated) && (
+      <div class="post-card__foot">
+        {d.topics.map((t) => (
+          <Tag name={t} href={topicUrl(t)} />
+        ))}
+        {d.updated && (
+          <span class="post-card__updated">updated {isoDate(d.updated)}</span>
+        )}
+      </div>
+    )
+  }
+</a>

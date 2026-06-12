@@ -1,0 +1,42 @@
+---
+import Badge from "./Badge.astro";
+import Tag from "./Tag.astro";
+import Stars from "./Stars.astro";
+import { isoDate } from "../../utils/dates";
+import { postUrl, type Post } from "../../utils/posts";
+import { topicUrl } from "../../utils/topics";
+
+/** Feed card for a software/library review, leads with subject, score, verdict. */
+interface Props {
+  post: Post;
+}
+const { post } = Astro.props;
+const d = post.data;
+const r = d.review!;
+---
+
+<a href={postUrl(post)} class="post-card review-card">
+  <div class="post-card__head">
+    <Badge type="review" />
+    <span class="verdict" data-verdict={r.verdict}>{r.verdictLabel}</span>
+    <span class="post-card__date">{isoDate(d.date)}</span>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+    <h3 class="post-card__title">{r.subject}</h3>
+    {r.version && <span class="review-card__version">{r.version}</span>}
+  </div>
+  <div class="review-card__score">
+    <Stars score={r.score} size={15} />
+    <span class="score-num"><strong>{r.score.toFixed(1)}</strong> / 5</span>
+  </div>
+  <p class="post-card__desc">{r.tagline ?? d.description}</p>
+  {
+    d.topics.length > 0 && (
+      <div class="post-card__foot">
+        {d.topics.map((t) => (
+          <Tag name={t} href={topicUrl(t)} />
+        ))}
+      </div>
+    )
+  }
+</a>

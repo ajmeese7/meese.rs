@@ -1,0 +1,22 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  X-Frame-Options: DENY
+
+# CSP is intentionally NOT enabled yet, it must be tested in a Cloudflare
+# preview first (SPEC §31). Before enabling, account for: the inline
+# theme-apply script in <head> (needs a hash or 'unsafe-inline'); Google Fonts
+# (fonts.googleapis.com + fonts.gstatic.com) until fonts are self-hosted; and
+# the Pagefind index fetched by /search. A workable starting point once fonts
+# are self-hosted and the inline script is hashed:
+#
+#   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'
+
+# Long-cache the immutable, hashed build assets.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The generated search index is safe to cache for a while.
+/pagefind/*
+  Cache-Control: public, max-age=86400

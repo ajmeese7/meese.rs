@@ -1,0 +1,60 @@
+---
+title: "Getting an Expo SDK 56 app running on a real device"
+description: "Modernizing an old app to the newest SDK turns up a few gotchas the docs never connect for you, here is the path that actually worked."
+date: 2026-06-08
+updated: 2026-06-11
+type: guide
+topics:
+  - react-native
+  - expo
+  - mobile-dev
+tags:
+  - expo-sdk
+  - android
+  - eas
+draft: false
+featured: true
+related:
+  - slug: expo-go-version-mismatch
+    reason: "The mismatch failure mode this guide routes around."
+  - slug: eas-build-cache
+    reason: "A build-speed flag from the same upgrade."
+---
+
+I had an Expo app that hadn't been touched in two years. Getting it onto a real
+Pixel under SDK 56 should have been a fifteen-minute job, it was not, but the
+friction was all in places the docs describe separately and never connect.
+
+## The setup
+
+Start from a clean upgrade. Bump the SDK, let the CLI rewrite the config, and
+resist the urge to fix lint noise before the thing even boots.
+
+<CodeCaption title="Upgrade, doctor, build" />
+
+```bash
+npx expo install expo@^56.0.0
+npx expo-doctor
+eas build --profile development --platform android
+```
+
+<Callout type="warning" title="Watch for SDK / runtime mismatch">
+Expo Go may not support the newest SDK immediately depending on release timing.
+If the splash screen hangs, this is almost always why, not your code. The
+[short note on this failure mode](/posts/expo-go-version-mismatch/) has the
+one-line fix.
+</Callout>
+
+## Build a dev client, not Expo Go
+
+A development build pins the native runtime to **your** SDK, which removes the
+entire class of mismatch. It costs one EAS build up front and pays for itself
+the first time you'd otherwise chase a phantom error.
+
+<Figure caption="The dev-client install flow on a physical device, QR pairing, then the dev server on the same network." kind="screenshot" />
+
+## Takeaways
+
+- Use a dev client over Expo Go for bleeding-edge SDKs
+- Read errors one layer up from where they point
+- Keep the first upgrade commit boring

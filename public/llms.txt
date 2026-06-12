@@ -1,0 +1,24 @@
+# meese.rs
+
+> Canonical technical writing index for software, AI/devtool work, implementation notes, and systems-building.
+
+## Sections
+
+- /latest, mixed chronological writing feed
+- /guides, tactical guides
+- /notes, short notes
+- /reviews, software & library reviews
+- /topics, topic index
+- /graph, visual content graph
+- /search, site search
+
+## Machine-readable resources
+
+- /sitemap-index.xml
+- /feed.xml
+- /feed.json
+- /graph.json
+
+## Usage
+
+This site is intended for human reading, normal search indexing, and local assistant use for navigating, summarizing, or citing specific public pages. Bulk scraping for model training or automated mirroring is not intended.

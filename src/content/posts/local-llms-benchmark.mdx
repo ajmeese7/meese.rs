@@ -1,0 +1,36 @@
+---
+title: "Benchmarking local LLMs for task-specific code edits"
+description: "A reproducible run comparing four quantized models on a fixed set of refactors. Numbers, prompts, and the harness are all here."
+date: 2026-06-04
+type: lab
+topics:
+  - local-llms
+  - ai-devtools
+tags:
+  - benchmark
+  - ollama
+  - quantization
+draft: false
+---
+
+A reproducible run comparing four quantized models on a fixed set of refactors.
+Same prompts, same harness, same machine, here are the numbers.
+
+## Results
+
+| Model        | Pass rate | Median latency |
+| ------------ | --------- | -------------- |
+| Q4_K_M · 7B  | 68%       | 4.1s           |
+| Q5_K_M · 7B  | 72%       | 5.8s           |
+| Q4 · 14B     | 81%       | 9.2s           |
+| Q4 · 32B     | 88%       | 18.6s          |
+
+<Callout type="context" title="How to read this">
+Pass rate is against a fixed acceptance test per task. Latency is wall-clock on
+a single consumer GPU; your numbers will move with hardware.
+</Callout>
+
+<Figure caption="Pass rate vs. latency across the four quantizations, the 14B sits on the efficient frontier." kind="chart" />
+
+The 14B at Q4 was the sweet spot for my hardware: most of the quality of the 32B
+at half the latency.

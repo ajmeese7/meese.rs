@@ -1,0 +1,18 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import GraphViewer from "../components/graph/GraphViewer.astro";
+import { getPosts } from "../utils/posts";
+import { buildGraph } from "../utils/graph";
+
+const posts = await getPosts();
+const graph = buildGraph(posts);
+---
+
+<BaseLayout
+  title="Graph"
+  description="A branded concept graph of how the writing on meese.rs connects, posts, notes, and the topics that bind them."
+  current="graph"
+  footer={false}
+>
+  <GraphViewer graph={graph} />
+</BaseLayout>

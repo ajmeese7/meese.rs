@@ -1,0 +1,60 @@
+# AGENTS.md, meese.rs
+
+Guidance for coding agents working in this public repository.
+
+## What this is
+
+- Production domain: **meese.rs**
+- A static-first technical writing site. **Astro + MDX + Pagefind**, deployed to
+  **Cloudflare Pages**. No server runtime, no database, no CMS.
+- Full product spec: `docs/SPEC.md`. The approved visual system (tokens,
+  components, UI kit, brand assets) lives in `design-system/`, read its
+  `project/README.md` before touching anything visual.
+
+## Project structure
+
+```
+src/
+  content.config.ts     content collection schema (posts, incl. reviews)
+  content/posts/*.mdx    the writing, one MDX file per entry
+  components/            layout/, posts/, mdx/, graph/, search/
+  layouts/               BaseLayout, PostLayout, ReviewLayout
+  pages/                 routes (see docs/SPEC.md §11)
+  styles/                tokens + base lifted from design-system, plus the
+                         static-CSS port of the UI-kit components
+  utils/                 posts, dates, topics, backlinks, graph, seo
+  scripts/ (client)      search.ts (Pagefind)
+scripts/                 validate-content.ts, generate-graph.ts (build-time)
+public/                  robots.txt, llms.txt, AGENTS.md, _headers, assets
+```
+
+## Commands
+
+```
+pnpm dev               # local dev (drafts visible)
+pnpm build             # astro build + pagefind index → dist/
+pnpm preview           # serve the built site
+pnpm check             # astro check (types)
+pnpm validate:content  # frontmatter / relation integrity
+pnpm generate:graph    # write public/graph.json snapshot (also served dynamically)
+```
+
+## Conventions
+
+- Sentence case for titles and headings. ALL CAPS + mono only for system labels
+  (`[ GUIDE ]`, `// WARNING`). No emoji anywhere.
+- Body is never monospace; mono is for metadata, code, and chrome.
+- Reference semantic CSS variables (`--text-body`, `--surface-card`, `--accent`,
+  `--border-default`), never raw palette values. The accent is themeable via
+  `data-theme`; default is `neon-violet`.
+- Reading pages ship zero client JS; search and graph may use JS.
+- Drafts (`draft: true`) are excluded from production build, feeds, sitemap,
+  search, and graph.
+
+## Do not
+
+- Add comments, discussion links, or per-post "View MDX" links by default.
+- Add a CMS, admin panel, database, or server runtime without explicit approval.
+- Add terminal-first UX as a primary feature.
+- Reinvent the visual system, it is approved and lives in `design-system/`.
+- Commit secrets. This repository is public.

@@ -1,0 +1,80 @@
+---
+title: "Paseo"
+description: "One self-hosted interface for running Claude Code, Codex, Copilot and other coding agents in parallel, ambitious, and early."
+date: 2026-06-12
+type: review
+topics:
+  - ai-devtools
+  - agents
+  - developer-experience
+tags:
+  - paseo
+  - agents
+  - self-hosted
+draft: false
+featured: true
+review:
+  subject: "Paseo"
+  version: "preview"
+  score: 3.9
+  verdict: watch
+  verdictLabel: "One to watch"
+  tagline: "One self-hosted interface for running Claude Code, Codex, Copilot, OpenCode, and Pi agents in parallel."
+  links:
+    - label: repo
+      href: "https://github.com/getpaseo/paseo"
+    - label: docs
+      href: "https://paseo.sh/docs"
+  meta:
+    - { key: "license", value: "AGPL-3.0" }
+    - { key: "runs", value: "self-hosted daemon" }
+    - { key: "clients", value: "iOS · Android · desktop · CLI" }
+    - { key: "maintainer", value: "solo" }
+  criteria:
+    - name: "Multi-provider"
+      score: 4.5
+      note: "Claude Code, Codex, Copilot, OpenCode, and Pi behind one interface, pick the right model per job."
+    - name: "Cross-device"
+      score: 4.4
+      note: "Start at your desk, check in from your phone, script it from the terminal. The handoff is the point."
+    - name: "Privacy & control"
+      score: 4.3
+      note: "Self-hosted on your own machine with your configs; no telemetry, no forced logins."
+    - name: "Maturity"
+      score: 3.0
+      note: "Young and moving fast. Capable, but expect rough edges and breaking changes."
+    - name: "Docs & support"
+      score: 3.2
+      note: "Solo maintainer; Discord is faster than Issues. Docs cover the happy path."
+  pros:
+    - "One interface across five agent providers"
+    - "Self-hosted, your machine, your tools, your configs"
+    - "Genuinely cross-device, including a real mobile client"
+    - "Privacy-first: no telemetry, no forced login"
+    - "Orchestration skills: handoff, loop, advisor, committee"
+  cons:
+    - "Early and fast-moving; expect breaking changes"
+    - "Solo maintainer, Issues can lag behind Discord"
+    - "AGPL-3.0 will not suit every team or product"
+    - "You still install and configure each agent CLI yourself"
+  bottomLine: "The most interesting take on multi-agent orchestration I have tried, and the cross-device story is real. It is early and solo-maintained, so treat it as a promising daily-driver-in-waiting: run it, follow it, and revisit at a stable release."
+---
+
+## The pitch
+
+Paseo is a self-hosted daemon that runs your coding agents and exposes them
+through one interface, desktop, mobile, web, or CLI. Run several in parallel,
+hand work between them, and drive it all from wherever you are.
+
+## Where it shines
+
+If you already live across Claude Code, Codex, and Copilot, Paseo collapses them
+into one control surface and lets you start a task at your desk and check it from
+your phone. The orchestration skills, handoff, loop, committee, are the
+genuinely novel part.
+
+## Where it bites
+
+It is early and maintained by one person. The ideas are ahead of the polish, and
+AGPL-3.0 plus self-hosting means it is not a drop-in for every team. Watch it; do
+not yet bet a critical workflow on it.

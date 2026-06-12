@@ -1,0 +1,40 @@
+---
+import Icon from "../layout/Icon.astro";
+
+/** Bordered figure frame. With `src`, shows the image; without, a labeled
+ *  placeholder panel (diagram/screenshot/chart) in the brand's grid frame. */
+interface Props {
+  src?: string;
+  alt?: string;
+  caption?: string;
+  kind?: "screenshot" | "diagram" | "chart";
+}
+const { src, alt = "", caption, kind = "diagram" } = Astro.props;
+const ICON: Record<string, string> = {
+  screenshot: "image",
+  diagram: "git-fork",
+  chart: "bar-chart-3",
+};
+---
+
+<figure class="figure">
+  {
+    src ? (
+      <img src={src} alt={alt} />
+    ) : (
+      <div class="figure__placeholder reticle">
+        <span class="tick tl" />
+        <span class="tick tr" />
+        <span class="tick bl" />
+        <span class="tick br" />
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <Icon name={ICON[kind]} size={30} color="var(--accent)" />
+          <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4)">
+            {kind} · placeholder
+          </span>
+        </div>
+      </div>
+    )
+  }
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>

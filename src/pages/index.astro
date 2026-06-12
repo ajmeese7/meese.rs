@@ -1,0 +1,132 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SectionLabel from "../components/layout/SectionLabel.astro";
+import FeedList from "../components/posts/FeedList.astro";
+import ReviewCard from "../components/posts/ReviewCard.astro";
+import Icon from "../components/layout/Icon.astro";
+import { getWriting, getReviews, getPosts } from "../utils/posts";
+import { getTopics } from "../utils/topics";
+import { isoDate } from "../utils/dates";
+
+const writing = await getWriting();
+const reviews = await getReviews();
+const topics = await getTopics();
+const allPosts = await getPosts();
+const latestReview = reviews[0];
+const lastWrite = allPosts[0] ? isoDate(allPosts[0].data.date) : ", ";
+
+// HUMAN INPUT: hero copy is the approved design placeholder, owner should
+// confirm or rewrite before launch (SPEC §13).
+---
+
+<BaseLayout
+  title="meese.rs"
+  description="Practical writing on software, AI/devtools, implementation work, and systems-building. Field notes from a builder."
+  current="latest"
+>
+  <div class="shell">
+    <section class="identity">
+      <div class="identity__lead">
+        <span class="sys-label">// system index</span>
+        <h1>Practical writing on software,<br />AI/devtools, and systems-building.</h1>
+        <p>
+          Tactical guides, dev logs, short notes, labs, and references, long
+          and short in one feed. Built things, learned the tradeoffs, wrote them
+          down.
+        </p>
+      </div>
+      <div class="index-status reticle">
+        <span class="tick tl"></span><span class="tick tr"></span>
+        <span class="tick bl"></span><span class="tick br"></span>
+        <span class="sys-label">// index status</span>
+        <div class="index-status__row">
+          <span class="k">entries</span><span class="v">{String(allPosts.length).padStart(2, "0")}</span>
+        </div>
+        <div class="index-status__row">
+          <span class="k">topics</span><span class="v">{String(topics.length).padStart(2, "0")}</span>
+        </div>
+        <div class="index-status__row">
+          <span class="k">last write</span><span class="v">{lastWrite}</span>
+        </div>
+        <div class="index-status__row">
+          <span class="k">build</span><span class="v">static · pagefind</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="home-grid">
+      <div>
+        {
+          latestReview && (
+            <div style="margin-bottom:30px">
+              <SectionLabel
+                label="latest review"
+                action={`all reviews · ${String(reviews.length).padStart(2, "0")}`}
+                href="/reviews/"
+              />
+              <ReviewCard post={latestReview} />
+            </div>
+          )
+        }
+
+        <SectionLabel
+          label="latest writing"
+          action={`all writing · ${String(writing.length).padStart(2, "0")}`}
+          href="/latest/"
+        />
+        <FeedList posts={writing} />
+      </div>
+
+      <aside class="home-sidebar">
+        <div>
+          <SectionLabel label="active topics" action="topics" href="/topics/" />
+          <div>
+            {
+              topics.slice(0, 6).map((t) => (
+                <a href={`/topics/${t.slug}/`} class="topic-row">
+                  <span class="dot" style={`background:${t.hue}`} />
+                  <span class="label">{t.label}</span>
+                  <span class="count">{String(t.count).padStart(2, "0")}</span>
+                </a>
+              ))
+            }
+          </div>
+        </div>
+
+        <div>
+          <SectionLabel label="graph" />
+          <a href="/graph/" class="graph-teaser">
+            <div class="graph-teaser__canvas">
+              <svg viewBox="0 0 240 132" style="position:absolute;inset:0;width:100%;height:100%">
+                <line x1="60" y1="44" x2="120" y2="80" stroke="var(--line-2)" stroke-width="1"></line>
+                <line x1="120" y1="80" x2="186" y2="50" stroke="var(--line-2)" stroke-width="1"></line>
+                <line x1="120" y1="80" x2="96" y2="112" stroke="var(--line-2)" stroke-width="1"></line>
+                <line x1="186" y1="50" x2="60" y2="44" stroke="var(--line-2)" stroke-width="1"></line>
+                <circle cx="120" cy="80" r="8" fill="var(--accent)"></circle>
+                <circle cx="60" cy="44" r="5.5" fill="var(--hue-cyan)"></circle>
+                <circle cx="186" cy="50" r="6" fill="var(--hue-green)"></circle>
+                <circle cx="96" cy="112" r="4.5" fill="var(--hue-violet)"></circle>
+              </svg>
+            </div>
+            <div class="graph-teaser__foot">
+              <div>
+                <div class="t">Concept graph</div>
+                <div class="s">posts · topics · backlinks</div>
+              </div>
+              <span style="flex:1"></span>
+              <Icon name="git-fork" size={18} color="var(--ink-3)" />
+            </div>
+          </a>
+        </div>
+
+        <div>
+          <SectionLabel label="search" />
+          <button type="button" class="search-tile" data-search-open>
+            <span class="prompt">/</span>
+            <span>Search the index…</span>
+          </button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

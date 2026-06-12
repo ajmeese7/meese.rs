@@ -1,0 +1,24 @@
+---
+import Icon from "./Icon.astro";
+
+/** `// label ──────── action →` section divider. */
+interface Props {
+  label: string;
+  action?: string;
+  href?: string;
+}
+const { label, action, href } = Astro.props;
+---
+
+<div class="section-label">
+  <span class="sys-label">{`// ${label}`}</span>
+  <span class="rule"></span>
+  {
+    action && href && (
+      <a href={href} class="action">
+        {action}
+        <Icon name="arrow-right" size={12} />
+      </a>
+    )
+  }
+</div>

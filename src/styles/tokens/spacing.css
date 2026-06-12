@@ -1,0 +1,36 @@
+/* ============================================================
+   meese.rs — Spacing & Layout
+   ------------------------------------------------------------
+   4px base grid. The "system index" feel comes from a tight,
+   predictable rhythm — favor the smaller steps for chrome.
+   ============================================================ */
+
+:root {
+  --space-0:   0;
+  --space-px:  1px;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-7:   32px;
+  --space-8:   40px;
+  --space-9:   48px;
+  --space-10:  64px;
+  --space-11:  80px;
+  --space-12:  96px;
+  --space-13:  128px;
+
+  /* ---- Semantic spacing ---- */
+  --gap-inline:    var(--space-2);   /* between inline chips/icons   */
+  --gap-stack:     var(--space-4);   /* vertical rhythm in cards     */
+  --pad-card:      var(--space-6);   /* card interior padding        */
+  --pad-card-sm:   var(--space-4);   /* compact (note) card padding  */
+  --pad-section:   var(--space-11);  /* page section spacing         */
+  --gutter:        var(--space-6);   /* page gutter / shell padding  */
+
+  /* ---- Layout primitives ---- */
+  --header-height: 60px;
+  --max-shell:     1200px;
+}

@@ -1,0 +1,227 @@
+---
+import { graphNodeHue, type Graph } from "../../utils/graph";
+
+/** The branded concept graph. Renders the SVG server-side (works with no JS as
+ *  a static diagram); a small island adds hover/select + a detail panel. */
+interface Props {
+  graph: Graph;
+}
+const { graph } = Astro.props;
+const W = 1000;
+const H = 640;
+
+const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+const LEGEND: [string, string][] = [
+  ["topic", "var(--accent)"],
+  ["guide", "var(--hue-cyan)"],
+  ["devlog", "var(--hue-green)"],
+  ["note", "var(--hue-slate)"],
+  ["essay", "var(--hue-violet)"],
+  ["lab", "var(--hue-gold)"],
+  ["reference", "var(--hue-rose)"],
+  ["review", "var(--accent)"],
+];
+
+// serialize a lean version for the client island
+const graphData = {
+  nodes: graph.nodes.map((n) => ({
+    id: n.id,
+    type: n.type,
+    title: n.title,
+    url: n.url,
+  })),
+  edges: graph.edges.map((e) => [e.source, e.target]),
+};
+---
+
+<div class="graph-stage">
+  <div class="graph-stage__grid"></div>
+  <div class="reticle-frame">
+    <span class="tick tl"></span><span class="tick tr"></span>
+    <span class="tick bl"></span><span class="tick br"></span>
+  </div>
+
+  <div class="graph-head">
+    <span class="sys-label">// concept graph</span>
+    <h2>How the writing connects</h2>
+    <p>
+      Posts, notes, and the topics that bind them. Hover a node to trace its
+      edges; click to inspect.
+    </p>
+  </div>
+
+  <div class="graph-legend">
+    {
+      LEGEND.map(([k, c]) => (
+        <span>
+          <span class="dot" style={`background:${c}`} />
+          {k}
+        </span>
+      ))
+    }
+  </div>
+
+  <svg
+    class="graph-svg"
+    viewBox={`0 0 ${W} ${H}`}
+    preserveAspectRatio="xMidYMid meet"
+    data-graph-svg
+  >
+    <g>
+      {
+        graph.edges.map((e) => {
+          const a = nodeById.get(e.source);
+          const b = nodeById.get(e.target);
+          if (!a || !b) return null;
+          return (
+            <line
+              class="edge"
+              data-a={e.source}
+              data-b={e.target}
+              x1={a.x * W}
+              y1={a.y * H}
+              x2={b.x * W}
+              y2={b.y * H}
+            />
+          );
+        })
+      }
+    </g>
+    <g>
+      {
+        graph.nodes.map((n) => (
+          <g
+            class="node"
+            data-id={n.id}
+            data-url={n.url}
+            transform={`translate(${n.x * W},${n.y * H})`}
+            style={`color:${graphNodeHue(n)}`}
+          >
+            <circle class="ring" r={n.r + 7} />
+            <circle class="dot" r={n.r} fill="currentColor" />
+            <text
+              class={n.type === "topic" ? "topic" : "post"}
+              x={n.r + 7}
+              y="4"
+              fill={n.type === "topic" ? "var(--ink-1)" : "var(--ink-2)"}
+            >
+              {n.title}
+            </text>
+          </g>
+        ))
+      }
+    </g>
+  </svg>
+
+  <div class="graph-detail" data-graph-detail hidden></div>
+
+  <p class="visually-hidden">
+    This graph shows relationships between posts, notes, topics, and tags. Use
+    the Topics page or Search page for a non-visual navigation path.
+  </p>
+
+  <script is:inline type="application/json" data-graph-json set:html={JSON.stringify(graphData)} />
+</div>
+
+<script>
+  interface GNode { id: string; type: string; title: string; url: string }
+  const stage = document.querySelector<HTMLElement>(".graph-stage");
+  const svg = document.querySelector<SVGSVGElement>("[data-graph-svg]");
+  const detail = document.querySelector<HTMLElement>("[data-graph-detail]");
+  const json = document.querySelector<HTMLElement>("[data-graph-json]");
+  if (stage && svg && detail && json) {
+    const data: { nodes: GNode[]; edges: [string, string][] } = JSON.parse(
+      json.textContent || "{}",
+    );
+    const nodeMap = new Map(data.nodes.map((n) => [n.id, n]));
+    const adj = new Map<string, Set<string>>();
+    for (const n of data.nodes) adj.set(n.id, new Set());
+    for (const [a, b] of data.edges) {
+      adj.get(a)?.add(b);
+      adj.get(b)?.add(a);
+    }
+
+    const nodeEls = [...svg.querySelectorAll<SVGGElement>(".node")];
+    const edgeEls = [...svg.querySelectorAll<SVGLineElement>(".edge")];
+    let selected: string | null =
+      data.nodes.find((n) => n.type === "topic")?.id ?? data.nodes[0]?.id ?? null;
+    let hovered: string | null = null;
+
+    function focusId() {
+      return hovered || selected;
+    }
+    function paint() {
+      const f = focusId();
+      const active = new Set<string>();
+      if (f) {
+        active.add(f);
+        adj.get(f)?.forEach((x) => active.add(x));
+      }
+      svg!.classList.toggle("has-focus", !!f);
+      for (const el of nodeEls) {
+        const id = el.dataset.id!;
+        el.classList.toggle("on", !f || active.has(id));
+        el.classList.toggle("sel", id === selected);
+      }
+      for (const el of edgeEls) {
+        const on = !f || el.dataset.a === f || el.dataset.b === f;
+        el.classList.toggle("on", on);
+      }
+    }
+
+    function renderDetail() {
+      if (!selected) {
+        detail!.hidden = true;
+        return;
+      }
+      const n = nodeMap.get(selected)!;
+      const neighbors = [...(adj.get(selected) ?? [])]
+        .map((id) => nodeMap.get(id))
+        .filter((x): x is GNode => !!x);
+      const isTopic = n.type === "topic";
+      const badge = isTopic
+        ? `<span class="badge" data-type="review">[ TOPIC ]</span>`
+        : `<span class="badge" data-type="${n.type}">[ ${n.type.toUpperCase()} ]</span>`;
+      const rows = neighbors
+        .map(
+          (nb) =>
+            `<button type="button" data-goto="${nb.id}"><span class="dot" style="background:var(--accent)"></span><span class="lbl">${nb.title}</span></button>`,
+        )
+        .join("");
+      detail!.hidden = false;
+      detail!.innerHTML = `
+        <div class="graph-detail__head">${badge}<span class="graph-detail__edges">${neighbors.length} edges</span></div>
+        <div class="graph-detail__title">${n.title}</div>
+        <div class="graph-detail__neighbors">${rows}</div>
+        <a class="btn" data-variant="accent" data-size="sm" data-full="true" href="${n.url}">${isTopic ? "Open topic →" : "Read →"}</a>`;
+      detail!
+        .querySelectorAll<HTMLButtonElement>("[data-goto]")
+        .forEach((b) =>
+          b.addEventListener("click", () => {
+            selected = b.dataset.goto!;
+            paint();
+            renderDetail();
+          }),
+        );
+    }
+
+    for (const el of nodeEls) {
+      const id = el.dataset.id!;
+      el.addEventListener("mouseenter", () => {
+        hovered = id;
+        paint();
+      });
+      el.addEventListener("mouseleave", () => {
+        hovered = null;
+        paint();
+      });
+      el.addEventListener("click", () => {
+        selected = id;
+        paint();
+        renderDetail();
+      });
+    }
+    paint();
+    renderDetail();
+  }
+</script>

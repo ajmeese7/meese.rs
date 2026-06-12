@@ -1,0 +1,19 @@
+---
+/** Lower-level `#label`. Links to its topic archive by default. */
+interface Props {
+  name: string;
+  href?: string;
+  active?: boolean;
+  class?: string;
+}
+const { name, href, active = false, class: cls } = Astro.props;
+const Tag = href ? "a" : "span";
+---
+
+<Tag
+  href={href}
+  class:list={["tag", { "is-active": active }, cls]}
+  aria-pressed={active ? "true" : undefined}
+>
+  <span class="hash">#</span>{name}
+</Tag>

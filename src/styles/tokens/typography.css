@@ -1,0 +1,58 @@
+/* ============================================================
+   meese.rs — Typography System
+   ------------------------------------------------------------
+   Display  : Space Grotesk  — headings, hero, card titles
+   Body     : IBM Plex Sans  — long-form reading (NOT monospace)
+   Mono     : JetBrains Mono — metadata, code, system labels, search
+
+   Body is set for sustained reading at ~72ch. Mono carries the
+   "system index" chrome: type badges, dates, nav, prompt UI.
+   ============================================================ */
+
+:root {
+  /* ---- Families ---- */
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
+
+  /* ---- Type scale (1.250 major-third-ish, tuned) ---- */
+  --text-2xs:   11px;   /* micro labels, badge text             */
+  --text-xs:    12.5px; /* metadata, captions                   */
+  --text-sm:    14px;   /* compact UI, note body                */
+  --text-base:  16.5px; /* article body baseline                */
+  --text-md:    18px;   /* lead paragraphs                      */
+  --text-lg:    21px;   /* h4 / card titles                     */
+  --text-xl:    26px;   /* h3                                   */
+  --text-2xl:   33px;   /* h2                                   */
+  --text-3xl:   42px;   /* h1 / page title                      */
+  --text-4xl:   54px;   /* hero display                         */
+  --text-5xl:   68px;   /* oversized index numerals             */
+
+  /* ---- Weights ---- */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ---- Line heights ---- */
+  --leading-solid:   1;      /* display numerals               */
+  --leading-tight:   1.12;   /* large headings                 */
+  --leading-snug:    1.32;   /* card titles, subheads          */
+  --leading-normal:  1.45;   /* UI text                        */
+  --leading-relaxed: 1.7;    /* article body — readability     */
+
+  /* ---- Letter spacing ---- */
+  --tracking-tight:   -0.02em;  /* large display                */
+  --tracking-snug:    -0.01em;  /* headings                     */
+  --tracking-normal:  0;
+  --tracking-wide:    0.04em;   /* mono UI labels               */
+  --tracking-wider:   0.12em;   /* uppercase system labels      */
+
+  /* ---- Reading measures ---- */
+  --content-width:       72ch;     /* article column            */
+  --wide-content-width:  1120px;   /* feed / index shell        */
+  --narrow-width:        56ch;     /* notes, asides             */
+
+  /* ---- Composed roles (font shorthand-ish helpers) ---- */
+  --label-system: var(--weight-medium) var(--text-2xs)/1 var(--font-mono);
+}

@@ -1,0 +1,105 @@
+/* ============================================================
+   meese.rs, concept graph (/graph)
+   ------------------------------------------------------------
+   The branded SVG node graph. Hover/selection state is driven by a
+   small client island (GraphViewer); these styles cover the static
+   chrome + the interactive node/edge classes it toggles.
+   ============================================================ */
+
+.graph-stage {
+  position: relative;
+  height: calc(100vh - var(--header-height));
+  overflow: hidden;
+  background: var(--bg-void);
+}
+.graph-stage__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+.graph-stage > .reticle-frame > .tick {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--accent-dim);
+  z-index: 2;
+}
+.graph-stage > .reticle-frame > .tick.tl { top: 14px; left: 14px; border-right: 0; border-bottom: 0; }
+.graph-stage > .reticle-frame > .tick.tr { top: 14px; right: 14px; border-left: 0; border-bottom: 0; }
+.graph-stage > .reticle-frame > .tick.bl { bottom: 14px; left: 14px; border-right: 0; border-top: 0; }
+.graph-stage > .reticle-frame > .tick.br { bottom: 14px; right: 14px; border-left: 0; border-top: 0; }
+
+.graph-head { position: absolute; top: 22px; left: 26px; z-index: 3; max-width: 42ch; }
+.graph-head .sys-label { color: var(--accent); display: block; }
+.graph-head h2 { font-size: var(--text-2xl); margin: 8px 0 0; letter-spacing: -0.01em; }
+.graph-head p { font-family: var(--font-body); font-size: 14px; color: var(--ink-3); margin: 8px 0 0; }
+
+.graph-legend {
+  position: absolute;
+  top: 24px;
+  right: 26px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  max-width: 300px;
+  justify-content: flex-end;
+}
+.graph-legend span { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+.graph-legend .dot { width: 8px; height: 8px; border-radius: 999px; }
+
+.graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.graph-svg .edge { stroke: var(--line-2); stroke-width: 1; opacity: 0.6; transition: opacity var(--dur-3) var(--ease-out), stroke var(--dur-2) var(--ease-out); }
+.graph-svg.has-focus .edge { opacity: 0.18; }
+.graph-svg.has-focus .edge.on { opacity: 0.9; stroke: var(--accent-deep); stroke-width: 1.4; }
+.graph-svg .node { cursor: pointer; transition: opacity var(--dur-3) var(--ease-out); }
+.graph-svg.has-focus .node { opacity: 0.28; }
+.graph-svg.has-focus .node.on { opacity: 1; }
+.graph-svg .node circle.dot { stroke: var(--bg-void); stroke-width: 2; }
+.graph-svg .node.sel circle.dot,
+.graph-svg .node:hover circle.dot { filter: drop-shadow(0 0 8px currentColor); }
+.graph-svg .node circle.ring { display: none; fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.5; }
+.graph-svg .node.sel circle.ring { display: block; }
+.graph-svg .node text.topic { font-family: var(--font-mono); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+.graph-svg .node text.post { font-family: var(--font-body); font-size: 12.5px; }
+
+.graph-detail {
+  position: absolute;
+  bottom: 24px;
+  left: 26px;
+  z-index: 3;
+  width: 320px;
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  backdrop-filter: var(--blur-overlay);
+  -webkit-backdrop-filter: var(--blur-overlay);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  padding: 18px;
+}
+.graph-detail__head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.graph-detail__edges { font-family: var(--font-mono); font-size: 11px; color: var(--ink-4); }
+.graph-detail__title { font-family: var(--font-display); font-weight: 600; font-size: 17px; color: var(--ink-1); margin-bottom: 12px; }
+.graph-detail__neighbors { display: flex; flex-direction: column; gap: 1px; margin-bottom: 14px; max-height: 132px; overflow-y: auto; }
+.graph-detail__neighbors button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.graph-detail__neighbors button:hover { background: var(--surface-3); }
+.graph-detail__neighbors .dot { width: 7px; height: 7px; border-radius: 999px; flex: none; }
+.graph-detail__neighbors span.lbl { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+@media (max-width: 640px) {
+  .graph-legend { display: none; }
+  .graph-detail { width: auto; left: 16px; right: 16px; }
+}

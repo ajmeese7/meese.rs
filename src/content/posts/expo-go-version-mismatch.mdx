@@ -1,0 +1,24 @@
+---
+title: "Expo Go version mismatch is still a bad failure mode"
+description: "A short note on why SDK/runtime mismatch errors remain more confusing than they need to be."
+date: 2026-06-09
+type: note
+topics:
+  - react-native
+  - expo
+tags:
+  - expo-go
+  - developer-experience
+draft: false
+---
+
+The failure mode is genuinely bad: the error names the **runtime** when the real
+mismatch is the **SDK**. You'll burn a few minutes looking in the wrong layer.
+
+<Callout type="note" title="The one-line fix">
+Stop using Expo Go for a bleeding-edge SDK. A dev client pins the runtime to
+your SDK and the whole error class disappears.
+</Callout>
+
+> If the tool can detect the mismatch well enough to error, it can detect it
+> well enough to tell you which side is wrong.

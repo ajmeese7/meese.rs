@@ -1,0 +1,49 @@
+---
+import Icon from "../layout/Icon.astro";
+
+/** The search panel innards, shared by the ⌘K overlay and the /search page. */
+interface Props {
+  showEsc?: boolean;
+}
+const { showEsc = false } = Astro.props;
+const TYPES = ["guide", "note", "devlog", "essay", "lab", "reference", "review"];
+---
+
+<div class="search-panel" data-search-root>
+  <div class="search-input-row">
+    <div class="search-input-box">
+      <span class="prompt">/</span>
+      <input
+        type="search"
+        data-search-input
+        placeholder="Search the index…"
+        aria-label="Search"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+    {showEsc && <button type="button" class="search-esc" data-search-close>ESC</button>}
+  </div>
+
+  <div class="search-filters">
+    <span class="sys-label">type</span>
+    <button type="button" class="tag" data-type="" aria-pressed="true">
+      <span class="hash">#</span>all
+    </button>
+    {
+      TYPES.map((t) => (
+        <button type="button" class="tag" data-type={t} aria-pressed="false">
+          <span class="hash">#</span>
+          {t}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="search-results" data-search-results></div>
+
+  <div class="search-foot">
+    <Icon name="zap" size={12} color="var(--ink-4)" />
+    <span>static index · <span data-search-count>00</span> shown</span>
+  </div>
+</div>

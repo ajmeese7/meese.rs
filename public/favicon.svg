@@ -1,0 +1,12 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="meese.rs">
+  <rect x="1" y="1" width="46" height="46" rx="10" fill="#090A0C" stroke="#22252A" stroke-width="1.5"></rect>
+  
+  <path d="M7 12 V8 H11 M37 8 H41 V12 M41 36 V40 H37 M11 40 H7 V36" stroke="#2E2658" stroke-width="1.4" fill="none"></path>
+  
+  <line x1="15" y1="32" x2="24" y2="15" stroke="#30353C" stroke-width="1.6"></line>
+  <line x1="24" y1="15" x2="34" y2="28" stroke="#30353C" stroke-width="1.6"></line>
+  <line x1="15" y1="32" x2="34" y2="28" stroke="#30353C" stroke-width="1.6"></line>
+  <circle cx="24" cy="15" r="4.2" fill="#9A7CFF"></circle>
+  <circle cx="15" cy="32" r="3.2" fill="#B7A2FF"></circle>
+  <circle cx="34" cy="28" r="3.4" fill="#767D85"></circle>
+</svg>

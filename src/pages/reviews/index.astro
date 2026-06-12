@@ -1,0 +1,91 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ReviewCard from "../../components/posts/ReviewCard.astro";
+import Stars from "../../components/posts/Stars.astro";
+import Icon from "../../components/layout/Icon.astro";
+import { getReviews } from "../../utils/posts";
+
+const reviews = await getReviews();
+const avg = reviews.length
+  ? reviews.reduce((s, p) => s + (p.data.review?.score ?? 0), 0) / reviews.length
+  : 0;
+---
+
+<BaseLayout
+  title="Reviews"
+  description="Honest, score-backed takes on the software and libraries I actually run, full breakdowns, not press releases."
+  current="reviews"
+>
+  <div class="shell" style="padding-top:28px">
+    <a href="/" class="back-link"><Icon name="arrow-left" size={13} /> back to index</a>
+
+    <div class="reviews-header">
+      <div class="reviews-header__lead">
+        <h1 class="page-title">Reviews</h1>
+        <p class="page-lead">
+          Honest, score-backed takes on the software and libraries I actually
+          run. Each one is a full breakdown, performance, DX, tradeoffs, not a
+          press release.
+        </p>
+      </div>
+      <div class="aggregate">
+        <div>
+          <div class="k">reviews</div>
+          <div class="v">{String(reviews.length).padStart(2, "0")}</div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <div class="k">avg score</div>
+          <div class="v-row">
+            <span class="v">{avg.toFixed(1)}</span>
+            <Stars score={avg} size={13} />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-row" style="justify-content:flex-end">
+      <span class="sys-label">sort</span>
+      <button type="button" class="sort-btn" data-sort="recent" aria-pressed="true">newest</button>
+      <button type="button" class="sort-btn" data-sort="score" aria-pressed="false">highest rated</button>
+    </div>
+    <div class="count-rule">
+      <span class="rule"></span>
+      <span class="count">{String(reviews.length).padStart(2, "0")} entries</span>
+    </div>
+
+    <div class="feed" data-review-list>
+      {
+        reviews.map((post) => (
+          <div
+            data-review-item
+            data-score={post.data.review?.score ?? 0}
+            data-date={post.data.date.getTime()}
+          >
+            <ReviewCard post={post} />
+          </div>
+        ))
+      }
+      {reviews.length === 0 && <div class="empty-state">no reviews published yet</div>}
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const list = document.querySelector<HTMLElement>("[data-review-list]");
+  const btns = [...document.querySelectorAll<HTMLButtonElement>("[data-sort]")];
+  if (list && btns.length) {
+    const items = [...list.querySelectorAll<HTMLElement>("[data-review-item]")];
+    const sort = (mode: string) => {
+      const ordered = [...items].sort((a, b) =>
+        mode === "score"
+          ? Number(b.dataset.score) - Number(a.dataset.score)
+          : Number(b.dataset.date) - Number(a.dataset.date),
+      );
+      for (const el of ordered) list.appendChild(el);
+      for (const b of btns)
+        b.setAttribute("aria-pressed", b.dataset.sort === mode ? "true" : "false");
+    };
+    for (const b of btns) b.addEventListener("click", () => sort(b.dataset.sort!));
+  }
+</script>

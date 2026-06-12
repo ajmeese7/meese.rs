@@ -1,0 +1,63 @@
+---
+import BaseHead from "../components/layout/BaseHead.astro";
+import SiteHeader from "../components/layout/SiteHeader.astro";
+import SiteFooter from "../components/layout/SiteFooter.astro";
+import SearchUI from "../components/search/SearchUI.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  current?: string;
+  type?: "website" | "article";
+  publishedTime?: Date;
+  modifiedTime?: Date;
+  tags?: string[];
+  topics?: string[];
+  footer?: boolean;
+}
+const {
+  title,
+  description,
+  current,
+  type,
+  publishedTime,
+  modifiedTime,
+  tags,
+  topics,
+  footer = true,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={title}
+      description={description}
+      type={type}
+      publishedTime={publishedTime}
+      modifiedTime={modifiedTime}
+      tags={tags}
+      topics={topics}
+    />
+    <script is:inline>
+      // Apply the saved accent theme before first paint (default neon-violet),
+      // so there's no flash of the wrong accent.
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem("meeders-theme") || "neon-violet";
+      } catch (e) {
+        document.documentElement.dataset.theme = "neon-violet";
+      }
+    </script>
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <SiteHeader current={current} />
+    <main id="main">
+      <slot />
+    </main>
+    {footer && <SiteFooter />}
+    <SearchUI />
+  </body>
+</html>

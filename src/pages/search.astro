@@ -1,0 +1,35 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SearchPanel from "../components/search/SearchPanel.astro";
+import Icon from "../components/layout/Icon.astro";
+---
+
+<BaseLayout
+  title="Search"
+  description="Static full-text search across all writing on meese.rs, filtered by type, topic, and tag."
+  current="search"
+>
+  <div class="shell" style="padding-top:28px;max-width:760px">
+    <a href="/" class="back-link"><Icon name="arrow-left" size={13} /> back to index</a>
+    <h1 class="page-title">Search</h1>
+    <p class="page-lead">
+      Full-text search over the static index. Filter by type; results update as
+      you type. (Press <kbd
+        style="font-family:var(--font-mono);font-size:11px;border:1px solid var(--line-2);border-radius:3px;padding:1px 5px"
+        >⌘K</kbd
+      > anywhere.)
+    </p>
+    <div style="margin-top:24px">
+      <SearchPanel />
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initSearch } from "../scripts/search";
+  const root = document.querySelector<HTMLElement>("[data-search-root]");
+  if (root) {
+    const handle = initSearch(root);
+    handle.focus();
+  }
+</script>

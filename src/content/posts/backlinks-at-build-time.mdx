@@ -1,0 +1,32 @@
+---
+title: "Generating backlinks at build time"
+description: "A durable explainer of the backlink pass: frontmatter relations, internal links, and shared topics resolved into one graph."
+date: 2026-05-22
+type: reference
+topics:
+  - static-sites
+  - publishing
+tags:
+  - mdx
+  - graph
+draft: false
+---
+
+Backlinks are generated at build time from four sources: manual frontmatter
+relations, internal links, supersedes/supersededBy fields, and shared topics.
+
+```ts
+const edges = posts.flatMap((p) => [
+  ...p.related.map((r) => link(p, r)),
+  ...internalLinks(p),
+]);
+```
+
+- Manual related links first
+- Direct internal-link backlinks second
+- Then "more in this topic"
+
+<Callout type="tip" title="Keep it useful, not exhaustive">
+A backlink section that lists everything is noise. Cap it, rank it, and let the
+graph page handle full discovery.
+</Callout>

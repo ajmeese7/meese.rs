@@ -1,0 +1,40 @@
+---
+import type { GetStaticPaths } from "astro";
+import { render } from "astro:content";
+import PostLayout from "../../layouts/PostLayout.astro";
+import ReviewLayout from "../../layouts/ReviewLayout.astro";
+import Callout from "../../components/mdx/Callout.astro";
+import Aside from "../../components/mdx/Aside.astro";
+import Figure from "../../components/mdx/Figure.astro";
+import DemoFrame from "../../components/mdx/DemoFrame.astro";
+import CodeCaption from "../../components/mdx/CodeCaption.astro";
+import { getPosts } from "../../utils/posts";
+
+export const getStaticPaths = (async () => {
+  const posts = await getPosts();
+  // Posts that point elsewhere don't get a local page.
+  return posts
+    .filter((p) => !p.data.externalUrl)
+    .map((post) => ({ params: { slug: post.id }, props: { post } }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props;
+const allPosts = await getPosts();
+const { Content, headings } = await render(post);
+
+// MDX components available to every post without per-file imports.
+const components = { Callout, Aside, Figure, DemoFrame, CodeCaption };
+const isReview = post.data.type === "review";
+---
+
+{
+  isReview ? (
+    <ReviewLayout post={post} allPosts={allPosts}>
+      <Content components={components} />
+    </ReviewLayout>
+  ) : (
+    <PostLayout post={post} headings={headings} allPosts={allPosts}>
+      <Content components={components} />
+    </PostLayout>
+  )
+}

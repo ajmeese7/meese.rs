@@ -1,0 +1,12 @@
+---
+/** Bordered frame for an embedded interactive demo. */
+interface Props {
+  title?: string;
+}
+const { title = "demo" } = Astro.props;
+---
+
+<div class="demo-frame">
+  <div class="demo-frame__bar">{title}</div>
+  <div class="demo-frame__body"><slot /></div>
+</div>

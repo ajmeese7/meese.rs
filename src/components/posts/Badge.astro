@@ -1,0 +1,40 @@
+---
+/** System-index type/status marker, e.g. `[ GUIDE ]`. */
+interface Props {
+  type?: string;
+  status?: string;
+  label?: string;
+  bracketed?: boolean;
+  class?: string;
+}
+const { type, status, label, bracketed = true, class: cls } = Astro.props;
+
+const TYPE_LABELS: Record<string, string> = {
+  guide: "GUIDE",
+  note: "NOTE",
+  devlog: "DEVLOG",
+  essay: "ESSAY",
+  lab: "LAB",
+  reference: "REF",
+  review: "REVIEW",
+};
+const STATUS_LABELS: Record<string, string> = {
+  updated: "UPDATED",
+  corrected: "CORRECTED",
+  deprecated: "DEPRECATED",
+  superseded: "SUPERSEDED",
+  pinned: "PINNED",
+};
+
+const text =
+  label ??
+  (type ? TYPE_LABELS[type] : status ? STATUS_LABELS[status] : "") ??
+  "";
+const display = bracketed ? `[ ${text} ]` : text;
+---
+
+<span
+  class:list={["badge", cls]}
+  data-type={type}
+  data-status={status}>{display}</span
+>

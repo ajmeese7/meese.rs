@@ -1,0 +1,35 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Icon from "../../components/layout/Icon.astro";
+import { getTopics } from "../../utils/topics";
+
+const topics = await getTopics();
+---
+
+<BaseLayout
+  title="Topics"
+  description="The higher-level threads running through the writing on meese.rs."
+  current="topics"
+>
+  <div class="shell" style="padding-top:28px">
+    <a href="/" class="back-link"><Icon name="arrow-left" size={13} /> back to index</a>
+    <h1 class="page-title">Topics</h1>
+    <p class="page-lead">
+      The higher-level threads running through the writing. Open one for
+      everything filed under it.
+    </p>
+
+    <div class="topics-grid">
+      {
+        topics.map((t) => (
+          <a href={`/topics/${t.slug}/`} class="topic-card" style={`color:${t.hue}`}>
+            <span class="dot" style={`background:${t.hue}`} />
+            <span class="label">{t.label}</span>
+            <span class="count">{String(t.count).padStart(2, "0")}</span>
+            <span class="arrow"><Icon name="arrow-right" size={14} /></span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>

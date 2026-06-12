@@ -1,0 +1,222 @@
+/* meese.rs Color System -- themeable, single-accent.
+   Fixed graphite-black foundation lit by ONE neon accent.
+   Swap the accent by setting data-theme on <html>:
+     <html data-theme="acid-green">
+   Default (no attribute) = neon-violet.
+   Components reference semantic + accent aliases only. Legacy
+   cyan/ember names are kept as aliases so they follow the theme.
+   Themes: neon-violet acid-green neon-lime neon-mint neon-cyan
+           electric-blue hot-magenta neon-pink coral */
+
+:root {
+  /* Foundation: graphite black (theme-independent) */
+  --bg-void: #06070A;
+  --bg-base: #090A0C;
+  --surface-1: #101215;
+  --surface-2: #181B20;
+  --surface-3: #1F232A;
+  --surface-inset: #06070A;
+
+  /* Hairlines and borders */
+  --line-faint: #15171B;
+  --line-1: #22252A;
+  --line-2: #30353C;
+  --line-3: #3D444D;
+
+  /* Ink (text) */
+  --ink-1: #EDEFF1;
+  --ink-2: #AAB0B7;
+  --ink-3: #767D85;
+  --ink-4: #535961;
+
+  /* Muted categorical hues for post-type badges and graph posts.
+     Desaturated so they never compete with the neon accent. */
+  --hue-cyan: #6FA8D6;
+  --hue-slate: #8B95A2;
+  --hue-green: #5FB58C;
+  --hue-violet: #9A8BD8;
+  --hue-gold: #C9A95E;
+  --hue-rose: #CF8497;
+  --hue-ember: #C9A95E;
+
+  /* Semantic status (muted, theme-independent) */
+  --green: #57B58C;
+  --green-wash: rgba(87, 181, 140, 0.12);
+  --gold: #C9A95E;
+  --gold-wash: rgba(201, 169, 94, 0.12);
+  --red: #E0655E;
+  --red-wash: rgba(224, 101, 94, 0.12);
+  --violet: #9A8BD8;
+  --violet-wash: rgba(154, 139, 216, 0.12);
+
+  /* Accent layer -- default theme NEON VIOLET. */
+  --accent: #9A7CFF;
+  --accent-bright: #B7A2FF;
+  --accent-deep: #6A4ED6;
+  --accent-dim: #2E2658;
+  --accent-wash: rgba(154, 124, 255, 0.13);
+  --accent-wash-2: rgba(154, 124, 255, 0.20);
+  --accent-line: rgba(154, 124, 255, 0.42);
+  --accent-glow: rgba(154, 124, 255, 0.55);
+  --on-accent: #0A0814;
+
+  /* Legacy cyan/ember aliases (follow active accent) */
+  --cyan: var(--accent);
+  --cyan-bright: var(--accent-bright);
+  --cyan-deep: var(--accent-deep);
+  --cyan-dim: var(--accent-dim);
+  --cyan-wash: var(--accent-wash);
+  --cyan-wash-2: var(--accent-wash-2);
+  --cyan-glow: var(--accent-glow);
+  --ember: var(--accent);
+  --ember-bright: var(--accent-bright);
+  --ember-deep: var(--accent-deep);
+  --ember-dim: var(--accent-dim);
+  --ember-wash: var(--accent-wash);
+
+  /* Semantic: surfaces */
+  --color-bg: var(--bg-base);
+  --color-bg-void: var(--bg-void);
+  --surface-card: var(--surface-1);
+  --surface-raised: var(--surface-2);
+  --surface-overlay: var(--surface-3);
+  --surface-well: var(--surface-inset);
+
+  /* Semantic: text */
+  --text-heading: var(--ink-1);
+  --text-body: var(--ink-2);
+  --text-muted: var(--ink-3);
+  --text-faint: var(--ink-4);
+  --text-on-accent: var(--on-accent);
+  --ink-inverse: var(--on-accent);
+
+  /* Semantic: lines */
+  --border-faint: var(--line-faint);
+  --border-default: var(--line-1);
+  --border-strong: var(--line-2);
+  --border-active: var(--line-3);
+
+  /* Semantic: interactive / brand */
+  --accent-hover: var(--accent-bright);
+  --accent-press: var(--accent-deep);
+  --link: var(--accent);
+  --link-hover: var(--accent-bright);
+  --brand: var(--accent);
+  --brand-hover: var(--accent-bright);
+
+  /* Semantic: focus */
+  --focus-ring: var(--accent-glow);
+  --focus-line: var(--accent);
+
+  /* Semantic: status */
+  --status-ok: var(--green);
+  --status-ok-bg: var(--green-wash);
+  --status-warn: var(--gold);
+  --status-warn-bg: var(--gold-wash);
+  --status-danger: var(--red);
+  --status-danger-bg: var(--red-wash);
+  --status-info: var(--accent);
+  --status-info-bg: var(--accent-wash);
+}
+
+/* THEME PRESETS -- each sets only the nine accent vars. */
+
+[data-theme="neon-violet"] {
+  --accent: #9A7CFF;
+  --accent-bright: #B7A2FF;
+  --accent-deep: #6A4ED6;
+  --accent-dim: #2E2658;
+  --accent-wash: rgba(154, 124, 255, 0.13);
+  --accent-wash-2: rgba(154, 124, 255, 0.20);
+  --accent-line: rgba(154, 124, 255, 0.42);
+  --accent-glow: rgba(154, 124, 255, 0.55);
+  --on-accent: #0A0814;
+}
+[data-theme="acid-green"] {
+  --accent: #84F24B;
+  --accent-bright: #A6FF73;
+  --accent-deep: #57B82C;
+  --accent-dim: #25441A;
+  --accent-wash: rgba(132, 242, 75, 0.13);
+  --accent-wash-2: rgba(132, 242, 75, 0.20);
+  --accent-line: rgba(132, 242, 75, 0.44);
+  --accent-glow: rgba(132, 242, 75, 0.55);
+  --on-accent: #07140A;
+}
+[data-theme="neon-lime"] {
+  --accent: #CCFF42;
+  --accent-bright: #DEFF73;
+  --accent-deep: #9BCC2A;
+  --accent-dim: #36420F;
+  --accent-wash: rgba(204, 255, 66, 0.13);
+  --accent-wash-2: rgba(204, 255, 66, 0.20);
+  --accent-line: rgba(204, 255, 66, 0.44);
+  --accent-glow: rgba(204, 255, 66, 0.55);
+  --on-accent: #0F1405;
+}
+[data-theme="neon-mint"] {
+  --accent: #35F0A2;
+  --accent-bright: #6BFAC0;
+  --accent-deep: #1FB87A;
+  --accent-dim: #143F30;
+  --accent-wash: rgba(53, 240, 162, 0.13);
+  --accent-wash-2: rgba(53, 240, 162, 0.20);
+  --accent-line: rgba(53, 240, 162, 0.44);
+  --accent-glow: rgba(53, 240, 162, 0.55);
+  --on-accent: #04130C;
+}
+[data-theme="neon-cyan"] {
+  --accent: #29E7F2;
+  --accent-bright: #6FF3FB;
+  --accent-deep: #1AAAB3;
+  --accent-dim: #103B40;
+  --accent-wash: rgba(41, 231, 242, 0.13);
+  --accent-wash-2: rgba(41, 231, 242, 0.20);
+  --accent-line: rgba(41, 231, 242, 0.44);
+  --accent-glow: rgba(41, 231, 242, 0.55);
+  --on-accent: #03171A;
+}
+[data-theme="electric-blue"] {
+  --accent: #5391FF;
+  --accent-bright: #82B0FF;
+  --accent-deep: #3568D6;
+  --accent-dim: #1B2C52;
+  --accent-wash: rgba(83, 145, 255, 0.13);
+  --accent-wash-2: rgba(83, 145, 255, 0.20);
+  --accent-line: rgba(83, 145, 255, 0.42);
+  --accent-glow: rgba(83, 145, 255, 0.55);
+  --on-accent: #F2F6FF;
+}
+[data-theme="hot-magenta"] {
+  --accent: #FF3DA1;
+  --accent-bright: #FF74BF;
+  --accent-deep: #D11A78;
+  --accent-dim: #4A1330;
+  --accent-wash: rgba(255, 61, 161, 0.13);
+  --accent-wash-2: rgba(255, 61, 161, 0.20);
+  --accent-line: rgba(255, 61, 161, 0.42);
+  --accent-glow: rgba(255, 61, 161, 0.55);
+  --on-accent: #1A0510;
+}
+[data-theme="neon-pink"] {
+  --accent: #FF73B6;
+  --accent-bright: #FF9ACE;
+  --accent-deep: #DB5594;
+  --accent-dim: #4A1F33;
+  --accent-wash: rgba(255, 115, 182, 0.13);
+  --accent-wash-2: rgba(255, 115, 182, 0.20);
+  --accent-line: rgba(255, 115, 182, 0.42);
+  --accent-glow: rgba(255, 115, 182, 0.55);
+  --on-accent: #1A0712;
+}
+[data-theme="coral"] {
+  --accent: #FF5E73;
+  --accent-bright: #FF8A99;
+  --accent-deep: #DB4257;
+  --accent-dim: #471A22;
+  --accent-wash: rgba(255, 94, 115, 0.13);
+  --accent-wash-2: rgba(255, 94, 115, 0.20);
+  --accent-line: rgba(255, 94, 115, 0.42);
+  --accent-glow: rgba(255, 94, 115, 0.55);
+  --on-accent: #190609;
+}

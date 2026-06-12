@@ -1,0 +1,57 @@
+---
+import type { GetStaticPaths } from "astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FeedList from "../../components/posts/FeedList.astro";
+import Icon from "../../components/layout/Icon.astro";
+import { getByTopic } from "../../utils/posts";
+import { getTopics, getRelatedTopics, topicHue } from "../../utils/topics";
+
+export const getStaticPaths = (async () => {
+  const topics = await getTopics();
+  return topics.map((t) => ({ params: { topic: t.slug } }));
+}) satisfies GetStaticPaths;
+
+const { topic } = Astro.params;
+const posts = await getByTopic(topic!);
+const related = await getRelatedTopics(topic!);
+const hue = topicHue(topic!);
+---
+
+<BaseLayout
+  title={`#${topic}`}
+  description={`Everything on meese.rs filed under ${topic}.`}
+  current="topics"
+  topics={[topic!]}
+>
+  <div class="shell" style="padding-top:28px">
+    <a href="/topics/" class="back-link"><Icon name="arrow-left" size={13} /> back to topics</a>
+    <h1 class="page-title" style={`color:${hue}`}>
+      <span style={`color:var(--ink-4)`}>#</span>{topic}
+    </h1>
+    <p class="page-lead">Everything filed under {topic}, newest first.</p>
+
+    {
+      related.length > 0 && (
+        <div class="filter-row">
+          <span class="sys-label">related</span>
+          {related.map((t) => (
+            <a href={`/topics/${t.slug}/`} class="tag">
+              <span class="hash">#</span>
+              {t.label}
+            </a>
+          ))}
+        </div>
+      )
+    }
+
+    <div class="count-rule">
+      <span class="rule"></span>
+      <span class="count">{String(posts.length).padStart(2, "0")} entries</span>
+    </div>
+    <FeedList posts={posts} />
+
+    <div style="margin-top:32px">
+      <a href="/graph/" class="tag"><Icon name="git-fork" size={13} /> see this in the graph</a>
+    </div>
+  </div>
+</BaseLayout>

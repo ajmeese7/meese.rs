@@ -1,0 +1,174 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Badge from "../components/posts/Badge.astro";
+import Stars from "../components/posts/Stars.astro";
+import Icon from "../components/layout/Icon.astro";
+import PagefindMeta from "../components/posts/PagefindMeta.astro";
+import { isoDate } from "../utils/dates";
+import { postUrl, type Post } from "../utils/posts";
+import { getBacklinks } from "../utils/backlinks";
+
+interface Props {
+  post: Post;
+  allPosts: Post[];
+}
+const { post, allPosts } = Astro.props;
+const d = post.data;
+const r = d.review!;
+const reviewed = isoDate(d.updated ?? d.date);
+const backlinks = getBacklinks(post, allPosts);
+const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic].slice(0, 3);
+---
+
+<BaseLayout
+  title={`${r.subject} review`}
+  description={r.tagline ?? d.description}
+  type="article"
+  current="reviews"
+  publishedTime={d.date}
+  modifiedTime={d.updated}
+  tags={d.tags}
+  topics={d.topics}
+>
+  <div class="shell" data-pagefind-body>
+    <PagefindMeta post={post} />
+    <a href="/reviews/" class="back-link">
+      <Icon name="arrow-left" size={13} /> back to reviews
+    </a>
+
+    <div class="review-grid">
+      <div>
+        <div class="review__head">
+          <Badge type="review" />
+          <span class="verdict" data-verdict={r.verdict}>
+            {r.verdictLabel.toUpperCase()}
+          </span>
+          <span class="review__reviewed">reviewed {reviewed}</span>
+        </div>
+
+        <div class="review__title-row">
+          <h1>{r.subject}</h1>
+          {r.version && <span class="review__version">{r.version}</span>}
+        </div>
+        {r.tagline && <p class="review__tagline">{r.tagline}</p>}
+
+        <div class="score-band">
+          <div class="score-band__num">
+            <span class="n">{r.score.toFixed(1)}</span><span class="d">/ 5</span>
+          </div>
+          <span class="divider"></span>
+          <Stars score={r.score} size={20} />
+          {
+            r.links.length > 0 && (
+              <div class="score-band__links">
+                {r.links.map((l) => (
+                  <a href={l.href}>
+                    <Icon name={l.label === "repo" ? "github" : "book-open"} size={12} />
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+            )
+          }
+        </div>
+
+        {
+          r.meta.length > 0 && (
+            <div class="review__meta">
+              {r.meta.map((m) => (
+                <span>{m.key}: <b>{m.value}</b></span>
+              ))}
+            </div>
+          )
+        }
+
+        {
+          r.criteria.length > 0 && (
+            <>
+              <span class="sys-label" style="display:block;margin:34px 0 14px">// score breakdown</span>
+              <div class="criteria">
+                {r.criteria.map((c) => (
+                  <div class="criteria__row">
+                    <span class="criteria__name">{c.name}</span>
+                    <span class="criteria__score">
+                      <Stars score={c.score} size={13} />
+                      <span class="n">{c.score.toFixed(1)}</span>
+                    </span>
+                    <span class="criteria__note">{c.note}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )
+        }
+
+        {
+          (r.pros.length > 0 || r.cons.length > 0) && (
+            <div class="proscons">
+              <div class="proscons__col" data-kind="pros">
+                <div class="proscons__title" data-kind="pros">Pros</div>
+                <ul>
+                  {r.pros.map((p) => (
+                    <li><span class="mark"><Icon name="plus" size={13} /></span>{p}</li>
+                  ))}
+                </ul>
+              </div>
+              <div class="proscons__col" data-kind="cons">
+                <div class="proscons__title" data-kind="cons">Cons</div>
+                <ul>
+                  {r.cons.map((c) => (
+                    <li><span class="mark"><Icon name="minus" size={13} /></span>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )
+        }
+
+        <article class="prose" style="margin-top:36px;max-width:none">
+          <slot />
+        </article>
+
+        {
+          r.bottomLine && (
+            <div class="bottom-line">
+              <span class="sys-label">// the bottom line</span>
+              <p>{r.bottomLine}</p>
+            </div>
+          )
+        }
+      </div>
+
+      <aside class="review-aside">
+        <div class="verdict-panel reticle">
+          <span class="tick tl"></span><span class="tick tr"></span>
+          <span class="tick bl"></span><span class="tick br"></span>
+          <span class="sys-label">// verdict</span>
+          <div class="verdict-panel__num">
+            <span class="n">{r.score.toFixed(1)}</span><span class="d">/ 5</span>
+          </div>
+          <Stars score={r.score} size={18} />
+          <div class="verdict-panel__label" style={`color:var(--${r.verdict === "recommended" ? "green" : r.verdict === "caveats" ? "gold" : r.verdict === "skip" ? "red" : "accent"})`}>
+            {r.verdictLabel.toUpperCase()}
+          </div>
+        </div>
+
+        {
+          related.length > 0 && (
+            <div>
+              <span class="sys-label" style="display:block;margin-bottom:12px">// related</span>
+              <div class="related-list">
+                {related.map((p) => (
+                  <a href={postUrl(p)}>
+                    <Badge type={p.data.type} />
+                    <span class="t">{p.data.title}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )
+        }
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

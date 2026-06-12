@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import FeedList from "../components/posts/FeedList.astro";
+import Icon from "../components/layout/Icon.astro";
+import { getByType } from "../utils/posts";
+
+const posts = await getByType("guide");
+---
+
+<BaseLayout
+  title="Guides"
+  description="Tactical, practical how-to-do-X writing, updated in place as tooling changes."
+  current="guides"
+>
+  <div class="shell" style="padding-top:28px">
+    <a href="/" class="back-link"><Icon name="arrow-left" size={13} /> back to index</a>
+    <h1 class="page-title">Guides</h1>
+    <p class="page-lead">
+      Tactical, practical how-to-do-X writing, updated in place as tooling
+      changes.
+    </p>
+    <div class="count-rule">
+      <span class="rule"></span>
+      <span class="count">{String(posts.length).padStart(2, "0")} entries</span>
+    </div>
+    <FeedList posts={posts} emptyText="no guides published yet" />
+  </div>
+</BaseLayout>
