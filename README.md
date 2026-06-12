@@ -72,8 +72,6 @@ docs/
 
 Cloudflare Pages, framework preset **Astro**, build command `pnpm build`, output
 `dist`, production branch `master`. The owner connects the repo and configures
-the `meese.rs` domain. Full step-by-step (dashboard setup, custom domain,
-toolchain pinning, rollback, troubleshooting) is in
-[`docs/DEPLOY.md`](./docs/DEPLOY.md).
+the `meese.rs` domain.
 
 For agents working in this repo, read [`AGENTS.md`](./AGENTS.md).
