@@ -14,9 +14,7 @@ export default defineConfig({
     mdx(),
     sitemap({
       filter: (page) =>
-        !page.includes("/search") &&
-        !page.includes("/graph") &&
-        !page.includes("/ux/"),
+        !page.includes("/search") && !page.includes("/graph"),
     }),
   ],
   build: {

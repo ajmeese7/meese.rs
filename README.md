@@ -64,7 +64,6 @@ public/                   robots.txt · llms.txt · AGENTS.md · _headers · ass
 design-system/            the approved Claude Design handoff bundle
 docs/SPEC.md              the product specification (source of truth)
 docs/CONTENT.md           writer reference: types, statuses, verdicts, topics/tags
-src/pages/ux/             visual experiments as dev-only routes (noindex, no nav)
 ```
 
 ## Deploy
