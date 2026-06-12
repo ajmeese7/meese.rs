@@ -1,5 +1,5 @@
 /* ============================================================
-   meese.rs — Base layer
+   meese.rs, Base layer
    ------------------------------------------------------------
    Element resets, the signature grid backdrop, link & focus
    styling, scrollbars, selection, and the .prose reading column.
@@ -13,7 +13,7 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   background-color: var(--color-bg);
-  /* signature faint system grid — restrained, blueprint-like */
+  /* signature faint system grid, restrained, blueprint-like */
   background-image:
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
@@ -46,7 +46,9 @@ a {
   text-decoration-thickness: 1px;
   transition: color var(--dur-1) var(--ease-out);
 }
-a:hover { color: var(--link-hover); text-decoration: underline; }
+a:hover { color: var(--link-hover); }
+/* Inline prose links underline (rule below); structural links (cards, tags,
+   nav, teasers) signal hover via color/border instead, never underline. */
 
 /* ---- Mono system label utility ---- */
 .sys-label {
@@ -86,7 +88,7 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 *::-webkit-scrollbar-thumb:hover { background: var(--line-3); background-clip: content-box; }
 
 /* ============================================================
-   .prose — the long-form reading column (~72ch)
+   .prose, the long-form reading column (~72ch)
    ============================================================ */
 .prose {
   max-width: var(--content-width);

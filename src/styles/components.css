@@ -706,6 +706,7 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   border-top: 1px solid var(--line-1);
 }
 .graph-teaser__foot .t { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink-1); }
+.graph-teaser:hover .graph-teaser__foot .t { text-decoration: underline; text-underline-offset: 3px; }
 .graph-teaser__foot .s { font-family: var(--font-mono); font-size: 11px; color: var(--ink-4); margin-top: 2px; }
 .search-tile {
   width: 100%;
@@ -1020,6 +1021,8 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 .search-input-box:focus-within { border-color: var(--accent); box-shadow: var(--glow-soft); }
 .search-input-box .prompt { color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
 .search-input-box input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--ink-1); font-family: var(--font-mono); font-size: 14px; }
+/* The box shows focus via :focus-within; suppress the input's own global ring. */
+.search-input-box input:focus-visible { box-shadow: none; }
 .search-esc { font-family: var(--font-mono); font-size: 10px; color: var(--ink-4); background: var(--surface-2); border: 1px solid var(--line-1); border-radius: 3px; padding: 4px 7px; cursor: pointer; }
 .search-filters { padding: 12px 16px; border-bottom: 1px solid var(--line-1); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .search-results { max-height: 48vh; overflow-y: auto; }
