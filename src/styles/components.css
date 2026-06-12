@@ -1135,6 +1135,10 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   .related-grid,
   .proscons { grid-template-columns: 1fr; }
   .criteria__row { grid-template-columns: 1fr; gap: 4px; }
+
+  /* The index-status counters (entries / topics / last write) are a desktop
+     flourish; stacked under the hero on a narrow screen they earn no keep. */
+  .index-status { display: none; }
 }
 
 @media (max-width: 640px) {
