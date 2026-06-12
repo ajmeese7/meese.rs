@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Static-first technical writing site, field notes from a builder.",
+  "packageManager": "pnpm@11.2.2",
   "scripts": {
     "dev": "astro dev",
     "build": "pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",

@@ -64,12 +64,15 @@ public/                   robots.txt · llms.txt · AGENTS.md · _headers · ass
 design-system/            the approved Claude Design handoff bundle
 docs/SPEC.md              the product specification (source of truth)
 docs/CONTENT.md           writer reference: types, statuses, verdicts, topics/tags
+docs/DEPLOY.md            Cloudflare Pages deploy guide (setup, domain, rollback)
 ```
 
 ## Deploy
 
 Cloudflare Pages, framework preset **Astro**, build command `pnpm build`, output
 `dist`, production branch `master`. The owner connects the repo and configures
-the `meese.rs` domain (see `docs/SPEC.md` §8, §40).
+the `meese.rs` domain. Full step-by-step (dashboard setup, custom domain,
+toolchain pinning, rollback, troubleshooting) is in
+[`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 For agents working in this repo, read [`AGENTS.md`](./AGENTS.md).
