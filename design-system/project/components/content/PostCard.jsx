@@ -59,7 +59,7 @@ export function PostCard({
         fontWeight: 600,
         lineHeight: 1.2,
         letterSpacing: '-0.01em',
-        color: hover ? 'var(--cyan-bright)' : 'var(--ink-1)',
+        color: hover ? 'var(--accent-bright)' : 'var(--ink-1)',
         margin: 0,
         transition: 'color var(--dur-1) var(--ease-out)',
         textWrap: 'pretty',
@@ -96,7 +96,7 @@ export function PostCard({
 }
 
 function Reticle() {
-  const c = { position: 'absolute', width: 11, height: 11, border: '1.5px solid var(--cyan-deep)' };
+  const c = { position: 'absolute', width: 11, height: 11, border: '1.5px solid var(--accent-deep)' };
   return (
     <>
       <span style={{ ...c, top: 7, left: 7, borderRight: 0, borderBottom: 0 }} />

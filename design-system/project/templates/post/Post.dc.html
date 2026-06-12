@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Post — reading page" description="Long-form meese.rs reading page: brand chrome, type/status badges, .prose body with a Callout, code + blockquote, topics, and backlinks. Copy and replace the content." -->
+<helmet>
+<script src="./ds-base.js"></script>
+</helmet>
+
+<div style="min-height:100%;display:flex;flex-direction:column">
+
+  <header style="position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:24px;height:60px;padding:0 32px;background:color-mix(in srgb, var(--bg-base) 84%, transparent);backdrop-filter:blur(10px) saturate(120%);border-bottom:1px solid var(--line-1)">
+    <a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <img src="../../assets/logomark.svg" alt="" width="24" height="24" style="display:block">
+      <span style="font-family:var(--font-display);font-weight:600;font-size:18px;letter-spacing:-0.01em;color:var(--ink-1)">meese<span style="color:var(--accent)">.rs</span></span>
+    </a>
+    <nav style="display:flex;gap:22px;margin-left:10px;font-family:var(--font-mono);font-size:14px">
+      <a href="#" style="color:var(--ink-1);text-decoration:none">Latest</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Guides</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Notes</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Reviews</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Topics</a>
+    </nav>
+    <span style="flex:1"></span>
+    <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-3);border:1px solid var(--line-2);border-radius:5px;padding:5px 10px">/ &nbsp;search</span>
+  </header>
+
+  <main style="width:100%;max-width:760px;margin:0 auto;padding:56px 32px 96px">
+
+    <a href="#" style="display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:13px;color:var(--ink-3);text-decoration:none;margin-bottom:28px">&larr; back to index</a>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Badge" type="guide" hint-size="68px,20px"></x-import>
+      <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Badge" status="updated" hint-size="86px,20px"></x-import>
+      <span style="flex:1"></span>
+      <span style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-3)">2026-06-08 &middot; 7 min</span>
+    </div>
+
+    <h1 style="font-family:var(--font-display);font-weight:600;font-size:42px;line-height:1.12;letter-spacing:-0.02em;color:var(--ink-1);margin:0 0 18px;text-wrap:balance">Getting an Expo SDK 56 app running on a real device</h1>
+
+    <p style="font-family:var(--font-body);font-size:18px;line-height:1.55;color:var(--ink-2);margin:0 0 22px;max-width:62ch;text-wrap:pretty">Modernizing an old app to the newest SDK turns up a few gotchas the docs never connect for you. Here is the path that actually worked, in order, with the errors you will see along the way.</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:36px">
+      <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Tag" href="#react-native" hint-size="100px,24px">react-native</x-import>
+      <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Tag" href="#expo" hint-size="60px,24px">expo</x-import>
+      <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Tag" href="#mobile-dev" hint-size="96px,24px">mobile-dev</x-import>
+    </div>
+
+    <div style="height:1px;background:var(--line-1);margin-bottom:36px"></div>
+
+    <article class="prose">
+      <p>The upgrade itself is one command. Everything that breaks afterward is a version-mismatch problem wearing a different mask each time &mdash; the JS bundle, the dev client, and the native runtime all have to agree, and the error you get rarely names the one that disagreed.</p>
+
+      <h2>Start from a clean dev client</h2>
+      <p>Before touching the SDK version, rebuild the development client so you are debugging one change at a time. A stale dev client is the single most common reason a &ldquo;successful&rdquo; upgrade still red-screens on launch.</p>
+
+      <pre><code>npx expo install expo@^56.0.0
+npx expo prebuild --clean
+eas build --profile development --platform android</code></pre>
+
+      <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Callout" type="warning" title="The dev client is not the app" hint-size="100%,96px">If you install SDK 56 but launch yesterday&rsquo;s dev client, the runtime mismatch surfaces as an opaque bundling error. Rebuild the client first, then load JS into it.</x-import>
+
+      <h2>Read the error, not the stack</h2>
+      <p>The runtime points at the JS bundle, but the real problem is usually the native side that loaded it. When you see a mismatch error, check the installed <code>expo</code> version against the dev client&rsquo;s embedded runtime before you touch anything in <code>metro.config.js</code>.</p>
+
+      <blockquote>The fastest path through an SDK upgrade is to stop trusting the first error and verify the three versions agree by hand.</blockquote>
+
+      <p>Once the three agree, the rest of the upgrade is ordinary: bump the libraries Expo flags, run the app on device, and fix the handful of API renames the changelog lists explicitly.</p>
+    </article>
+
+    <div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--line-1)">
+      <div style="font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px">// related &middot; same topic</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <a href="#" style="display:flex;align-items:center;gap:12px;padding:12px 0;text-decoration:none;border-bottom:1px solid var(--line-faint)">
+          <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Badge" type="note" hint-size="72px,20px"></x-import>
+          <span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-1)">Expo Go version mismatch is still a bad failure mode</span>
+        </a>
+        <a href="#" style="display:flex;align-items:center;gap:12px;padding:12px 0;text-decoration:none">
+          <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.Badge" type="lab" hint-size="60px,20px"></x-import>
+          <span style="font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--ink-1)">Benchmarking local LLMs for task-specific code edits</span>
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

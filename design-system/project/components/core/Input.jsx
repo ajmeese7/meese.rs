@@ -38,7 +38,7 @@ export function Input({
         padding: '0 12px',
         background: 'var(--surface-well)',
         border: '1px solid',
-        borderColor: focus ? 'var(--cyan)' : 'var(--line-2)',
+        borderColor: focus ? 'var(--accent)' : 'var(--line-2)',
         borderRadius: isSearch ? 'var(--radius-md)' : 'var(--radius-sm)',
         boxShadow: focus ? 'var(--glow-soft)' : 'none',
         opacity: disabled ? 0.5 : 1,
@@ -47,7 +47,7 @@ export function Input({
       }}
     >
       {lead ? (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)', color: focus ? 'var(--cyan)' : 'var(--ink-4)', fontWeight: 600 }}>{lead}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)', color: focus ? 'var(--accent)' : 'var(--ink-4)', fontWeight: 600 }}>{lead}</span>
       ) : null}
       {iconLeft ? <span style={{ display: 'inline-flex', color: 'var(--ink-3)' }}>{iconLeft}</span> : null}
       <input

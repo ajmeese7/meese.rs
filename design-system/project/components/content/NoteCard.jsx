@@ -39,7 +39,7 @@ export function NoteCard({ title, body, date, href = '#', style, ...rest }) {
             fontFamily: 'var(--font-display)',
             fontSize: 'var(--text-base)',
             fontWeight: 600,
-            color: hover ? 'var(--cyan-bright)' : 'var(--ink-1)',
+            color: hover ? 'var(--accent-bright)' : 'var(--ink-1)',
             transition: 'color var(--dur-1) var(--ease-out)',
             marginBottom: 4,
             textWrap: 'pretty',

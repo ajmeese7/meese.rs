@@ -319,14 +319,14 @@
     { slug: 'expo', label: 'expo', count: 5, hue: 'var(--hue-cyan)' },
     { slug: 'developer-experience', label: 'developer-experience', count: 4, hue: 'var(--hue-rose)' },
     { slug: 'publishing', label: 'publishing', count: 3, hue: 'var(--hue-slate)' },
-    { slug: 'security', label: 'security', count: 2, hue: 'var(--hue-ember)' },
+    { slug: 'security', label: 'security', count: 2, hue: 'var(--hue-gold)' },
   ];
 
   // Concept graph: posts + topics, edges by topic membership
   const TYPE_HUE = {
     guide: 'var(--hue-cyan)', note: 'var(--hue-slate)', devlog: 'var(--hue-green)',
     essay: 'var(--hue-violet)', lab: 'var(--hue-gold)', reference: 'var(--hue-rose)',
-    topic: 'var(--ember)',
+    topic: 'var(--accent)',
   };
 
   // hand-placed positions (0..1) for a sleek, legible layout

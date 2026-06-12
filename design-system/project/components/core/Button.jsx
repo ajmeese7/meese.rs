@@ -30,8 +30,8 @@ export function Button({
 
   const variants = {
     primary: {
-      base: { background: 'var(--cyan)', color: 'var(--ink-inverse)', border: '1px solid var(--cyan)' },
-      hover: { background: 'var(--cyan-bright)', borderColor: 'var(--cyan-bright)', boxShadow: 'var(--glow-soft)' },
+      base: { background: 'var(--accent)', color: 'var(--ink-inverse)', border: '1px solid var(--accent)' },
+      hover: { background: 'var(--accent-bright)', borderColor: 'var(--accent-bright)', boxShadow: 'var(--glow-soft)' },
     },
     secondary: {
       base: { background: 'var(--surface-2)', color: 'var(--ink-1)', border: '1px solid var(--line-2)' },
@@ -42,8 +42,8 @@ export function Button({
       hover: { background: 'var(--surface-2)', color: 'var(--ink-1)' },
     },
     accent: {
-      base: { background: 'var(--cyan-wash)', color: 'var(--cyan-bright)', border: '1px solid var(--cyan-dim)' },
-      hover: { background: 'var(--cyan-wash-2)', borderColor: 'var(--cyan-deep)' },
+      base: { background: 'var(--accent-wash)', color: 'var(--accent-bright)', border: '1px solid var(--accent-dim)' },
+      hover: { background: 'var(--accent-wash-2)', borderColor: 'var(--accent-deep)' },
     },
     danger: {
       base: { background: 'var(--red-wash)', color: 'var(--red)', border: '1px solid var(--red)' },

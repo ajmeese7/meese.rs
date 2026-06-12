@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":3,"namespace":"MeeseRsDesignSystem_ed1971","components":[{"name":"Callout","sourcePath":"components/content/Callout.jsx"},{"name":"NoteCard","sourcePath":"components/content/NoteCard.jsx"},{"name":"PostCard","sourcePath":"components/content/PostCard.jsx"},{"name":"Stars","sourcePath":"components/content/ReviewCard.jsx"},{"name":"ReviewCard","sourcePath":"components/content/ReviewCard.jsx"},{"name":"Badge","sourcePath":"components/core/Badge.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"Input","sourcePath":"components/core/Input.jsx"},{"name":"Tag","sourcePath":"components/core/Tag.jsx"}],"sourceHashes":{"components/content/Callout.jsx":"3cb79245f285","components/content/NoteCard.jsx":"5d57c8da7df9","components/content/PostCard.jsx":"610bcf3cd87f","components/content/ReviewCard.jsx":"1df8e9b39819","components/core/Badge.jsx":"28e39b12f080","components/core/Button.jsx":"d5fc65ec84af","components/core/Input.jsx":"37938f8f85d0","components/core/Tag.jsx":"f1dc13e62607","ui_kits/website/Chrome.jsx":"3b266ed8b49a","ui_kits/website/GraphView.jsx":"058701d6eb83","ui_kits/website/Home.jsx":"8c5a040fb4d7","ui_kits/website/ListView.jsx":"aaf0ad90b878","ui_kits/website/PostView.jsx":"4d5da1e4d54f","ui_kits/website/ReviewView.jsx":"a87059b29567","ui_kits/website/ReviewsView.jsx":"d2427667b51c","ui_kits/website/SearchOverlay.jsx":"9b79b0aa6ee8","ui_kits/website/TopicsView.jsx":"506eb665d377","ui_kits/website/app.jsx":"b84bd3c73b95","ui_kits/website/data.js":"4b114ef0c318","ui_kits/website/kit-primitives.js":"0207bc20f690"},"inlinedExternals":[],"unexposedExports":[]} */
+/* @ds-bundle: {"format":3,"namespace":"MeeseRsDesignSystem_ed1971","components":[{"name":"Callout","sourcePath":"components/content/Callout.jsx"},{"name":"NoteCard","sourcePath":"components/content/NoteCard.jsx"},{"name":"PostCard","sourcePath":"components/content/PostCard.jsx"},{"name":"Stars","sourcePath":"components/content/ReviewCard.jsx"},{"name":"ReviewCard","sourcePath":"components/content/ReviewCard.jsx"},{"name":"Badge","sourcePath":"components/core/Badge.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"ICONS","sourcePath":"components/core/Icon.jsx"},{"name":"TYPE_ICONS","sourcePath":"components/core/Icon.jsx"},{"name":"Icon","sourcePath":"components/core/Icon.jsx"},{"name":"Input","sourcePath":"components/core/Input.jsx"},{"name":"Tag","sourcePath":"components/core/Tag.jsx"}],"sourceHashes":{"components/content/Callout.jsx":"53d5970a957f","components/content/NoteCard.jsx":"805aff6929a1","components/content/PostCard.jsx":"af745c75c82d","components/content/ReviewCard.jsx":"1df8e9b39819","components/core/Badge.jsx":"9bd451c93fb6","components/core/Button.jsx":"93ffdaa58c1b","components/core/Icon.jsx":"c5a988adffa5","components/core/Input.jsx":"6a173ac5fb74","components/core/Tag.jsx":"53afbf718a18","ui_kits/website/Chrome.jsx":"9b08a0504642","ui_kits/website/GraphView.jsx":"f585a46607ec","ui_kits/website/Home.jsx":"c67e4faf7c42","ui_kits/website/ListView.jsx":"aaf0ad90b878","ui_kits/website/PostView.jsx":"4d5da1e4d54f","ui_kits/website/ReviewView.jsx":"a87059b29567","ui_kits/website/ReviewsView.jsx":"d2427667b51c","ui_kits/website/SearchOverlay.jsx":"ab217a01d00a","ui_kits/website/TopicsView.jsx":"506eb665d377","ui_kits/website/app.jsx":"b84bd3c73b95","ui_kits/website/data.js":"6a81f6f7d6c0","ui_kits/website/kit-primitives.js":"c3d5ccce9637"},"inlinedExternals":[],"unexposedExports":[]} */
 
 (() => {
 
@@ -18,7 +18,7 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
  */
 const KIND = {
   note: {
-    color: 'var(--cyan)',
+    color: 'var(--accent)',
     label: 'NOTE'
   },
   tip: {
@@ -91,13 +91,262 @@ function Callout({
 Object.assign(__ds_scope, { Callout });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/content/Callout.jsx", error: String((e && e.message) || e) }); }
 
+// components/core/Button.jsx
+try { (() => {
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
+/**
+ * meese.rs — Button
+ * Technical, restrained. Primary uses the cyan signal; ghost is the
+ * default for system-index chrome. Press shifts down 1px, no bounce.
+ */
+function Button({
+  children,
+  variant = 'secondary',
+  size = 'md',
+  iconLeft,
+  iconRight,
+  disabled = false,
+  fullWidth = false,
+  type = 'button',
+  onClick,
+  style,
+  ...rest
+}) {
+  const [hover, setHover] = React.useState(false);
+  const [active, setActive] = React.useState(false);
+  const sizes = {
+    sm: {
+      height: 30,
+      padding: '0 12px',
+      font: 'var(--text-2xs)',
+      gap: 6,
+      radius: 'var(--radius-sm)'
+    },
+    md: {
+      height: 38,
+      padding: '0 16px',
+      font: 'var(--text-sm)',
+      gap: 8,
+      radius: 'var(--radius-sm)'
+    },
+    lg: {
+      height: 46,
+      padding: '0 22px',
+      font: 'var(--text-base)',
+      gap: 9,
+      radius: 'var(--radius-md)'
+    }
+  };
+  const s = sizes[size] || sizes.md;
+  const variants = {
+    primary: {
+      base: {
+        background: 'var(--accent)',
+        color: 'var(--ink-inverse)',
+        border: '1px solid var(--accent)'
+      },
+      hover: {
+        background: 'var(--accent-bright)',
+        borderColor: 'var(--accent-bright)',
+        boxShadow: 'var(--glow-soft)'
+      }
+    },
+    secondary: {
+      base: {
+        background: 'var(--surface-2)',
+        color: 'var(--ink-1)',
+        border: '1px solid var(--line-2)'
+      },
+      hover: {
+        background: 'var(--surface-3)',
+        borderColor: 'var(--line-3)'
+      }
+    },
+    ghost: {
+      base: {
+        background: 'transparent',
+        color: 'var(--ink-2)',
+        border: '1px solid transparent'
+      },
+      hover: {
+        background: 'var(--surface-2)',
+        color: 'var(--ink-1)'
+      }
+    },
+    accent: {
+      base: {
+        background: 'var(--accent-wash)',
+        color: 'var(--accent-bright)',
+        border: '1px solid var(--accent-dim)'
+      },
+      hover: {
+        background: 'var(--accent-wash-2)',
+        borderColor: 'var(--accent-deep)'
+      }
+    },
+    danger: {
+      base: {
+        background: 'var(--red-wash)',
+        color: 'var(--red)',
+        border: '1px solid var(--red)'
+      },
+      hover: {
+        background: 'rgba(226,106,98,0.20)'
+      }
+    }
+  };
+  const v = variants[variant] || variants.secondary;
+  const composed = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: s.gap,
+    height: s.height,
+    padding: s.padding,
+    width: fullWidth ? '100%' : 'auto',
+    fontFamily: 'var(--font-mono)',
+    fontSize: s.font,
+    fontWeight: 500,
+    letterSpacing: '0.02em',
+    lineHeight: 1,
+    borderRadius: s.radius,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.45 : 1,
+    transition: 'background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out)',
+    transform: active && !disabled ? 'translateY(1px)' : 'translateY(0)',
+    whiteSpace: 'nowrap',
+    userSelect: 'none',
+    ...v.base,
+    ...(hover && !disabled ? v.hover : null),
+    ...style
+  };
+  return /*#__PURE__*/React.createElement("button", _extends({
+    type: type,
+    disabled: disabled,
+    onClick: onClick,
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => {
+      setHover(false);
+      setActive(false);
+    },
+    onMouseDown: () => setActive(true),
+    onMouseUp: () => setActive(false),
+    style: composed
+  }, rest), iconLeft ? /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      marginLeft: -2
+    }
+  }, iconLeft) : null, children, iconRight ? /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      marginRight: -2
+    }
+  }, iconRight) : null);
+}
+Object.assign(__ds_scope, { Button });
+})(); } catch (e) { __ds_ns.__errors.push({ path: "components/core/Button.jsx", error: String((e && e.message) || e) }); }
+
+// components/core/Icon.jsx
+try { (() => {
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
+/**
+ * meese.rs — Icon
+ * Inline Lucide glyphs (MIT), the single source the UI draws from. Ported
+ * verbatim from the site's `src/utils/icons.ts` so a glyph looks identical
+ * whether the design system, an Astro component, or the search overlay drew
+ * it. Stroke is 1.5px, no fill, `currentColor` — it inherits ink/accent from
+ * its parent. This is deliberately NOT the Lucide CDN runtime: badges and
+ * chrome must render self-contained, with zero external script.
+ */
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  'git-fork': '<circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/>',
+  zap: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+  'refresh-cw': '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  'bar-chart-3': '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  'book-open': '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+  terminal: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>',
+  pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+  feather: '<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" x2="2" y1="8" y2="22"/><line x1="17.5" x2="9" y1="15" y2="15"/>',
+  'flask-conical': '<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>',
+  bookmark: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  github: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  minus: '<path d="M5 12h14"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  linkedin: '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
+  'x-twitter': '<path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  'arrow-up-right': '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  menu: '<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>'
+};
+
+/** One Lucide icon per post type — the glyph carries the "what kind" signal. */
+const TYPE_ICONS = {
+  guide: 'book-open',
+  note: 'pencil',
+  devlog: 'terminal',
+  essay: 'feather',
+  lab: 'flask-conical',
+  reference: 'bookmark',
+  review: 'star'
+};
+
+/**
+ * Inline icon. `name` indexes the glyph map above. Inherits color via
+ * `currentColor`; size it in px (18 in UI, 16 inline, ~13 inside a badge).
+ */
+function Icon({
+  name,
+  size = 18,
+  strokeWidth = 1.5,
+  style,
+  ...rest
+}) {
+  const inner = ICONS[name] || '';
+  return /*#__PURE__*/React.createElement("svg", _extends({
+    xmlns: "http://www.w3.org/2000/svg",
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: strokeWidth,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true",
+    style: {
+      display: 'block',
+      flex: 'none',
+      ...style
+    },
+    dangerouslySetInnerHTML: {
+      __html: inner
+    }
+  }, rest));
+}
+Object.assign(__ds_scope, { ICONS, TYPE_ICONS, Icon });
+})(); } catch (e) { __ds_ns.__errors.push({ path: "components/core/Icon.jsx", error: String((e && e.message) || e) }); }
+
 // components/core/Badge.jsx
 try { (() => {
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 /**
  * meese.rs — Badge
- * The system-index type marker. Each post type carries a fixed hue;
- * status badges (updated/deprecated) reuse the semantic palette.
+ * The system-index marker. Two distinct shapes by intent:
+ *   • TYPE badges lead with a Lucide icon and an UNBRACKETED label — the
+ *     glyph is what tells one content type from another (guide ▸ book,
+ *     review ▸ star, …). Each type carries a fixed categorical hue.
+ *   • STATUS badges are bracketed `[ LABEL ]` with no icon, in a semantic
+ *     hue (updated/corrected/deprecated/superseded/pinned).
+ * Verdict pills on reviews are a third, separate shape (see ReviewCard).
  */
 const TYPE_MAP = {
   guide: {
@@ -142,8 +391,12 @@ const STATUS_MAP = {
     color: 'var(--red)',
     label: 'DEPRECATED'
   },
+  superseded: {
+    color: 'var(--hue-slate)',
+    label: 'SUPERSEDED'
+  },
   pinned: {
-    color: 'var(--ember)',
+    color: 'var(--accent)',
     label: 'PINNED'
   }
 };
@@ -152,15 +405,21 @@ function Badge({
   status,
   children,
   color,
-  bracketed = true,
+  bracketed,
   solid = false,
+  icon = true,
   style,
   ...rest
 }) {
   const preset = type ? TYPE_MAP[type] : status ? STATUS_MAP[status] : null;
   const hue = color || (preset ? preset.color : 'var(--ink-3)');
   const label = children != null ? children : preset ? preset.label : '';
-  const text = bracketed ? `[ ${label} ]` : label;
+
+  // Type badges are icon-led + unbracketed; status/custom badges bracket by
+  // default. An explicit `bracketed` prop always wins.
+  const showBracket = bracketed === undefined ? !type : bracketed;
+  const text = showBracket ? `[ ${label} ]` : label;
+  const iconName = icon && type ? __ds_scope.TYPE_ICONS[type] : null;
   const base = solid ? {
     background: hue,
     color: 'var(--ink-inverse)',
@@ -174,8 +433,9 @@ function Badge({
     style: {
       display: 'inline-flex',
       alignItems: 'center',
+      gap: iconName ? 5 : 0,
       height: 20,
-      padding: '0 7px',
+      padding: iconName ? '0 7px 0 6px' : '0 7px',
       fontFamily: 'var(--font-mono)',
       fontSize: 'var(--text-2xs)',
       fontWeight: 600,
@@ -186,7 +446,10 @@ function Badge({
       ...base,
       ...style
     }
-  }, rest), text);
+  }, rest), iconName ? /*#__PURE__*/React.createElement(__ds_scope.Icon, {
+    name: iconName,
+    size: 13
+  }) : null, text);
 }
 Object.assign(__ds_scope, { Badge });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/core/Badge.jsx", error: String((e && e.message) || e) }); }
@@ -253,7 +516,7 @@ function NoteCard({
       fontFamily: 'var(--font-display)',
       fontSize: 'var(--text-base)',
       fontWeight: 600,
-      color: hover ? 'var(--cyan-bright)' : 'var(--ink-1)',
+      color: hover ? 'var(--accent-bright)' : 'var(--ink-1)',
       transition: 'color var(--dur-1) var(--ease-out)',
       marginBottom: 4,
       textWrap: 'pretty'
@@ -271,162 +534,6 @@ function NoteCard({
 }
 Object.assign(__ds_scope, { NoteCard });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/content/NoteCard.jsx", error: String((e && e.message) || e) }); }
-
-// components/core/Button.jsx
-try { (() => {
-function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
-/**
- * meese.rs — Button
- * Technical, restrained. Primary uses the cyan signal; ghost is the
- * default for system-index chrome. Press shifts down 1px, no bounce.
- */
-function Button({
-  children,
-  variant = 'secondary',
-  size = 'md',
-  iconLeft,
-  iconRight,
-  disabled = false,
-  fullWidth = false,
-  type = 'button',
-  onClick,
-  style,
-  ...rest
-}) {
-  const [hover, setHover] = React.useState(false);
-  const [active, setActive] = React.useState(false);
-  const sizes = {
-    sm: {
-      height: 30,
-      padding: '0 12px',
-      font: 'var(--text-2xs)',
-      gap: 6,
-      radius: 'var(--radius-sm)'
-    },
-    md: {
-      height: 38,
-      padding: '0 16px',
-      font: 'var(--text-sm)',
-      gap: 8,
-      radius: 'var(--radius-sm)'
-    },
-    lg: {
-      height: 46,
-      padding: '0 22px',
-      font: 'var(--text-base)',
-      gap: 9,
-      radius: 'var(--radius-md)'
-    }
-  };
-  const s = sizes[size] || sizes.md;
-  const variants = {
-    primary: {
-      base: {
-        background: 'var(--cyan)',
-        color: 'var(--ink-inverse)',
-        border: '1px solid var(--cyan)'
-      },
-      hover: {
-        background: 'var(--cyan-bright)',
-        borderColor: 'var(--cyan-bright)',
-        boxShadow: 'var(--glow-soft)'
-      }
-    },
-    secondary: {
-      base: {
-        background: 'var(--surface-2)',
-        color: 'var(--ink-1)',
-        border: '1px solid var(--line-2)'
-      },
-      hover: {
-        background: 'var(--surface-3)',
-        borderColor: 'var(--line-3)'
-      }
-    },
-    ghost: {
-      base: {
-        background: 'transparent',
-        color: 'var(--ink-2)',
-        border: '1px solid transparent'
-      },
-      hover: {
-        background: 'var(--surface-2)',
-        color: 'var(--ink-1)'
-      }
-    },
-    accent: {
-      base: {
-        background: 'var(--cyan-wash)',
-        color: 'var(--cyan-bright)',
-        border: '1px solid var(--cyan-dim)'
-      },
-      hover: {
-        background: 'var(--cyan-wash-2)',
-        borderColor: 'var(--cyan-deep)'
-      }
-    },
-    danger: {
-      base: {
-        background: 'var(--red-wash)',
-        color: 'var(--red)',
-        border: '1px solid var(--red)'
-      },
-      hover: {
-        background: 'rgba(226,106,98,0.20)'
-      }
-    }
-  };
-  const v = variants[variant] || variants.secondary;
-  const composed = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: s.gap,
-    height: s.height,
-    padding: s.padding,
-    width: fullWidth ? '100%' : 'auto',
-    fontFamily: 'var(--font-mono)',
-    fontSize: s.font,
-    fontWeight: 500,
-    letterSpacing: '0.02em',
-    lineHeight: 1,
-    borderRadius: s.radius,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.45 : 1,
-    transition: 'background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out)',
-    transform: active && !disabled ? 'translateY(1px)' : 'translateY(0)',
-    whiteSpace: 'nowrap',
-    userSelect: 'none',
-    ...v.base,
-    ...(hover && !disabled ? v.hover : null),
-    ...style
-  };
-  return /*#__PURE__*/React.createElement("button", _extends({
-    type: type,
-    disabled: disabled,
-    onClick: onClick,
-    onMouseEnter: () => setHover(true),
-    onMouseLeave: () => {
-      setHover(false);
-      setActive(false);
-    },
-    onMouseDown: () => setActive(true),
-    onMouseUp: () => setActive(false),
-    style: composed
-  }, rest), iconLeft ? /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'inline-flex',
-      marginLeft: -2
-    }
-  }, iconLeft) : null, children, iconRight ? /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'inline-flex',
-      marginRight: -2
-    }
-  }, iconRight) : null);
-}
-Object.assign(__ds_scope, { Button });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/core/Button.jsx", error: String((e && e.message) || e) }); }
 
 // components/core/Input.jsx
 try { (() => {
@@ -469,7 +576,7 @@ function Input({
       padding: '0 12px',
       background: 'var(--surface-well)',
       border: '1px solid',
-      borderColor: focus ? 'var(--cyan)' : 'var(--line-2)',
+      borderColor: focus ? 'var(--accent)' : 'var(--line-2)',
       borderRadius: isSearch ? 'var(--radius-md)' : 'var(--radius-sm)',
       boxShadow: focus ? 'var(--glow-soft)' : 'none',
       opacity: disabled ? 0.5 : 1,
@@ -480,7 +587,7 @@ function Input({
     style: {
       fontFamily: 'var(--font-mono)',
       fontSize: 'var(--text-sm)',
-      color: focus ? 'var(--cyan)' : 'var(--ink-4)',
+      color: focus ? 'var(--accent)' : 'var(--ink-4)',
       fontWeight: 600
     }
   }, lead) : null, iconLeft ? /*#__PURE__*/React.createElement("span", {
@@ -550,9 +657,9 @@ function Tag({
       textDecoration: 'none',
       borderRadius: 'var(--radius-pill)',
       border: '1px solid',
-      borderColor: active ? 'var(--cyan-deep)' : hover && interactive ? 'var(--line-3)' : 'var(--line-1)',
-      background: active ? 'var(--cyan-wash)' : hover && interactive ? 'var(--surface-2)' : 'transparent',
-      color: active ? 'var(--cyan-bright)' : hover && interactive ? 'var(--ink-1)' : 'var(--ink-3)',
+      borderColor: active ? 'var(--accent-deep)' : hover && interactive ? 'var(--line-3)' : 'var(--line-1)',
+      background: active ? 'var(--accent-wash)' : hover && interactive ? 'var(--surface-2)' : 'transparent',
+      color: active ? 'var(--accent-bright)' : hover && interactive ? 'var(--ink-1)' : 'var(--ink-3)',
       cursor: interactive ? 'pointer' : 'default',
       transition: 'all var(--dur-1) var(--ease-out)',
       whiteSpace: 'nowrap',
@@ -560,7 +667,7 @@ function Tag({
     }
   }, rest), /*#__PURE__*/React.createElement("span", {
     style: {
-      color: active ? 'var(--cyan)' : 'var(--ink-4)'
+      color: active ? 'var(--accent)' : 'var(--ink-4)'
     }
   }, "#"), children);
 }
@@ -635,7 +742,7 @@ function PostCard({
       fontWeight: 600,
       lineHeight: 1.2,
       letterSpacing: '-0.01em',
-      color: hover ? 'var(--cyan-bright)' : 'var(--ink-1)',
+      color: hover ? 'var(--accent-bright)' : 'var(--ink-1)',
       margin: 0,
       transition: 'color var(--dur-1) var(--ease-out)',
       textWrap: 'pretty'
@@ -676,7 +783,7 @@ function Reticle() {
     position: 'absolute',
     width: 11,
     height: 11,
-    border: '1.5px solid var(--cyan-deep)'
+    border: '1.5px solid var(--accent-deep)'
   };
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -1125,7 +1232,7 @@ try { (() => {
       }
     }, "meese", /*#__PURE__*/React.createElement("span", {
       style: {
-        color: 'var(--ember)'
+        color: 'var(--accent)'
       }
     }, ".rs")));
   }
@@ -1323,9 +1430,9 @@ try { (() => {
     adj[b] && adj[b].add(a);
   });
   function hueOf(n) {
-    return n.kind === 'topic' ? 'var(--ember)' : TYPE_HUE[n.kind] || 'var(--hue-slate)';
+    return n.kind === 'topic' ? 'var(--accent)' : TYPE_HUE[n.kind] || 'var(--hue-slate)';
   }
-  const LEGEND = [['topic', 'var(--ember)'], ['guide', 'var(--hue-cyan)'], ['devlog', 'var(--hue-green)'], ['note', 'var(--hue-slate)'], ['essay', 'var(--hue-violet)'], ['lab', 'var(--hue-gold)'], ['reference', 'var(--hue-rose)']];
+  const LEGEND = [['topic', 'var(--accent)'], ['guide', 'var(--hue-cyan)'], ['devlog', 'var(--hue-green)'], ['note', 'var(--hue-slate)'], ['essay', 'var(--hue-violet)'], ['lab', 'var(--hue-gold)'], ['reference', 'var(--hue-rose)']];
   function GraphView({
     onOpenPost,
     onTopic
@@ -1372,7 +1479,7 @@ try { (() => {
     }, /*#__PURE__*/React.createElement("div", {
       className: "sys-label",
       style: {
-        color: 'var(--cyan)'
+        color: 'var(--accent)'
       }
     }, "// concept graph"), /*#__PURE__*/React.createElement("h2", {
       style: {
@@ -1439,7 +1546,7 @@ try { (() => {
         y1: pa.y,
         x2: pb.x,
         y2: pb.y,
-        stroke: on && focus ? 'var(--cyan-deep)' : 'var(--line-2)',
+        stroke: on && focus ? 'var(--accent-deep)' : 'var(--line-2)',
         strokeWidth: on && focus ? 1.4 : 1,
         style: {
           opacity: mounted ? on ? 0.9 : 0.18 : 0,
@@ -1513,14 +1620,16 @@ try { (() => {
         fontSize: 11,
         fontWeight: 600,
         letterSpacing: '0.1em',
-        color: 'var(--ember)',
-        background: 'var(--ember-wash)',
-        border: '1px solid color-mix(in srgb, var(--ember) 38%, transparent)',
+        color: 'var(--accent)',
+        background: 'var(--accent-wash)',
+        border: '1px solid color-mix(in srgb, var(--accent) 38%, transparent)',
         borderRadius: 'var(--radius-xs)',
         height: 20,
         padding: '0 7px',
         display: 'inline-flex',
-        alignItems: 'center'
+        alignItems: 'center',
+        whiteSpace: 'nowrap',
+        flex: 'none'
       }
     }, "[ TOPIC ]") : /*#__PURE__*/React.createElement(Badge, {
       type: selNode.kind
@@ -1600,7 +1709,7 @@ try { (() => {
       position: 'absolute',
       width: 16,
       height: 16,
-      border: '1.5px solid var(--cyan-dim)',
+      border: '1.5px solid var(--accent-dim)',
       zIndex: 2
     };
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
@@ -1721,7 +1830,7 @@ try { (() => {
     }, /*#__PURE__*/React.createElement("div", {
       className: "sys-label",
       style: {
-        color: 'var(--cyan)',
+        color: 'var(--accent)',
         marginBottom: 14
       }
     }, "// system index"), /*#__PURE__*/React.createElement("h1", {
@@ -1781,7 +1890,7 @@ try { (() => {
       position: 'absolute',
       width: 11,
       height: 11,
-      border: '1.5px solid var(--cyan-deep)'
+      border: '1.5px solid var(--accent-deep)'
     };
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -1931,17 +2040,17 @@ try { (() => {
       cx: "120",
       cy: "80",
       r: "8",
-      fill: "var(--ember)"
+      fill: "var(--accent)"
     }), /*#__PURE__*/React.createElement("circle", {
       cx: "60",
       cy: "44",
       r: "5.5",
-      fill: "var(--cyan)"
+      fill: "var(--accent)"
     }), /*#__PURE__*/React.createElement("circle", {
       cx: "186",
       cy: "50",
       r: "6",
-      fill: "var(--cyan)"
+      fill: "var(--accent)"
     }), /*#__PURE__*/React.createElement("circle", {
       cx: "96",
       cy: "112",
@@ -2108,7 +2217,7 @@ try { (() => {
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        color: 'var(--cyan)',
+        color: 'var(--accent)',
         fontWeight: 600
       }
     }, "/"), /*#__PURE__*/React.createElement("span", null, "Search the index\u2026"))))));
@@ -3636,7 +3745,7 @@ try { (() => {
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        color: 'var(--cyan)',
+        color: 'var(--accent)',
         fontFamily: 'var(--font-mono)',
         fontWeight: 600
       }
@@ -3799,8 +3908,8 @@ try { (() => {
       style: ex
     }, text.slice(0, idx), /*#__PURE__*/React.createElement("mark", {
       style: {
-        background: 'var(--cyan-wash-2)',
-        color: 'var(--cyan-bright)',
+        background: 'var(--accent-wash-2)',
+        color: 'var(--accent-bright)',
         padding: '0 2px',
         borderRadius: 2
       }
@@ -4381,7 +4490,7 @@ try { (() => {
     slug: 'security',
     label: 'security',
     count: 2,
-    hue: 'var(--hue-ember)'
+    hue: 'var(--hue-gold)'
   }];
 
   // Concept graph: posts + topics, edges by topic membership
@@ -4392,7 +4501,7 @@ try { (() => {
     essay: 'var(--hue-violet)',
     lab: 'var(--hue-gold)',
     reference: 'var(--hue-rose)',
-    topic: 'var(--ember)'
+    topic: 'var(--accent)'
   };
 
   // hand-placed positions (0..1) for a sleek, legible layout
@@ -4517,8 +4626,38 @@ try { (() => {
     updated: ['UPDATED', 'var(--green)'],
     corrected: ['CORRECTED', 'var(--gold)'],
     deprecated: ['DEPRECATED', 'var(--red)'],
-    pinned: ['PINNED', 'var(--ember)']
+    superseded: ['SUPERSEDED', 'var(--hue-slate)'],
+    pinned: ['PINNED', 'var(--accent)']
   };
+
+  // Leading type-badge glyphs (the 7 post types), matching Icon.jsx geometry.
+  const TYPE_GLYPH = {
+    guide: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+    note: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+    devlog: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>',
+    essay: '<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" x2="2" y1="8" y2="22"/><line x1="17.5" x2="9" y1="15" y2="15"/>',
+    lab: '<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>',
+    reference: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+    review: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'
+  };
+  const glyph = type => h('svg', {
+    width: 13,
+    height: 13,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.5,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    style: {
+      display: 'block',
+      flex: 'none'
+    },
+    'aria-hidden': true,
+    dangerouslySetInnerHTML: {
+      __html: TYPE_GLYPH[type] || ''
+    }
+  });
   const Fallback = {
     Button: ({
       children,
@@ -4536,9 +4675,9 @@ try { (() => {
         borderRadius: 'var(--radius-sm)',
         cursor: 'pointer',
         letterSpacing: '.02em',
-        background: variant === 'primary' ? 'var(--cyan)' : variant === 'ghost' ? 'transparent' : 'var(--surface-2)',
+        background: variant === 'primary' ? 'var(--accent)' : variant === 'ghost' ? 'transparent' : 'var(--surface-2)',
         color: variant === 'primary' ? 'var(--ink-inverse)' : 'var(--ink-1)',
-        border: '1px solid ' + (variant === 'primary' ? 'var(--cyan)' : variant === 'ghost' ? 'transparent' : 'var(--line-2)'),
+        border: '1px solid ' + (variant === 'primary' ? 'var(--accent)' : variant === 'ghost' ? 'transparent' : 'var(--line-2)'),
         ...style
       },
       ...p
@@ -4547,21 +4686,25 @@ try { (() => {
       type,
       status,
       children,
-      bracketed = true,
+      bracketed,
       color,
+      icon = true,
       style
     }) => {
       const p = type ? TYPE[type] : status ? STATUS[status] : null;
       const hue = color || (p ? p[1] : 'var(--ink-3)');
       const label = children != null ? children : p ? p[0] : '';
+      const showBracket = bracketed === undefined ? !type : bracketed;
+      const withIcon = icon && type;
       return h('span', {
         style: {
           fontFamily: 'var(--font-mono)',
           fontSize: 11,
           fontWeight: 600,
           letterSpacing: '.1em',
+          gap: withIcon ? 5 : 0,
           height: 20,
-          padding: '0 7px',
+          padding: withIcon ? '0 7px 0 6px' : '0 7px',
           display: 'inline-flex',
           alignItems: 'center',
           borderRadius: 'var(--radius-xs)',
@@ -4571,7 +4714,7 @@ try { (() => {
           border: '1px solid color-mix(in srgb, ' + hue + ' 38%, transparent)',
           ...style
         }
-      }, bracketed ? '[ ' + label + ' ]' : label);
+      }, withIcon ? glyph(type) : null, showBracket ? '[ ' + label + ' ]' : label);
     },
     Tag: ({
       children,
@@ -4592,9 +4735,9 @@ try { (() => {
         gap: 2,
         textDecoration: 'none',
         borderRadius: 'var(--radius-pill)',
-        border: '1px solid ' + (active ? 'var(--cyan-deep)' : 'var(--line-1)'),
-        background: active ? 'var(--cyan-wash)' : 'transparent',
-        color: active ? 'var(--cyan-bright)' : 'var(--ink-3)',
+        border: '1px solid ' + (active ? 'var(--accent-deep)' : 'var(--line-1)'),
+        background: active ? 'var(--accent-wash)' : 'transparent',
+        color: active ? 'var(--accent-bright)' : 'var(--ink-3)',
         cursor: href || onClick ? 'pointer' : 'default',
         whiteSpace: 'nowrap',
         ...style
@@ -4775,7 +4918,7 @@ try { (() => {
     }
   }, body)));
   const CK = {
-    note: ['NOTE', 'var(--cyan)'],
+    note: ['NOTE', 'var(--accent)'],
     tip: ['TIP', 'var(--green)'],
     warning: ['WARNING', 'var(--gold)'],
     danger: ['DANGER', 'var(--red)'],
@@ -5013,6 +5156,12 @@ __ds_ns.ReviewCard = __ds_scope.ReviewCard;
 __ds_ns.Badge = __ds_scope.Badge;
 
 __ds_ns.Button = __ds_scope.Button;
+
+__ds_ns.ICONS = __ds_scope.ICONS;
+
+__ds_ns.TYPE_ICONS = __ds_scope.TYPE_ICONS;
+
+__ds_ns.Icon = __ds_scope.Icon;
 
 __ds_ns.Input = __ds_scope.Input;
 

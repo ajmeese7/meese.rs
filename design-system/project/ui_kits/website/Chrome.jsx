@@ -104,7 +104,7 @@
       <a href="#" onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
         <img src="../../assets/logomark.svg" width={size + 8} height={size + 8} alt="" />
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: size, letterSpacing: '-0.02em', color: 'var(--ink-1)' }}>
-          meese<span style={{ color: 'var(--ember)' }}>.rs</span>
+          meese<span style={{ color: 'var(--accent)' }}>.rs</span>
         </span>
       </a>
     );

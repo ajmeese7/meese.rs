@@ -40,16 +40,16 @@
         "message": "Font not provided by the design system. Available: Space Grotesk, IBM Plex Sans, JetBrains Mono."
       },
       {
-        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute > JSXIdentifier[name!=/^(?:type|status|color|bracketed|solid|children|key|ref|className|style|children)$/]",
-        "message": "<Badge> doesn't accept that prop. Declared props: type, status, color, bracketed, solid, children."
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute > JSXIdentifier[name!=/^(?:type|status|color|bracketed|icon|solid|children|key|ref|className|style|children)$/]",
+        "message": "<Badge> doesn't accept that prop. Declared props: type, status, color, bracketed, icon, solid, children."
       },
       {
         "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:guide|note|devlog|essay|lab|reference|review)$/]",
         "message": "<Badge> type must be one of 'guide' | 'note' | 'devlog' | 'essay' | 'lab' | 'reference' | 'review'."
       },
       {
-        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='status'] > Literal[value!=/^(?:updated|corrected|deprecated|pinned)$/]",
-        "message": "<Badge> status must be one of 'updated' | 'corrected' | 'deprecated' | 'pinned'."
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='status'] > Literal[value!=/^(?:updated|corrected|deprecated|superseded|pinned)$/]",
+        "message": "<Badge> status must be one of 'updated' | 'corrected' | 'deprecated' | 'superseded' | 'pinned'."
       },
       {
         "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|size|iconLeft|iconRight|fullWidth|disabled|children|key|ref|className|style|children)$/]",
@@ -70,6 +70,10 @@
       {
         "selector": "JSXOpeningElement[name.name='Callout'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:note|tip|warning|danger|context)$/]",
         "message": "<Callout> type must be one of 'note' | 'tip' | 'warning' | 'danger' | 'context'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Icon'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|size|strokeWidth|key|ref|className|style|children)$/]",
+        "message": "<Icon> doesn't accept that prop. Declared props: name, size, strokeWidth."
       },
       {
         "selector": "JSXOpeningElement[name.name='Input'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|size|iconLeft|prompt|fullWidth|key|ref|className|style|children)$/]",
@@ -126,6 +130,9 @@
       "Callout": {
         "replaces": []
       },
+      "Icon": {
+        "replaces": []
+      },
       "Input": {
         "replaces": []
       },
@@ -167,13 +174,6 @@
       "--color-bg",
       "--color-bg-void",
       "--content-width",
-      "--cyan",
-      "--cyan-bright",
-      "--cyan-deep",
-      "--cyan-dim",
-      "--cyan-glow",
-      "--cyan-wash",
-      "--cyan-wash-2",
       "--dur-1",
       "--dur-2",
       "--dur-3",
@@ -181,11 +181,6 @@
       "--ease-in",
       "--ease-mono",
       "--ease-out",
-      "--ember",
-      "--ember-bright",
-      "--ember-deep",
-      "--ember-dim",
-      "--ember-wash",
       "--focus-line",
       "--focus-ring",
       "--font-body",
@@ -194,7 +189,6 @@
       "--gap-inline",
       "--gap-stack",
       "--glow-accent",
-      "--glow-ember",
       "--glow-soft",
       "--gold",
       "--gold-wash",
@@ -205,7 +199,6 @@
       "--gutter",
       "--header-height",
       "--hue-cyan",
-      "--hue-ember",
       "--hue-gold",
       "--hue-green",
       "--hue-rose",
@@ -334,7 +327,6 @@
       "--hue-violet": "color",
       "--hue-gold": "color",
       "--hue-rose": "color",
-      "--hue-ember": "color",
       "--green": "color",
       "--green-wash": "color",
       "--gold": "color",
@@ -352,18 +344,6 @@
       "--accent-line": "color",
       "--accent-glow": "color",
       "--on-accent": "color",
-      "--cyan": "color",
-      "--cyan-bright": "color",
-      "--cyan-deep": "color",
-      "--cyan-dim": "color",
-      "--cyan-wash": "color",
-      "--cyan-wash-2": "color",
-      "--cyan-glow": "color",
-      "--ember": "color",
-      "--ember-bright": "color",
-      "--ember-deep": "color",
-      "--ember-dim": "color",
-      "--ember-wash": "color",
       "--color-bg": "color",
       "--color-bg-void": "color",
       "--surface-card": "color",
@@ -463,7 +443,6 @@
       "--shadow-3": "shadow",
       "--glow-accent": "color",
       "--glow-soft": "color",
-      "--glow-ember": "color",
       "--ring": "color",
       "--ring-inset": "spacing",
       "--blur-overlay": "other",

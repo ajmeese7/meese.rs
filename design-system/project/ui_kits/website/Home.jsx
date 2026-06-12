@@ -23,7 +23,7 @@
     return (
       <div style={{ display: 'flex', gap: 28, alignItems: 'stretch', padding: '40px 0 8px', flexWrap: 'wrap' }}>
         <div style={{ flex: '1 1 420px', minWidth: 280 }}>
-          <div className="sys-label" style={{ color: 'var(--cyan)', marginBottom: 14 }}>// system index</div>
+          <div className="sys-label" style={{ color: 'var(--accent)', marginBottom: 14 }}>// system index</div>
           <h1 style={{ fontSize: 'var(--text-3xl)', lineHeight: 1.08, margin: 0, letterSpacing: '-0.02em' }}>
             Practical writing on software,<br />AI/devtools, and systems-building.
           </h1>
@@ -48,7 +48,7 @@
   }
 
   function Reticle() {
-    const c = { position: 'absolute', width: 11, height: 11, border: '1.5px solid var(--cyan-deep)' };
+    const c = { position: 'absolute', width: 11, height: 11, border: '1.5px solid var(--accent-deep)' };
     return (
       <>
         <span style={{ ...c, top: 7, left: 7, borderRight: 0, borderBottom: 0 }} />
@@ -93,9 +93,9 @@
             <line x1="120" y1="80" x2="186" y2="50" stroke="var(--line-2)" strokeWidth="1" />
             <line x1="120" y1="80" x2="96" y2="112" stroke="var(--line-2)" strokeWidth="1" />
             <line x1="186" y1="50" x2="60" y2="44" stroke="var(--line-2)" strokeWidth="1" />
-            <circle cx="120" cy="80" r="8" fill="var(--ember)" />
-            <circle cx="60" cy="44" r="5.5" fill="var(--cyan)" />
-            <circle cx="186" cy="50" r="6" fill="var(--cyan)" />
+            <circle cx="120" cy="80" r="8" fill="var(--accent)" />
+            <circle cx="60" cy="44" r="5.5" fill="var(--accent)" />
+            <circle cx="186" cy="50" r="6" fill="var(--accent)" />
             <circle cx="96" cy="112" r="4.5" fill="var(--hue-violet)" />
           </svg>
         </div>
@@ -161,7 +161,7 @@
                 background: 'var(--surface-well)', border: '1px solid var(--line-2)', borderRadius: 'var(--radius-md)',
                 color: 'var(--ink-3)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 13,
               }}>
-                <span style={{ color: 'var(--cyan)', fontWeight: 600 }}>/</span>
+                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>/</span>
                 <span>Search the index…</span>
               </button>
             </div>

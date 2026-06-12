@@ -87,8 +87,9 @@ All nine presets live in `tokens/colors.css`; each one only overrides the nine
 `--accent*` vars, so adding your own theme is a ten-line block. To let users
 toggle it, set the attribute from JS and persist it — the website UI kit's
 header has a working `ThemeSwitcher` (writes `data-theme` + `localStorage`) you
-can lift. Legacy `--cyan*` / `--ember*` names are kept as aliases to `--accent`,
-so older markup follows the active theme with no changes.
+can lift. The accent is the single source of truth — there are no
+`--cyan*` / `--ember*` aliases; reference `--accent*` (or the `--link` /
+`--brand` semantic names) directly.
 
 ---
 
@@ -113,8 +114,10 @@ placeholder text, or sample content you generate.
 **Casing & mechanics**
 - **Sentence case** for headings and titles — not Title Case, not ALL CAPS.
   > *"Getting an Expo SDK 56 app running on a real device"*
-- ALL CAPS + mono is reserved for **system labels only** (`[ GUIDE ]`,
-  `// WARNING`, `TOPICS`). Treat caps as UI chrome, never prose.
+- ALL CAPS + mono is reserved for **system labels only** (`[ UPDATED ]`,
+  `// WARNING`, `TOPICS`). Treat caps as UI chrome, never prose. (Type badges
+  pair the caps label with their icon and drop the brackets; bracketed caps are
+  for status markers and other system chrome.)
 - Dates are ISO-ish and mono: `2026-06-08`. Reading time: `7 min`.
 - Topic slugs are `kebab-case`: `react-native`, `local-llms`, `static-sites`.
 - Tags carry a `#` prefix in the UI (`#expo-go`, `#eas`).
@@ -218,16 +221,23 @@ See the **Design System tab** for live specimen cards of every foundation above.
 
 ## 6. ICONOGRAPHY
 
-- **Icon set: Lucide** (https://lucide.dev), linked from CDN
-  (`unpkg.com/lucide@latest`). Chosen for its **1.5px stroke, square-ish
-  geometry, and no-fill** style — it matches the hairline-border, engineered
-  feel exactly. *(Substitution flag: the spec ships no icon assets, so Lucide is
-  a deliberate, on-brand pick rather than a copied set. Swap if the author
+- **Icon set: Lucide** (https://lucide.dev), shipped as an **inline glyph map**
+  (`components/core/Icon.jsx`, ported from the site's `src/utils/icons.ts`) —
+  NOT the CDN runtime. Chosen for its **1.5px stroke, square-ish geometry, and
+  no-fill** style — it matches the hairline-border, engineered feel exactly.
+  Rendering inline keeps badges and chrome self-contained with zero external
+  script. *(Substitution flag: the spec ships no icon assets, so Lucide is a
+  deliberate, on-brand pick rather than a copied set. Swap if the author
   prefers another stroke set.)*
 - **Usage:** thin stroke (1.5px), `currentColor` so icons inherit ink/accent,
   18–20px in UI, 16px inline. Use them for nav, search, external-link marks,
   copy buttons, and graph controls — sparingly. Icons support text; they rarely
   stand alone.
+- **Type badges are icon-led.** Every post-type badge leads with its Lucide
+  glyph and an *unbracketed* label (guide ▸ `book-open`, note ▸ `pencil`,
+  devlog ▸ `terminal`, essay ▸ `feather`, lab ▸ `flask-conical`, reference ▸
+  `bookmark`, review ▸ `star`). The icon is what distinguishes a type chip from
+  a **bracketed** status badge (`[ UPDATED ]`) and from a plain verdict pill.
 - **No emoji**, ever, in product UI or brand copy.
 - **Unicode/mono glyphs as micro-icons** are on-brand where Lucide is overkill:
   the search prompt `/`, the tag `#`, list markers, `·` separators, `//` and
@@ -252,7 +262,7 @@ See the **Design System tab** for live specimen cards of every foundation above.
   `.prose` reading column.
 
 **Components** (`window.MeeseRsDesignSystem_ed1971.*`)
-- `components/core/` — **Button**, **Badge**, **Tag**, **Input**
+- `components/core/` — **Button**, **Badge**, **Tag**, **Input**, **Icon**
 - `components/content/` — **PostCard**, **NoteCard**, **ReviewCard** (+ **Stars**), **Callout**
 - Each ships `<Name>.jsx`, `<Name>.d.ts`, `<Name>.prompt.md`, and a directory
   `*.card.html` thumbnail.

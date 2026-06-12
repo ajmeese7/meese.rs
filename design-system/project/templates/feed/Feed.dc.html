@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Feed — system index" description="The latest-first meese.rs home: brand chrome, an index-status panel, and one feed mixing PostCard / NoteCard / ReviewCard. Copy and replace the entries." -->
+<helmet>
+<script src="./ds-base.js"></script>
+</helmet>
+
+<div style="min-height:100%;display:flex;flex-direction:column">
+
+  <header style="position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:24px;height:60px;padding:0 32px;background:color-mix(in srgb, var(--bg-base) 84%, transparent);backdrop-filter:blur(10px) saturate(120%);border-bottom:1px solid var(--line-1)">
+    <a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <img src="../../assets/logomark.svg" alt="" width="24" height="24" style="display:block">
+      <span style="font-family:var(--font-display);font-weight:600;font-size:18px;letter-spacing:-0.01em;color:var(--ink-1)">meese<span style="color:var(--accent)">.rs</span></span>
+    </a>
+    <nav style="display:flex;gap:22px;margin-left:10px;font-family:var(--font-mono);font-size:14px">
+      <a href="#" style="color:var(--ink-1);text-decoration:none">Latest</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Guides</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Notes</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Reviews</a>
+      <a href="#" style="color:var(--ink-3);text-decoration:none">Topics</a>
+    </nav>
+    <span style="flex:1"></span>
+    <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-3);border:1px solid var(--line-2);border-radius:5px;padding:5px 10px">/ &nbsp;search</span>
+  </header>
+
+  <main style="width:100%;max-width:1120px;margin:0 auto;padding:48px 32px 96px;display:grid;grid-template-columns:1fr 300px;gap:48px;align-items:start">
+
+    <div style="min-width:0">
+
+      <div style="font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16px">// system index</div>
+      <h1 style="font-family:var(--font-display);font-weight:600;font-size:42px;line-height:1.12;letter-spacing:-0.02em;color:var(--ink-1);margin:0 0 16px;max-width:18ch;text-wrap:balance">Practical writing on software, AI/devtools, and systems-building.</h1>
+      <p style="font-family:var(--font-body);font-size:18px;line-height:1.55;color:var(--ink-2);margin:0 0 40px;max-width:56ch;text-wrap:pretty">Tactical guides, dev logs, short notes, labs, and references &mdash; long and short in one feed. Built things, learned the tradeoffs, wrote them down.</p>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <span style="font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3)">// latest writing</span>
+        <a href="#" style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-3);text-decoration:none">all writing &middot; 08 &rarr;</a>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.PostCard" featured="{{ true }}" type="guide" title="Getting an Expo SDK 56 app running on a real device" description="Modernizing an old app to the newest SDK turns up a few gotchas the docs never connect for you — here is the path that actually worked." date="2026-06-08" reading-time="7 min" updated="2026-06-11" topics="{{ tGuide }}" hint-size="100%,228px"></x-import>
+
+        <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.NoteCard" title="Expo Go version mismatch is still a bad failure mode" body="The error points at the runtime when the real problem is the dev client. A short note on why the message is more confusing than it needs to be." date="2026-06-09" hint-size="100%,108px"></x-import>
+
+        <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.ReviewCard" subject="Paseo" version="preview" one-liner="A promising build tool with real DX wins, but the plugin story is not there yet. Worth tracking, not yet worth adopting." score="{{ 3.6 }}" verdict="watch" date="2026-06-12" topics="{{ tReview }}" hint-size="100%,196px"></x-import>
+
+        <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.PostCard" type="lab" title="Benchmarking local LLMs for task-specific code edits" description="A reproducible run comparing four quantized models on a fixed set of refactors. Numbers, prompts, and the harness are all here." date="2026-06-04" reading-time="12 min" topics="{{ tLab }}" hint-size="100%,200px"></x-import>
+
+        <x-import component-from-global-scope="MeeseRsDesignSystem_ed1971.PostCard" type="essay" title="Static search is a tradeoff, not a downgrade" description="Why I shipped a build-time index instead of a search backend, and where that decision will eventually hurt." date="2026-05-29" reading-time="6 min" topics="{{ tEssay }}" hint-size="100%,200px"></x-import>
+      </div>
+
+    </div>
+
+    <aside style="position:relative;background:var(--surface-1);border:1px solid var(--line-1);border-radius:var(--radius-md);padding:24px">
+      <div style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:18px">// index status</div>
+      <div style="display:flex;flex-direction:column;gap:14px;font-family:var(--font-mono);font-size:13.5px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-3)">entries</span><span style="color:var(--ink-1);font-weight:600">11</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-3)">topics</span><span style="color:var(--ink-1);font-weight:600">08</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-3)">last write</span><span style="color:var(--ink-1);font-weight:600">2026-06-11</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-3)">build</span><span style="color:var(--accent);font-weight:600">static &middot; pagefind</span></div>
+      </div>
+
+      <div style="height:1px;background:var(--line-1);margin:24px 0"></div>
+
+      <div style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px">// active topics</div>
+      <div style="display:flex;flex-direction:column;gap:11px;font-family:var(--font-mono);font-size:13.5px">
+        <a href="#" style="display:flex;justify-content:space-between;text-decoration:none"><span style="color:var(--ink-2)"><span style="color:var(--accent)">&bull;</span> react-native</span><span style="color:var(--ink-4)">06</span></a>
+        <a href="#" style="display:flex;justify-content:space-between;text-decoration:none"><span style="color:var(--ink-2)"><span style="color:var(--accent)">&bull;</span> ai-devtools</span><span style="color:var(--ink-4)">05</span></a>
+        <a href="#" style="display:flex;justify-content:space-between;text-decoration:none"><span style="color:var(--ink-2)"><span style="color:var(--accent)">&bull;</span> developer-experience</span><span style="color:var(--ink-4)">04</span></a>
+        <a href="#" style="display:flex;justify-content:space-between;text-decoration:none"><span style="color:var(--ink-2)"><span style="color:var(--accent)">&bull;</span> static-sites</span><span style="color:var(--ink-4)">03</span></a>
+      </div>
+    </aside>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      tGuide: ['react-native', 'expo', 'mobile-dev'],
+      tLab: ['local-llms', 'ai-devtools'],
+      tEssay: ['static-sites', 'search'],
+      tReview: ['build-tools', 'devtools'],
+    };
+  }
+}
+</script>
+</body>
+</html>

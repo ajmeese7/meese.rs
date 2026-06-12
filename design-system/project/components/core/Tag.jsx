@@ -30,9 +30,9 @@ export function Tag({ children, href, active = false, onClick, style, ...rest })
         textDecoration: 'none',
         borderRadius: 'var(--radius-pill)',
         border: '1px solid',
-        borderColor: active ? 'var(--cyan-deep)' : (hover && interactive ? 'var(--line-3)' : 'var(--line-1)'),
-        background: active ? 'var(--cyan-wash)' : (hover && interactive ? 'var(--surface-2)' : 'transparent'),
-        color: active ? 'var(--cyan-bright)' : (hover && interactive ? 'var(--ink-1)' : 'var(--ink-3)'),
+        borderColor: active ? 'var(--accent-deep)' : (hover && interactive ? 'var(--line-3)' : 'var(--line-1)'),
+        background: active ? 'var(--accent-wash)' : (hover && interactive ? 'var(--surface-2)' : 'transparent'),
+        color: active ? 'var(--accent-bright)' : (hover && interactive ? 'var(--ink-1)' : 'var(--ink-3)'),
         cursor: interactive ? 'pointer' : 'default',
         transition: 'all var(--dur-1) var(--ease-out)',
         whiteSpace: 'nowrap',
@@ -40,7 +40,7 @@ export function Tag({ children, href, active = false, onClick, style, ...rest })
       }}
       {...rest}
     >
-      <span style={{ color: active ? 'var(--cyan)' : 'var(--ink-4)' }}>#</span>{children}
+      <span style={{ color: active ? 'var(--accent)' : 'var(--ink-4)' }}>#</span>{children}
     </Comp>
   );
 }
