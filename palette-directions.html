@@ -15,7 +15,7 @@
   .head.c .k { color: #FF4DA1; }
   .head h1 { font-family: 'Space Grotesk', sans-serif; color: #ECEEF0; font-size: 26px; font-weight: 600; margin: 8px 0 6px; letter-spacing: -.01em; }
   .head p { color: #8A929B; font-size: 14px; margin: 0; max-width: 72ch; line-height: 1.6; }
-  .grid { max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid { max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 18px; }
   .panel { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg);
     background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size: 28px 28px; }
@@ -47,15 +47,32 @@
   .btn.ghost { background: transparent; color: var(--ink2); border: 1px solid var(--line2); }
   .graph { margin-top: 14px; height: 84px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); position: relative; overflow: hidden; }
   .note { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--ink3); margin-top: 12px; line-height: 1.5; }
+
+  /* responsive — single column + tighter spacing on phones */
+  @media (max-width: 720px) {
+    body { padding: 16px; }
+    .grid { gap: 14px; }
+    .head { margin-bottom: 16px; }
+    .head.b { margin-top: 30px; padding-top: 22px; }
+    .head h1 { font-size: 21px; }
+    .head p { font-size: 13px; }
+    .title { font-size: 18px; }
+  }
+  @media (max-width: 380px) {
+    body { padding: 12px; }
+    .head h1 { font-size: 19px; }
+    .phead { padding: 11px 13px; }
+    .body { padding: 16px 13px 18px; }
+  }
 </style>
 </head>
 <body>
-  <div class="head">
-    <div class="k">// brand · palette directions · batch a</div>
-    <h1>Batch A — restrained directions</h1>
-    <p>Same UI slice, four palettes, one accent each. The first three drop the orange (mono + one cool signal); the last keeps a single warm accent and drops the blue.</p>
+  <div class="head c">
+    <div class="k">// brand · neon family · batch c — full spectrum</div>
+    <h1>Batch C — greens, blues &amp; pinks (all with glow)</h1>
+    <p>Eight neon signals across the spectrum, every one carrying the soft glow. Same rule throughout: body copy stays neutral near-white, the accent only touches badge / button / link / nodes. Button label color is tuned per hue for contrast (dark text on the light greens &amp; pinks, white text on the deeper blues &amp; magentas).</p>
   </div>
-  <div class="grid" id="gridA"></div>
+  <div class="grid" id="gridC"></div>
 
   <div class="head b">
     <div class="k">// brand · lime family · batch b — neon</div>
@@ -64,12 +81,12 @@
   </div>
   <div class="grid" id="gridB"></div>
 
-  <div class="head b c">
-    <div class="k">// brand · neon family · batch c — full spectrum</div>
-    <h1>Batch C — greens, blues &amp; pinks (all with glow)</h1>
-    <p>Eight neon signals across the spectrum, every one carrying the soft glow. Same rule throughout: body copy stays neutral near-white, the accent only touches badge / button / link / nodes. Button label color is tuned per hue for contrast (dark text on the light greens &amp; pinks, white text on the deeper blues &amp; magentas).</p>
+  <div class="head b">
+    <div class="k">// brand · palette directions · batch a</div>
+    <h1>Batch A — restrained directions</h1>
+    <p>Same UI slice, four palettes, one accent each. The first three drop the orange (mono + one cool signal); the last keeps a single warm accent and drops the blue.</p>
   </div>
-  <div class="grid" id="gridC"></div>
+  <div class="grid" id="gridA"></div>
 
   <script>
     const OPTS_A = [
