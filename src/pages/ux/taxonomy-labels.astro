@@ -1,12 +1,161 @@
+---
+// Standalone visual experiment for telling the four label systems apart.
+// Served by the dev server at /ux/taxonomy-labels/ so the real design tokens
+// and component styles apply. Not linked in nav and excluded from the sitemap;
+// it is a preview surface, not part of the published site.
+import "../../styles/global.css";
+---
+
 <!doctype html>
 <html lang="en" data-theme="neon-violet">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
     <title>Taxonomy labels, visual experiment</title>
-    <!-- Pulls the real site tokens + components so chips render authentically.
-         This file is a standalone experiment; it is NOT wired into the site. -->
-    <link rel="stylesheet" href="../src/styles/global.css" />
+  </head>
+  <body>
+    <div class="lab">
+      <h1>Taxonomy labels</h1>
+      <p class="sub">A side-by-side experiment for telling the four label systems apart in the feed. Everything here uses the live design tokens. See <code>docs/CONTENT.md</code> for the definitions.</p>
+      <span class="warn">// experiment only, not part of the published site</span>
+
+      <h2>The four axes <span class="ax">// what each label answers</span></h2>
+      <div class="legend">
+        <div class="item"><span class="badge" data-type="devlog">[ DEVLOG ]</span><span><span class="axname">type</span><br /><span class="q">What kind of writing is this?</span></span></div>
+        <div class="item"><span class="badge" data-status="updated">[ UPDATED ]</span><span><span class="axname">status</span><br /><span class="q">Where is it in its lifecycle?</span></span></div>
+        <div class="item"><span class="verdict" data-verdict="watch">ONE TO WATCH</span><span><span class="axname">verdict</span><br /><span class="q">(Reviews) How did it score?</span></span></div>
+        <div class="item"><span class="tag"><span class="hash">#</span>expo</span><span><span class="axname">topic</span><br /><span class="q">What subject does it cover?</span></span></div>
+      </div>
+
+      <h2>The collision <span class="ax">// current rendering</span></h2>
+      <p class="note">A devlog and a "watch" review sit next to each other in the feed. Both lead with an uppercase mono pill, and on a <code>watch</code> verdict both the <code>[ REVIEW ]</code> badge and the verdict are accent-colored, so the type axis and the verdict axis blur together.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">devlog post (current)</span>
+          <div class="row">
+            <span class="badge" data-type="devlog">[ DEVLOG ]</span>
+            <span class="date">2026-06-10</span>
+          </div>
+          <div class="card-title">Building meese.rs in public</div>
+        </div>
+        <div class="panel">
+          <span class="cap">review post (current)</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+        </div>
+      </div>
+
+      <h2>Proposal A <span class="ax">// verdict reads as a rating, not a category</span></h2>
+      <p class="note">Keep the type badge as the anchor. Reshape the verdict into a scored chip: a leading dot in the verdict hue, sentence case, and the score baked in. Pill geometry plus a number make it unmistakably a judgment, not a "kind of post".</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">before</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+        </div>
+        <div class="panel" data-good>
+          <span class="cap">after</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict" data-verdict="watch"><span class="dot"></span>One to watch <span class="score">3.9</span></span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+          <div class="row" style="margin-top:14px">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict" data-verdict="recommended"><span class="dot"></span>Recommended <span class="score">4.6</span></span>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict" data-verdict="caveats"><span class="dot"></span>With caveats <span class="score">4.2</span></span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Proposal B <span class="ax">// types become an icon family</span></h2>
+      <p class="note">Give every type badge a small leading icon (Lucide, inline SVG, matching the rest of the site). Presence of an icon marks the type axis; the verdict stays text-only. Brackets become redundant once there is an icon, so they drop.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">before</span>
+          <div class="row"><span class="badge" data-type="guide">[ GUIDE ]</span></div>
+          <div class="row" style="margin-top:10px"><span class="badge" data-type="devlog">[ DEVLOG ]</span></div>
+          <div class="row" style="margin-top:10px"><span class="badge" data-type="review">[ REVIEW ]</span> <span class="verdict" data-verdict="watch">ONE TO WATCH</span></div>
+        </div>
+        <div class="panel" data-good>
+          <span class="cap">after</span>
+          <div class="row">
+            <span class="mk-badge" data-type="guide">
+              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>GUIDE
+            </span>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="mk-badge" data-type="devlog">
+              <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" x2="20" y1="19" y2="19"></line></svg>DEVLOG
+            </span>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="mk-badge" data-type="review">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>REVIEW
+            </span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Proposal C <span class="ax">// distinct geometry per axis</span></h2>
+      <p class="note">Push the axes apart by shape, not just color. Type keeps the hairline bracketed chip. Status drops to quiet dotted metadata (it is not a category). The verdict, the headline judgment of a review, goes loud: a solid filled pill with the score. Hard to mistake any one for another.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">before</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
+            <span class="badge" data-status="updated">[ UPDATED ]</span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+        </div>
+        <div class="panel" data-good>
+          <span class="cap">after</span>
+          <div class="row">
+            <span class="badge" data-type="review">[ REVIEW ]</span>
+            <span class="mk-verdict-loud" data-verdict="watch">One to watch <span class="score">3.9</span></span>
+            <span class="date">2026-06-09</span>
+          </div>
+          <div class="card-title">Paseo</div>
+          <div class="row" style="margin-top:10px">
+            <span class="mk-status"><span class="dot"></span>updated 2026-06-11</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Topics vs tags <span class="ax">// already separated, mostly a doc gap</span></h2>
+      <p class="note">Topics are the only ones rendered as pills, and they link to archives. Tags never appear as pills; they only power search. So the fix here is mostly the reference doc, but the experiment below shows the intended contrast.</p>
+      <div class="grid2">
+        <div class="panel">
+          <span class="cap">topics (navigable)</span>
+          <div class="row">
+            <span class="tag"><span class="hash">#</span>react-native</span>
+            <span class="tag"><span class="hash">#</span>expo</span>
+            <span class="tag"><span class="hash">#</span>mobile-development</span>
+          </div>
+        </div>
+        <div class="panel">
+          <span class="cap">tags (search only, not rendered)</span>
+          <div class="row"><span class="ghost-tags">eas, sdk-56, ios &nbsp;&rarr;&nbsp; surface only as search filters</span></div>
+        </div>
+      </div>
+    </div>
+
     <style>
       .lab { max-width: 1040px; margin: 0 auto; padding: 48px 24px 96px; }
       .lab h1 { font-family: var(--font-display); font-size: var(--text-3xl); margin: 0 0 6px; }
@@ -91,147 +240,5 @@
       /* topics vs tags clarifier */
       .ghost-tags { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-4); }
     </style>
-  </head>
-  <body>
-    <div class="lab">
-      <h1>Taxonomy labels</h1>
-      <p class="sub">A side-by-side experiment for telling the four label systems apart in the feed. Everything here uses the live design tokens. See <code>docs/CONTENT.md</code> for the definitions.</p>
-      <span class="warn">// experiment only, not wired into the site</span>
-
-      <h2>The four axes <span class="ax">// what each label answers</span></h2>
-      <div class="legend">
-        <div class="item"><span class="badge" data-type="devlog">[ DEVLOG ]</span><span><span class="axname">type</span><br /><span class="q">What kind of writing is this?</span></span></div>
-        <div class="item"><span class="badge" data-status="updated">[ UPDATED ]</span><span><span class="axname">status</span><br /><span class="q">Where is it in its lifecycle?</span></span></div>
-        <div class="item"><span class="verdict" data-verdict="watch">ONE TO WATCH</span><span><span class="axname">verdict</span><br /><span class="q">(Reviews) How did it score?</span></span></div>
-        <div class="item"><span class="tag"><span class="hash">#</span>expo</span><span><span class="axname">topic</span><br /><span class="q">What subject does it cover?</span></span></div>
-      </div>
-
-      <h2>The collision <span class="ax">// current rendering</span></h2>
-      <p class="note">A devlog and a "watch" review sit next to each other in the feed. Both lead with an uppercase mono pill, and on a <code>watch</code> verdict both the <code>[ REVIEW ]</code> badge and the verdict are accent-colored, so the type axis and the verdict axis blur together.</p>
-      <div class="grid2">
-        <div class="panel">
-          <span class="cap">devlog post (current)</span>
-          <div class="row">
-            <span class="badge" data-type="devlog">[ DEVLOG ]</span>
-            <span class="date">2026-06-10</span>
-          </div>
-          <div class="card-title">Building meese.rs in public</div>
-        </div>
-        <div class="panel">
-          <span class="cap">review post (current)</span>
-          <div class="row">
-            <span class="badge" data-type="review">[ REVIEW ]</span>
-            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
-            <span class="date">2026-06-09</span>
-          </div>
-          <div class="card-title">Paseo</div>
-        </div>
-      </div>
-
-      <h2>Proposal A <span class="ax">// verdict reads as a rating, not a category</span></h2>
-      <p class="note">Keep the type badge as the anchor. Reshape the verdict into a scored chip: a leading dot in the verdict hue, sentence case, and the score baked in. Pill geometry plus a number make it unmistakably a judgment, not a "kind of post".</p>
-      <div class="grid2">
-        <div class="panel">
-          <span class="cap">before</span>
-          <div class="row">
-            <span class="badge" data-type="review">[ REVIEW ]</span>
-            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
-            <span class="date">2026-06-09</span>
-          </div>
-          <div class="card-title">Paseo</div>
-        </div>
-        <div class="panel" data-good>
-          <span class="cap">after</span>
-          <div class="row">
-            <span class="badge" data-type="review">[ REVIEW ]</span>
-            <span class="mk-verdict" data-verdict="watch"><span class="dot"></span>One to watch <span class="score">3.9</span></span>
-            <span class="date">2026-06-09</span>
-          </div>
-          <div class="card-title">Paseo</div>
-          <div class="row" style="margin-top:14px">
-            <span class="badge" data-type="review">[ REVIEW ]</span>
-            <span class="mk-verdict" data-verdict="recommended"><span class="dot"></span>Recommended <span class="score">4.6</span></span>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <span class="badge" data-type="review">[ REVIEW ]</span>
-            <span class="mk-verdict" data-verdict="caveats"><span class="dot"></span>With caveats <span class="score">4.2</span></span>
-          </div>
-        </div>
-      </div>
-
-      <h2>Proposal B <span class="ax">// types become an icon family</span></h2>
-      <p class="note">Give every type badge a small leading icon (Lucide, inline SVG, matching the rest of the site). Presence of an icon marks the type axis; the verdict stays text-only. Brackets become redundant once there is an icon, so they drop.</p>
-      <div class="grid2">
-        <div class="panel">
-          <span class="cap">before</span>
-          <div class="row"><span class="badge" data-type="guide">[ GUIDE ]</span></div>
-          <div class="row" style="margin-top:10px"><span class="badge" data-type="devlog">[ DEVLOG ]</span></div>
-          <div class="row" style="margin-top:10px"><span class="badge" data-type="review">[ REVIEW ]</span> <span class="verdict" data-verdict="watch">ONE TO WATCH</span></div>
-        </div>
-        <div class="panel" data-good>
-          <span class="cap">after</span>
-          <div class="row">
-            <span class="mk-badge" data-type="guide">
-              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>GUIDE
-            </span>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <span class="mk-badge" data-type="devlog">
-              <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>DEVLOG
-            </span>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <span class="mk-badge" data-type="review">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>REVIEW
-            </span>
-            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
-          </div>
-        </div>
-      </div>
-
-      <h2>Proposal C <span class="ax">// distinct geometry per axis</span></h2>
-      <p class="note">Push the axes apart by shape, not just color. Type keeps the hairline bracketed chip. Status drops to quiet dotted metadata (it is not a category). The verdict, the headline judgment of a review, goes loud: a solid filled pill with the score. Hard to mistake any one for another.</p>
-      <div class="grid2">
-        <div class="panel">
-          <span class="cap">before</span>
-          <div class="row">
-            <span class="badge" data-type="review">[ REVIEW ]</span>
-            <span class="verdict" data-verdict="watch">ONE TO WATCH</span>
-            <span class="badge" data-status="updated">[ UPDATED ]</span>
-            <span class="date">2026-06-09</span>
-          </div>
-          <div class="card-title">Paseo</div>
-        </div>
-        <div class="panel" data-good>
-          <span class="cap">after</span>
-          <div class="row">
-            <span class="badge" data-type="review">[ REVIEW ]</span>
-            <span class="mk-verdict-loud" data-verdict="watch">One to watch <span class="score">3.9</span></span>
-            <span class="date">2026-06-09</span>
-          </div>
-          <div class="card-title">Paseo</div>
-          <div class="row" style="margin-top:10px">
-            <span class="mk-status"><span class="dot"></span>updated 2026-06-11</span>
-          </div>
-        </div>
-      </div>
-
-      <h2>Topics vs tags <span class="ax">// already separated, mostly a doc gap</span></h2>
-      <p class="note">Topics are the only ones rendered as pills, and they link to archives. Tags never appear as pills; they only power search. So the fix here is mostly the reference doc, but the experiment below shows the intended contrast.</p>
-      <div class="grid2">
-        <div class="panel">
-          <span class="cap">topics (navigable)</span>
-          <div class="row">
-            <span class="tag"><span class="hash">#</span>react-native</span>
-            <span class="tag"><span class="hash">#</span>expo</span>
-            <span class="tag"><span class="hash">#</span>mobile-development</span>
-          </div>
-        </div>
-        <div class="panel">
-          <span class="cap">tags (search only, not rendered)</span>
-          <div class="row"><span class="ghost-tags">eas, sdk-56, ios &nbsp;&rarr;&nbsp; surface only as search filters</span></div>
-        </div>
-      </div>
-    </div>
   </body>
 </html>
