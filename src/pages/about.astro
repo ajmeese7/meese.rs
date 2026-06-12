@@ -1,6 +1,9 @@
 ---
+import { Image } from "astro:assets";
+
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Icon from "../components/layout/Icon.astro";
+import photo from "../assets/aaron_meese.jpg";
 import { getPosts } from "../utils/posts";
 import { getTopics } from "../utils/topics";
 
@@ -43,14 +46,20 @@ const person = {
       <div class="about-id reticle">
         <span class="tick tl"></span><span class="tick tr"></span>
         <span class="tick bl"></span><span class="tick br"></span>
-        {/* HUMAN INPUT: swap the placeholder for a real photo. Drop the file at
-            src/assets/aaron-meese.jpg and replace this block with astro:assets:
-              import { Image } from "astro:assets";
-              import photo from "../assets/aaron-meese.jpg";
-              <Image src={photo} alt="Aaron Meese" class="about-id__photo" width={96} height={96} /> */}
+        <Image
+          src={photo}
+          alt="Aaron Meese"
+          class="about-id__photo"
+          width={88}
+          height={88}
+          densities={[2, 3]}
+          quality={85}
+        />
+        <!--
         <div class="about-id__photo about-id__photo--placeholder" aria-hidden="true">
           <img src="/logomark.svg" width="40" height="40" alt="" />
         </div>
+        -->
         <div class="about-id__lead">
           <span class="sys-label">// about</span>
           <h1 class="about-id__name">Aaron Meese</h1>
