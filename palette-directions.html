@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meese.rs — palette directions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #08090B; font-family: 'IBM Plex Sans', sans-serif; padding: 28px; }
+  .head { max-width: 980px; margin: 0 auto 22px; }
+  .head.b { margin-top: 44px; padding-top: 30px; border-top: 1px dashed #23262B; }
+  .head .k { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #7d8794; }
+  .head.b .k { color: #B6E84B; }
+  .head.c .k { color: #FF4DA1; }
+  .head h1 { font-family: 'Space Grotesk', sans-serif; color: #ECEEF0; font-size: 26px; font-weight: 600; margin: 8px 0 6px; letter-spacing: -.01em; }
+  .head p { color: #8A929B; font-size: 14px; margin: 0; max-width: 72ch; line-height: 1.6; }
+  .grid { max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px; }
+  .phead { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .pname { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; color: var(--ink1); }
+  .pnum { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink4); border: 1px solid var(--line2); border-radius: 3px; padding: 2px 5px; }
+  .chips { margin-left: auto; display: flex; gap: 5px; }
+  .chips i { width: 14px; height: 14px; border-radius: 3px; display: block; }
+  .body { padding: 18px 16px 20px; }
+  .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .glow .lbl { text-shadow: 0 0 12px var(--accent); }
+  .title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 19px; color: var(--ink1); margin: 8px 0 16px; letter-spacing: -.01em; line-height: 1.15; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+  .badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: .1em; color: var(--accent);
+    background: var(--wash); border: 1px solid var(--accent-line); border-radius: 3px; padding: 2px 6px; }
+  .glow .badge { box-shadow: 0 0 13px -3px var(--accent); }
+  .date { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink3); }
+  .ctitle { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; color: var(--ink1); margin: 0 0 5px; }
+  .desc { font-size: 12.5px; color: var(--ink2); line-height: 1.5; margin: 0 0 11px; }
+  .lnk { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+  .tags { display: flex; gap: 6px; }
+  .tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink3); border: 1px solid var(--line2); border-radius: 999px; padding: 2px 8px; }
+  .tag b { color: var(--ink4); font-weight: 400; }
+  .btns { display: flex; gap: 8px; margin-top: 14px; }
+  .btn { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; height: 32px; padding: 0 14px; border-radius: 5px; display: inline-flex; align-items: center; cursor: default; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+  .glow .btn.primary { box-shadow: 0 0 16px -2px var(--accent); }
+  .btn.ghost { background: transparent; color: var(--ink2); border: 1px solid var(--line2); }
+  .graph { margin-top: 14px; height: 84px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); position: relative; overflow: hidden; }
+  .note { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--ink3); margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="k">// brand · palette directions · batch a</div>
+    <h1>Batch A — restrained directions</h1>
+    <p>Same UI slice, four palettes, one accent each. The first three drop the orange (mono + one cool signal); the last keeps a single warm accent and drops the blue.</p>
+  </div>
+  <div class="grid" id="gridA"></div>
+
+  <div class="head b">
+    <div class="k">// brand · lime family · batch b — neon</div>
+    <h1>Batch B — pushing the lime brighter</h1>
+    <p>The lime, dialed up toward neon. The trick to staying readable: body text never goes lime — it stays neutral near-white. The accent only ever lands on small signal elements (badge, button, link, graph nodes). 04 adds a soft glow to express extra brightness <em>without</em> coloring any text. Note the inline <span style="color:#CCFF42;text-decoration:underline;text-underline-offset:2px">links</span> stay legible at the brighter end.</p>
+  </div>
+  <div class="grid" id="gridB"></div>
+
+  <div class="head b c">
+    <div class="k">// brand · neon family · batch c — full spectrum</div>
+    <h1>Batch C — greens, blues &amp; pinks (all with glow)</h1>
+    <p>Eight neon signals across the spectrum, every one carrying the soft glow. Same rule throughout: body copy stays neutral near-white, the accent only touches badge / button / link / nodes. Button label color is tuned per hue for contrast (dark text on the light greens &amp; pinks, white text on the deeper blues &amp; magentas).</p>
+  </div>
+  <div class="grid" id="gridC"></div>
+
+  <script>
+    const OPTS_A = [
+      { name: 'Signal Lime', num: 'A1', note: '// graphite mono + one acid signal. (your pick)',
+        vars: { bg:'#0A0B0D', surface:'#111316', line:'#23262B', line2:'#31363D', grid:'rgba(150,160,170,.04)',
+          ink1:'#ECEEF0', ink2:'#A9AFB6', ink3:'#767D85', ink4:'#535961',
+          accent:'#B6E84B', 'accent-line':'rgba(182,232,75,.4)', wash:'rgba(182,232,75,.12)', 'on-accent':'#0A0B0D' },
+        nodes:['#B6E84B','#ECEEF0','#767D85'] },
+      { name: 'Cold Mono', num: 'A2', note: '// near-zero chroma. accent is luminance.',
+        vars: { bg:'#0A0C0F', surface:'#12151A', line:'#242A32', line2:'#333B45', grid:'rgba(150,170,190,.045)',
+          ink1:'#EAEEF3', ink2:'#AEB7C2', ink3:'#79828E', ink4:'#555E69',
+          accent:'#AFC4D6', 'accent-line':'rgba(175,196,214,.38)', wash:'rgba(175,196,214,.1)', 'on-accent':'#0A0C0F' },
+        nodes:['#D2E1ED','#AFC4D6','#5E7280'] },
+      { name: 'Slate Teal', num: 'A3', note: '// cool blue-black + one muted teal.',
+        vars: { bg:'#0A0E10', surface:'#11171A', line:'#232E33', line2:'#324149', grid:'rgba(120,160,170,.045)',
+          ink1:'#E8EEEF', ink2:'#ABB8BB', ink3:'#79898D', ink4:'#56666B',
+          accent:'#5FB0A6', 'accent-line':'rgba(95,176,166,.4)', wash:'rgba(95,176,166,.12)', 'on-accent':'#06100E' },
+        nodes:['#5FB0A6','#E8EEEF','#79898D'] },
+      { name: 'Ember Mono', num: 'A4', note: '// warm graphite + one ember, no blue.',
+        vars: { bg:'#0C0B0A', surface:'#141210', line:'#29241F', line2:'#38302A', grid:'rgba(190,170,150,.04)',
+          ink1:'#F0EBE4', ink2:'#BAB2A8', ink3:'#897F73', ink4:'#625A50',
+          accent:'#DD935C', 'accent-line':'rgba(221,147,92,.4)', wash:'rgba(221,147,92,.12)', 'on-accent':'#0C0B0A' },
+        nodes:['#DD935C','#F0EBE4','#897F73'] },
+    ];
+
+    const NEON_BASE = { bg:'#090A0C', surface:'#101215', line:'#22252A', line2:'#30353C', grid:'rgba(150,160,170,.04)',
+      ink1:'#EDEFF1', ink2:'#AAB0B7', ink3:'#767D85', ink4:'#535961', 'on-accent':'#0A0B0D' };
+    const neon = (accent, line, wash) => ({ ...NEON_BASE, accent, 'accent-line':line, wash });
+
+    const OPTS_B = [
+      { name: 'Neon Lime', num: 'B1', note: '// #CCFF42 — bright lime, pure signal. body stays neutral.',
+        vars: neon('#CCFF42','rgba(204,255,66,.45)','rgba(204,255,66,.13)'), nodes:['#CCFF42','#EDEFF1','#767D85'] },
+      { name: 'Volt', num: 'B2', note: '// #E6FF3A — yellow-green, maximum brightness / volt.',
+        vars: neon('#E6FF3A','rgba(230,255,58,.45)','rgba(230,255,58,.13)'), nodes:['#E6FF3A','#EDEFF1','#767D85'] },
+      { name: 'Acid Green', num: 'B3', note: '// #84F24B — greener neon, classic hacker signal, tuned.',
+        vars: neon('#84F24B','rgba(132,242,75,.45)','rgba(132,242,75,.13)'), nodes:['#84F24B','#EDEFF1','#767D85'] },
+      { name: 'Neon Lime + Glow', num: 'B4', glow: true, note: '// #CCFF42 + soft glow on accent elements only — brightness without touching text.',
+        vars: neon('#CCFF42','rgba(204,255,66,.5)','rgba(204,255,66,.14)'), nodes:['#CCFF42','#EDEFF1','#767D85'] },
+    ];
+
+    const graphSVG = (n, glow) => {
+      const f = glow ? `filter:drop-shadow(0 0 5px ${n[0]})` : '';
+      return `<svg viewBox="0 0 260 84" style="position:absolute;inset:0;width:100%;height:100%">
+        <line x1="70" y1="30" x2="135" y2="56" stroke="var(--line2)" stroke-width="1"/>
+        <line x1="135" y1="56" x2="200" y2="32" stroke="var(--line2)" stroke-width="1"/>
+        <line x1="70" y1="30" x2="200" y2="32" stroke="var(--line2)" stroke-width="1"/>
+        <circle cx="135" cy="56" r="7" fill="${n[0]}" style="${f}"/>
+        <circle cx="70" cy="30" r="5" fill="${n[1]}"/>
+        <circle cx="200" cy="32" r="5.5" fill="${n[2]}"/>
+      </svg>`;
+    };
+
+    const panel = (o) => {
+      const v = Object.entries(o.vars).map(([k,val]) => `--${k}:${val}`).join(';');
+      const chips = [o.vars.accent, o.vars.ink1, o.vars.surface].map(c => `<i style="background:${c};border:1px solid var(--line2)"></i>`).join('');
+      return `<div class="panel${o.glow ? ' glow' : ''}" style="${v}">
+        <div class="phead"><span class="pname">${o.name}</span><span class="pnum">${o.num}</span><span class="chips">${chips}</span></div>
+        <div class="body">
+          <div class="lbl">// system index</div>
+          <div class="title">Field notes from a builder</div>
+          <div class="card">
+            <div class="row"><span class="badge">[ GUIDE ]</span><span class="date">2026-06-08 · 7 min</span></div>
+            <div class="ctitle">Getting an Expo SDK 56 app on a real device</div>
+            <p class="desc">A few gotchas the docs never connect for you — here's <a class="lnk">the path</a> that actually worked.</p>
+            <div class="tags"><span class="tag"><b>#</b>react-native</span><span class="tag"><b>#</b>expo</span></div>
+          </div>
+          <div class="btns"><span class="btn primary">Read guide</span><span class="btn ghost">Search</span></div>
+          <div class="graph">${graphSVG(o.nodes, o.glow)}</div>
+          <div class="note">${o.note}</div>
+        </div>
+      </div>`;
+    };
+
+    document.getElementById('gridA').innerHTML = OPTS_A.map(panel).join('');
+    document.getElementById('gridB').innerHTML = OPTS_B.map(panel).join('');
+
+    const neonC_UNUSED = null;
+    // build rgba helpers from hex
+    const hx = (h) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+    const mk = (name, num, accent, onAccent, note) => {
+      const [r,g,b] = hx(accent);
+      return { name, num, glow: true, note, nodes:[accent,'#EDEFF1','#767D85'],
+        vars: { ...NEON_BASE, accent, 'accent-line':`rgba(${r},${g},${b},.46)`, wash:`rgba(${r},${g},${b},.13)`, 'on-accent':onAccent } };
+    };
+    const D = '#0A0B0D', W = '#0A0B0D';
+    const OPTS_C = [
+      mk('Acid Green', 'C1', '#84F24B', D, '// your pick — greener neon + glow.'),
+      mk('Neon Mint',  'C2', '#35F0A2', D, '// green-cyan, fresh and bright.'),
+      mk('Neon Cyan',  'C3', '#29E7F2', D, '// aqua signal, coolest of the greens-blues.'),
+      mk('Electric Blue','C4', '#5391FF', '#06080F', '// true blue — white-ish text on the button.'),
+      mk('Neon Violet','C5', '#9A7CFF', '#0A0814', '// blue-purple, single accent (no gradient).'),
+      mk('Hot Magenta','C6', '#FF3DA1', '#160510', '// high-energy pink-magenta.'),
+      mk('Neon Pink',  'C7', '#FF73B6', D, '// softer rose-pink, light enough for dark text.'),
+      mk('Coral',      'C8', '#FF5E73', '#160508', '// pink-red coral, warm signal.'),
+    ];
+    document.getElementById('gridC').innerHTML = OPTS_C.map(panel).join('');
+  </script>
+</body>
+</html>
