@@ -35,7 +35,7 @@ const THEMES: [string, string, string][] = [
     <span>meese<span class="rs">.rs</span></span>
   </a>
 
-  <nav class="site-nav" aria-label="Primary">
+  <nav class="site-nav" id="site-nav" aria-label="Primary" data-site-nav>
     {
       NAV.map(([label, href, key]) => (
         <a
@@ -90,6 +90,18 @@ const THEMES: [string, string, string][] = [
     <span>Search</span>
     <kbd>⌘K</kbd>
   </button>
+
+  <button
+    type="button"
+    class="nav-toggle"
+    aria-label="Menu"
+    aria-controls="site-nav"
+    aria-expanded="false"
+    data-nav-toggle
+  >
+    <span class="nav-toggle__open"><Icon name="menu" size={18} /></span>
+    <span class="nav-toggle__close"><Icon name="x" size={18} /></span>
+  </button>
 </header>
 
 <script>
@@ -124,6 +136,23 @@ const THEMES: [string, string, string][] = [
   const menu = document.querySelector<HTMLElement>("[data-theme-menu]");
   const nameEl = document.querySelector<HTMLElement>("[data-theme-name]");
   const swatchEl = document.querySelector<HTMLElement>("[data-theme-swatch]");
+
+  // Mobile nav disclosure: the inline nav becomes a drawer below the header,
+  // toggled by the menu button. Desktop ignores the open state (nav is always
+  // shown and the toggle is display:none).
+  const navToggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
+  const siteNav = document.querySelector<HTMLElement>("[data-site-nav]");
+  function setNavOpen(open: boolean) {
+    if (!siteNav || !navToggle) return;
+    siteNav.classList.toggle("is-open", open);
+    navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  navToggle?.addEventListener("click", () =>
+    setNavOpen(!siteNav?.classList.contains("is-open")),
+  );
+  siteNav?.querySelectorAll("a").forEach((a) =>
+    a.addEventListener("click", () => setNavOpen(false)),
+  );
 
   function current(): string {
     return root.dataset.theme || "neon-violet";
@@ -161,10 +190,22 @@ const THEMES: [string, string, string][] = [
     opt.addEventListener("click", () => apply(opt.dataset.themeValue!));
   });
   document.addEventListener("mousedown", (e) => {
-    if (wrap && !wrap.contains(e.target as Node)) setOpen(false);
+    const target = e.target as Node;
+    if (wrap && !wrap.contains(target)) setOpen(false);
+    if (
+      siteNav &&
+      navToggle &&
+      !siteNav.contains(target) &&
+      !navToggle.contains(target)
+    ) {
+      setNavOpen(false);
+    }
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") setOpen(false);
+    if (e.key === "Escape") {
+      setOpen(false);
+      setNavOpen(false);
+    }
   });
   syncButton();
 </script>
