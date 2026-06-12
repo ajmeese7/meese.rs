@@ -1,0 +1,27 @@
+{
+  "name": "meese.rs",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static-first technical writing site, field notes from a builder.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",
+    "preview": "astro preview",
+    "check": "astro check",
+    "validate:content": "tsx scripts/validate-content.ts",
+    "generate:graph": "tsx scripts/generate-graph.ts"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^6.0.3",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^6.4.6"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "pagefind": "^1.5.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
