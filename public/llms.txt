@@ -21,4 +21,4 @@
 
 ## Usage
 
-This site is intended for human reading, normal search indexing, and local assistant use for navigating, summarizing, or citing specific public pages. Bulk scraping for model training or automated mirroring is not intended.
+This site is intended for human reading, normal search indexing, and local assistant use for navigating, summarizing, or citing specific public pages. Bulk scraping for model training or automated mirroring is not authorized.
