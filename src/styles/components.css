@@ -730,7 +730,7 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 }
 .graph-teaser__foot .t { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink-1); }
 .graph-teaser:hover .graph-teaser__foot .t { text-decoration: underline; text-underline-offset: 3px; }
-.graph-teaser__foot .s { font-family: var(--font-mono); font-size: 11px; color: var(--ink-4); margin-top: 2px; }
+.graph-teaser__foot .s { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 2px; }
 .search-tile {
   width: 100%;
   display: flex;

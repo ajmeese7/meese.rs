@@ -22,9 +22,9 @@ const r = d.review!;
     <span class="post-card__date">{isoDate(d.date)}</span>
   </div>
   <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-    <h3 class="post-card__title">
+    <h2 class="post-card__title">
       <a href={postUrl(post)} class="post-card__link">{r.subject}</a>
-    </h3>
+    </h2>
     {r.version && <span class="review-card__version">{r.version}</span>}
   </div>
   <div class="review-card__score">
