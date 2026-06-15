@@ -1,4 +1,5 @@
 ---
+import { Font } from "astro:assets";
 import { buildSeo } from "../../utils/seo";
 import "../../styles/global.css";
 
@@ -36,6 +37,12 @@ const seo = buildSeo({
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Self-hosted @font-face + preload for the render-critical weights. -->
+<Font cssVariable="--font-display" preload={[{ weight: 400, style: "normal" }, { weight: 700, style: "normal" }]} />
+<Font cssVariable="--font-body" preload={[{ weight: 400, style: "normal" }]} />
+<Font cssVariable="--font-mono" preload={[{ weight: 400, style: "normal" }]} />
+
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="canonical" href={seo.canonical} />
 <link rel="sitemap" href="/sitemap-index.xml" />

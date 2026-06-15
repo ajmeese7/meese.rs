@@ -26,9 +26,9 @@ const rt = readingTime(post.body);
     {d.pinned && <Badge status="pinned" />}
     <span class="post-card__date">{isoDate(d.date)} · {rt}</span>
   </div>
-  <h3 class="post-card__title">
+  <h2 class="post-card__title">
     <a href={postUrl(post)} class="post-card__link">{d.title}</a>
-  </h3>
+  </h2>
   <p class="post-card__desc">{d.summary ?? d.description}</p>
   {
     (d.topics.length > 0 || d.updated) && (

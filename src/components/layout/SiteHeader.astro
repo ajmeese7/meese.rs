@@ -98,6 +98,7 @@ const THEMES: [string, string, string][] = [
     <button
       type="button"
       class="theme-switcher__button"
+      aria-label="Accent theme"
       aria-haspopup="listbox"
       aria-expanded="false"
       data-theme-toggle
@@ -128,7 +129,7 @@ const THEMES: [string, string, string][] = [
     </ul>
   </div>
 
-  <button type="button" class="header-search" data-search-open>
+  <button type="button" class="header-search" aria-label="Search" data-search-open>
     <Icon name="search" size={15} />
     <span>Search</span>
     <kbd>⌘K</kbd>
