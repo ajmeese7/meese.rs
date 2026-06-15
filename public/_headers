@@ -6,10 +6,11 @@
 
 # CSP is intentionally NOT enabled yet, it must be tested in a Cloudflare
 # preview first (SPEC §31). Before enabling, account for: the inline
-# theme-apply script in <head> (needs a hash or 'unsafe-inline'); Google Fonts
-# (fonts.googleapis.com + fonts.gstatic.com) until fonts are self-hosted; and
-# the Pagefind index fetched by /search. A workable starting point once fonts
-# are self-hosted and the inline script is hashed:
+# theme-apply script in <head> (needs a hash or 'unsafe-inline'); the inline
+# @font-face <style> the Astro Fonts API injects (needs 'unsafe-inline' in
+# style-src); and the Pagefind index fetched by /search. Fonts are now
+# self-hosted under /_astro/fonts/, so font-src 'self' covers them. A workable
+# starting point once the inline script is hashed:
 #
 #   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'
 
