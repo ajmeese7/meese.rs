@@ -1,0 +1,250 @@
+---
+/**
+ * Ant-vs-wind sandbox. A canvas ant clings to a floor, wall, or ceiling while
+ * you crank a wind slider. Below the species' modeled threshold it holds and
+ * leans into the gust; above it, the ant slides or peels off and tumbles away.
+ * Pure spectacle, but the threshold is the same drag-equation number the
+ * calculator reports (full engagement, smooth surface).
+ */
+import { SPECIES } from "../../utils/ant-wind";
+---
+
+<div class="snd reticle" data-wind-sandbox>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <canvas class="snd__canvas" data-snd-canvas></canvas>
+
+  <div class="snd__hud">
+    <span class="snd__state" data-snd-state>HOLDING</span>
+    <span class="snd__wind"><b data-snd-wind>0</b> mph wind · threshold <b data-snd-thresh>, </b></span>
+  </div>
+
+  <div class="snd__controls">
+    <select data-snd-species aria-label="Species">
+      {SPECIES.map((s, i) => <option value={i} selected={i === 8}>{s.name}</option>)}
+    </select>
+    <div class="snd__seg" data-snd-seg>
+      <button type="button" data-val="ground" class="is-active">Floor</button>
+      <button type="button" data-val="wall">Wall</button>
+      <button type="button" data-val="ceiling">Ceiling</button>
+    </div>
+    <button type="button" class="snd__reset" data-snd-reset>↺ re-attach</button>
+  </div>
+  <label class="snd__slider">
+    <span>wind</span>
+    <input type="range" min="0" max="320" value="0" step="1" data-snd-slider aria-label="Wind speed mph" />
+  </label>
+</div>
+
+<style>
+  .snd {
+    position: relative; margin: var(--space-7) 0; padding: var(--space-5);
+    background: var(--surface-1); border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .snd__canvas {
+    display: block; width: 100%; height: 240px;
+    background: radial-gradient(120% 120% at 20% 10%, var(--surface-2), var(--surface-inset));
+    border-radius: var(--radius-sm); border: var(--border-hair) solid var(--line-1);
+  }
+  .snd__hud {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-top: var(--space-4); flex-wrap: wrap;
+  }
+  .snd__state {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .1em;
+    padding: 3px 9px; border-radius: var(--radius-xs);
+    color: var(--green); background: var(--green-wash);
+  }
+  .snd__state.is-gone { color: var(--red); background: var(--red-wash); }
+  .snd__wind { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  .snd__wind b { color: var(--ink-1); }
+  .snd__controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: var(--space-4); }
+  .snd select {
+    background: var(--surface-inset); color: var(--ink-1);
+    border: var(--border-hair) solid var(--line-2); border-radius: var(--radius-sm);
+    padding: 6px 9px; font-family: var(--font-mono); font-size: 12px; flex: 1 1 180px;
+  }
+  .snd__seg { display: flex; gap: 4px; }
+  .snd__seg button, .snd__reset {
+    background: var(--surface-inset); color: var(--ink-3);
+    border: var(--border-hair) solid var(--line-2); border-radius: var(--radius-sm);
+    padding: 6px 10px; font-family: var(--font-mono); font-size: 12px; cursor: pointer;
+    transition: color .15s var(--ease-out), background .15s var(--ease-out), border-color .15s var(--ease-out);
+  }
+  .snd__seg button:hover, .snd__reset:hover { color: var(--ink-1); border-color: var(--line-3); }
+  .snd__seg button.is-active { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+  .snd__slider { display: flex; align-items: center; gap: 12px; margin-top: var(--space-4); }
+  .snd__slider span { font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); }
+  .snd input[type="range"] { flex: 1; accent-color: var(--accent); }
+</style>
+
+<script>
+  import { SPECIES, bodyWeight, windSpeedForForce, toMph } from "../../utils/ant-wind";
+
+  type Orient = "ground" | "wall" | "ceiling";
+
+  const threshMph = (idx: number, orient: Orient) => {
+    const s = SPECIES[idx];
+    const massKg = s.massMg * 1e-6;
+    const W = bodyWeight(massKg);
+    const cap = s.ratio * W;
+    const resist = orient === "ground" ? cap : cap - W;
+    return toMph(windSpeedForForce(resist, massKg));
+  };
+
+  document.querySelectorAll<HTMLElement>("[data-wind-sandbox]").forEach((root) => {
+    const canvas = root.querySelector<HTMLCanvasElement>("[data-snd-canvas]")!;
+    const ctx = canvas.getContext("2d")!;
+    const stateEl = root.querySelector<HTMLElement>("[data-snd-state]")!;
+    const windEl = root.querySelector<HTMLElement>("[data-snd-wind]")!;
+    const threshEl = root.querySelector<HTMLElement>("[data-snd-thresh]")!;
+    const slider = root.querySelector<HTMLInputElement>("[data-snd-slider]")!;
+    const speciesSel = root.querySelector<HTMLSelectElement>("[data-snd-species]")!;
+    const reset = root.querySelector<HTMLButtonElement>("[data-snd-reset]")!;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let W = canvas.clientWidth, H = 240;
+    const cssColor = (v: string) => getComputedStyle(root).getPropertyValue(v).trim() || "#fff";
+    let accent = cssColor("--accent"), ink = cssColor("--ink-2"), faint = cssColor("--line-3"), surf = cssColor("--surface-3");
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      W = canvas.clientWidth;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    new ResizeObserver(resize).observe(canvas);
+    resize();
+
+    const state = {
+      species: 8,
+      orient: "ground" as Orient,
+      wind: 0,
+      detached: false,
+      // ant pose: position offset + rotation while tumbling
+      px: 0, py: 0, vx: 0, vy: 0, rot: 0, vr: 0, lean: 0,
+    };
+
+    const streaks = Array.from({ length: 80 }, () => ({
+      x: Math.random() * 600, y: Math.random() * H, len: 8 + Math.random() * 22,
+    }));
+
+    // Surface contact point, outward normal, and the ant's body rotation so its
+    // legs point into the surface (down on the floor, sideways on the wall,
+    // up on the ceiling).
+    function anchor(): { x: number; y: number; nx: number; ny: number; rot: number } {
+      if (state.orient === "ground") return { x: W * 0.42, y: H - 18, nx: 0, ny: -1, rot: 0 };
+      if (state.orient === "ceiling") return { x: W * 0.42, y: 18, nx: 0, ny: 1, rot: Math.PI };
+      return { x: 18, y: H * 0.45, nx: 1, ny: 0, rot: Math.PI / 2 }; // wall on the left
+    }
+    const BODY_GAP = 11; // body sits this far off the surface so legs reach it
+
+    function drawSurface() {
+      ctx.fillStyle = surf;
+      ctx.strokeStyle = faint;
+      ctx.lineWidth = 1;
+      if (state.orient === "ground") { ctx.fillRect(0, H - 18, W, 18); ctx.beginPath(); ctx.moveTo(0, H - 18); ctx.lineTo(W, H - 18); ctx.stroke(); }
+      else if (state.orient === "ceiling") { ctx.fillRect(0, 0, W, 18); ctx.beginPath(); ctx.moveTo(0, 18); ctx.lineTo(W, 18); ctx.stroke(); }
+      else { ctx.fillRect(0, 0, 18, H); ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(18, H); ctx.stroke(); }
+    }
+
+    function drawAnt(cx: number, cy: number, rot: number, lean: number) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+      const s = 1.3;
+      // legs (lean with wind)
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.6;
+      for (const side of [-1, 1]) {
+        for (const lx of [-6, 0, 6]) {
+          ctx.beginPath();
+          ctx.moveTo(lx * s, 0);
+          ctx.lineTo(lx * s + side * 8 * s + lean * 6, 9 * s);
+          ctx.stroke();
+        }
+      }
+      // body: gaster, thorax, head
+      ctx.fillStyle = ink;
+      ctx.beginPath(); ctx.ellipse(8 * s, -1 * s, 7 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, 0, 5 * s, 4 * s, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-7 * s, -1 * s, 3.4 * s, 0, Math.PI * 2); ctx.fill();
+      // antennae
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(-9 * s, -2 * s); ctx.lineTo(-14 * s, -7 * s); ctx.stroke();
+      ctx.restore();
+    }
+
+    function reattach() {
+      state.detached = false;
+      state.px = state.py = state.vx = state.vy = state.rot = state.vr = state.lean = 0;
+    }
+
+    let last = 0;
+    function frame(t: number) {
+      const dt = Math.min(40, t - last) / 16.67; last = t;
+      ctx.clearRect(0, 0, W, H);
+      drawSurface();
+
+      const a = anchor();
+      const bodyX = a.x + a.nx * BODY_GAP;
+      const bodyY = a.y + a.ny * BODY_GAP;
+      const tx = -a.ny, ty = a.nx; // surface tangent, for the slip jitter
+      const thr = threshMph(state.species, state.orient);
+      threshEl.textContent = `${thr.toFixed(0)} mph`;
+      const ratio = thr > 0 ? state.wind / thr : 99;
+
+      // wind streaks
+      const speed = 1 + state.wind * 0.06;
+      ctx.strokeStyle = accent + "55"; ctx.lineWidth = 1;
+      for (const st of streaks) {
+        ctx.globalAlpha = Math.min(0.5, state.wind / 200);
+        ctx.beginPath(); ctx.moveTo(st.x, st.y); ctx.lineTo(st.x + st.len, st.y); ctx.stroke();
+        if (!reduce && state.wind > 0) st.x += speed * dt * 3;
+        if (st.x > W) { st.x = -st.len; st.y = Math.random() * H; }
+      }
+      ctx.globalAlpha = 1;
+
+      if (!state.detached) {
+        // lean into the gust as it approaches threshold
+        state.lean = Math.min(1, ratio) * (state.orient === "ceiling" ? -1 : 1);
+        const jitter = ratio > 0.85 && !reduce ? (Math.random() - 0.5) * (ratio - 0.85) * 10 : 0;
+        drawAnt(bodyX + tx * jitter, bodyY + ty * jitter, a.rot, state.lean);
+        if (ratio >= 1) {
+          state.detached = true;
+          state.px = bodyX; state.py = bodyY;
+          state.vx = 2 + state.wind * 0.02; state.vy = state.orient === "ceiling" ? 1.5 : -0.4;
+          state.vr = 0.18;
+          stateEl.textContent = `DISLODGED @ ${state.wind} mph`;
+          stateEl.classList.add("is-gone");
+        } else {
+          stateEl.textContent = ratio > 0.85 ? "SLIPPING" : "HOLDING";
+          stateEl.classList.toggle("is-gone", false);
+        }
+      } else {
+        // tumble downwind under gravity
+        state.vy += 0.12 * dt; state.px += state.vx * dt * 2.4; state.py += state.vy * dt * 2.4;
+        state.rot += state.vr * dt;
+        drawAnt(state.px, state.py, state.rot, 0);
+      }
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    slider.addEventListener("input", () => { state.wind = +slider.value; windEl.textContent = String(state.wind); });
+    speciesSel.addEventListener("change", () => { state.species = +speciesSel.value; reattach(); });
+    reset.addEventListener("click", () => { reattach(); stateEl.classList.remove("is-gone"); });
+    root.querySelectorAll<HTMLButtonElement>("[data-snd-seg] button").forEach((b) =>
+      b.addEventListener("click", () => {
+        root.querySelectorAll("[data-snd-seg] button").forEach((x) => x.classList.remove("is-active"));
+        b.classList.add("is-active");
+        state.orient = b.dataset.val as Orient; reattach(); stateEl.classList.remove("is-gone");
+      }),
+    );
+
+    state.species = +speciesSel.value;
+  });
+</script>

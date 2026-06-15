@@ -1,0 +1,124 @@
+---
+/**
+ * The square-root damping curve. Wind speed scales with the square root of
+ * resisting force, so huge differences in grip collapse into modest
+ * differences in wind. Drag the slider and watch a 10× jump in grip buy only
+ * ~3.2× the wind. Curve is rendered server-side; the marker is interactive.
+ */
+import { M_REF, bodyWeight, windSpeedForForce, toMph } from "../../utils/ant-wind";
+
+// Plot geometry (SVG user units).
+const PX0 = 46, PX1 = 366, PY0 = 14, PY1 = 208;
+const R_MIN = 1, R_MAX = 1000;
+const massKg = M_REF;
+
+const logR = (r: number) => Math.log10(r);
+const xOf = (r: number) => PX0 + (logR(r) / logR(R_MAX)) * (PX1 - PX0);
+const mphOf = (r: number) => toMph(windSpeedForForce(r * bodyWeight(massKg), massKg));
+const MPH_MAX = Math.ceil(mphOf(R_MAX) / 50) * 50; // round up for the axis
+const yOf = (mph: number) => PY1 - (mph / MPH_MAX) * (PY1 - PY0);
+
+// Sample the curve in log space for a smooth polyline.
+const pts: string[] = [];
+for (let i = 0; i <= 64; i++) {
+  const r = R_MIN * Math.pow(R_MAX / R_MIN, i / 64);
+  pts.push(`${xOf(r).toFixed(1)},${yOf(mphOf(r)).toFixed(1)}`);
+}
+const curve = `M ${pts.join(" L ")}`;
+const gridR = [1, 3, 10, 30, 100, 300, 1000];
+---
+
+<div class="dmp reticle" data-damping-curve
+  data-px0={PX0} data-px1={PX1} data-py0={PY0} data-py1={PY1}
+  data-rmax={R_MAX} data-mphmax={MPH_MAX} data-mass={massKg}>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <svg class="dmp__svg" viewBox="0 0 380 236" role="img"
+    aria-label="Equivalent wind speed versus resisting force on a log axis">
+    <!-- gridlines -->
+    {gridR.map((r) => (
+      <line x1={xOf(r)} y1={PY0} x2={xOf(r)} y2={PY1} class="dmp__grid" />
+    ))}
+    {gridR.map((r) => (
+      <text x={xOf(r)} y={PY1 + 14} class="dmp__xlab" text-anchor="middle">{r}×</text>
+    ))}
+    <text x={PX0 - 8} y={PY0 + 4} class="dmp__ylab" text-anchor="end">{MPH_MAX}</text>
+    <text x={PX0 - 8} y={PY1} class="dmp__ylab" text-anchor="end">0</text>
+    <text x={(PX0 + PX1) / 2} y={234} class="dmp__axis" text-anchor="middle">grip (× body weight)</text>
+
+    <path d={curve} class="dmp__curve" fill="none" />
+    <line data-dmp-drop class="dmp__drop" />
+    <circle data-dmp-dot class="dmp__dot" r="5" />
+  </svg>
+
+  <div class="dmp__panel">
+    <input type="range" min="0" max="1000" value="100" step="1" data-dmp-slider
+      aria-label="Resisting force in body weights" />
+    <p class="dmp__readout" data-dmp-readout></p>
+  </div>
+</div>
+
+<style>
+  .dmp {
+    position: relative; margin: var(--space-7) 0; padding: var(--space-6);
+    background: var(--surface-1); border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .dmp__svg { width: 100%; height: auto; background: var(--surface-inset); border-radius: var(--radius-sm); }
+  .dmp__grid { stroke: var(--line-1); stroke-width: 1; }
+  .dmp__xlab, .dmp__ylab { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-4); }
+  .dmp__axis { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-3); letter-spacing: .08em; }
+  .dmp__curve { stroke: var(--accent); stroke-width: 2.5; }
+  .dmp__drop { stroke: var(--line-3); stroke-width: 1; stroke-dasharray: 3 3; }
+  .dmp__dot { fill: var(--ink-1); stroke: var(--accent); stroke-width: 2; }
+  .dmp__panel { margin-top: var(--space-5); }
+  .dmp input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .dmp__readout { font-size: 14px; color: var(--ink-2); margin: 12px 0 0; min-height: 3em; }
+  .dmp__readout b { color: var(--accent-bright); font-family: var(--font-mono); }
+</style>
+
+<script>
+  import { bodyWeight, windSpeedForForce, toMph } from "../../utils/ant-wind";
+
+  document.querySelectorAll<HTMLElement>("[data-damping-curve]").forEach((root) => {
+    const PX0 = +root.dataset.px0!, PX1 = +root.dataset.px1!;
+    const PY0 = +root.dataset.py0!, PY1 = +root.dataset.py1!;
+    const R_MAX = +root.dataset.rmax!, MPH_MAX = +root.dataset.mphmax!;
+    const massKg = +root.dataset.mass!;
+
+    const slider = root.querySelector<HTMLInputElement>("[data-dmp-slider]")!;
+    const dot = root.querySelector<SVGCircleElement>("[data-dmp-dot]")!;
+    const drop = root.querySelector<SVGLineElement>("[data-dmp-drop]")!;
+    const out = root.querySelector<HTMLElement>("[data-dmp-readout]")!;
+
+    const xOf = (r: number) => PX0 + (Math.log10(r) / Math.log10(R_MAX)) * (PX1 - PX0);
+    const mphOf = (r: number) => toMph(windSpeedForForce(r * bodyWeight(massKg), massKg));
+    const yOf = (mph: number) => PY1 - (mph / MPH_MAX) * (PY1 - PY0);
+
+    // Slider is 0..1000 linear but we want a log feel; map through a power.
+    const sliderToR = (v: number) => Math.max(1, Math.round(Math.pow(v / 1000, 3) * (R_MAX - 1) + 1));
+
+    function update() {
+      const r = sliderToR(+slider.value);
+      const mph = mphOf(r);
+      const x = xOf(r), y = yOf(mph);
+      dot.setAttribute("cx", String(x));
+      dot.setAttribute("cy", String(y));
+      drop.setAttribute("x1", String(x));
+      drop.setAttribute("y1", String(y));
+      drop.setAttribute("x2", String(x));
+      drop.setAttribute("y2", String(PY1));
+
+      const mph10 = mphOf(r * 10);
+      const factor = (mph10 / mph).toFixed(2);
+      out.innerHTML =
+        `At <b>${r}×</b> body weight, the threshold is <b>${mph.toFixed(0)} mph</b>. ` +
+        `Multiply the grip by 10 and it only rises to <b>${mph10.toFixed(0)} mph</b>, a factor of ${factor}. ` +
+        `That is the square root doing the work.`;
+    }
+
+    slider.addEventListener("input", update);
+    update();
+  });
+</script>

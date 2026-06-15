@@ -1,0 +1,179 @@
+---
+/**
+ * Orientation force-balance widget. A slider rotates the substrate from floor
+ * (0°) through wall (90°) to ceiling (180°). The gravity, wind-drag, and
+ * attachment vectors recompose live, and the limiting failure mode flips from
+ * shear-slide to peel/normal as the surface goes overhead. This is the
+ * conceptual heart of the piece: same ant, same grip, different failure mode.
+ */
+---
+
+<div class="ofb reticle" data-orientation-widget>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <svg class="ofb__stage" viewBox="0 0 360 300" role="img"
+    aria-label="Force balance on a rotating substrate">
+    <!-- substrate (rotates around the ant's contact point) -->
+    <g data-ofb-surface>
+      <rect x="80" y="146" width="200" height="10" rx="2" class="ofb__surface" />
+      <line x1="80" y1="156" x2="280" y2="156" class="ofb__hatch-base" />
+    </g>
+    <!-- ant body, clings to the surface and rotates with it -->
+    <g data-ofb-ant transform="translate(180,138)">
+      <ellipse cx="0" cy="0" rx="13" ry="8" class="ofb__ant" />
+      <circle cx="-13" cy="0" r="5" class="ofb__ant" />
+      <circle cx="14" cy="-1" r="6" class="ofb__ant" />
+    </g>
+    <!-- vectors -->
+    <g data-ofb-vectors stroke-width="3" fill="none">
+      <line data-ofb-gravity class="ofb__v ofb__v--grav" marker-end="url(#ofb-arrow-grav)" />
+      <line data-ofb-wind class="ofb__v ofb__v--wind" marker-end="url(#ofb-arrow-wind)" />
+      <line data-ofb-attach class="ofb__v ofb__v--attach" marker-end="url(#ofb-arrow-attach)" />
+    </g>
+    <defs>
+      <marker id="ofb-arrow-grav" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" class="ofb__head--grav" />
+      </marker>
+      <marker id="ofb-arrow-wind" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" class="ofb__head--wind" />
+      </marker>
+      <marker id="ofb-arrow-attach" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" class="ofb__head--attach" />
+      </marker>
+    </defs>
+  </svg>
+
+  <div class="ofb__panel">
+    <div class="ofb__readout">
+      <span class="ofb__angle" data-ofb-name>Floor</span>
+      <span class="ofb__mode" data-ofb-mode>shear / slide-limited</span>
+    </div>
+    <p class="ofb__note" data-ofb-note>
+      Gravity presses the ant into the surface. Wind has to overcome the full
+      shear grip to slide it. Body weight is helping, not fighting.
+    </p>
+    <input type="range" min="0" max="180" value="0" step="1" data-ofb-slider
+      aria-label="Substrate angle from floor to ceiling" />
+    <div class="ofb__ticks"><span>floor</span><span>wall</span><span>ceiling</span></div>
+    <div class="ofb__legend">
+      <span class="ofb__key ofb__key--grav">gravity</span>
+      <span class="ofb__key ofb__key--wind">wind drag</span>
+      <span class="ofb__key ofb__key--attach">attachment</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .ofb {
+    position: relative;
+    margin: var(--space-7) 0;
+    padding: var(--space-6);
+    background: var(--surface-1);
+    border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+    display: grid;
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: center;
+  }
+  @media (max-width: 680px) { .ofb { grid-template-columns: 1fr; } }
+  .ofb__stage { width: 100%; height: auto; background: var(--surface-inset); border-radius: var(--radius-sm); }
+  .ofb__surface { fill: var(--surface-3); stroke: var(--line-3); stroke-width: 1; }
+  .ofb__hatch-base { stroke: var(--line-2); stroke-width: 6; stroke-dasharray: 4 6; opacity: .6; }
+  .ofb__ant { fill: var(--ink-2); }
+
+  .ofb__v--grav { stroke: var(--ink-3); }
+  .ofb__head--grav { fill: var(--ink-3); }
+  .ofb__v--wind { stroke: var(--accent); }
+  .ofb__head--wind { fill: var(--accent); }
+  .ofb__v--attach { stroke: var(--green); stroke-dasharray: 5 4; }
+  .ofb__head--attach { fill: var(--green); }
+
+  .ofb__readout { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .ofb__angle { font-family: var(--font-display); font-weight: 600; font-size: 24px; color: var(--ink-1); }
+  .ofb__mode {
+    font-family: var(--font-mono); font-size: 12px; color: var(--accent-bright);
+    background: var(--accent-wash); padding: 2px 8px; border-radius: var(--radius-xs);
+  }
+  .ofb__note { font-size: 14px; color: var(--ink-2); margin: 12px 0 var(--space-5); min-height: 4.2em; }
+  .ofb input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .ofb__ticks {
+    display: flex; justify-content: space-between; margin-top: 4px;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-4);
+  }
+  .ofb__legend { display: flex; gap: 14px; margin-top: var(--space-5); flex-wrap: wrap; }
+  .ofb__key { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); display: inline-flex; align-items: center; gap: 6px; }
+  .ofb__key::before { content: ""; width: 14px; height: 3px; border-radius: 2px; }
+  .ofb__key--grav::before { background: var(--ink-3); }
+  .ofb__key--wind::before { background: var(--accent); }
+  .ofb__key--attach::before { background: var(--green); }
+</style>
+
+<script>
+  // Contact point the surface pivots around, in SVG coords.
+  const CX = 180, CY = 146;
+
+  type Stage = { name: string; mode: string; note: string };
+  const FLOOR: Stage = {
+    name: "Floor", mode: "shear / slide-limited",
+    note: "Gravity presses the ant into the surface. Wind has to overcome the full shear grip to slide it. Body weight is helping, not fighting.",
+  };
+  const WALL: Stage = {
+    name: "Wall", mode: "shear / slide-limited",
+    note: "Gravity now pulls along the surface, so it spends one body weight of the shear budget before wind even arrives. With grip reserves of tens to hundreds of body weights, that penalty is almost nothing.",
+  };
+  const CEILING: Stage = {
+    name: "Ceiling", mode: "peel / normal-limited",
+    note: "The failure mode changes. Gravity pulls straight off the surface, so survival depends on normal adhesion and peel resistance, not shear. Tarsal hairs are strong in shear and weak here, which is why inversion is the dangerous case.",
+  };
+
+  document.querySelectorAll<HTMLElement>("[data-orientation-widget]").forEach((root) => {
+    const slider = root.querySelector<HTMLInputElement>("[data-ofb-slider]")!;
+    const surface = root.querySelector<SVGGElement>("[data-ofb-surface]")!;
+    const ant = root.querySelector<SVGGElement>("[data-ofb-ant]")!;
+    const grav = root.querySelector<SVGLineElement>("[data-ofb-gravity]")!;
+    const wind = root.querySelector<SVGLineElement>("[data-ofb-wind]")!;
+    const attach = root.querySelector<SVGLineElement>("[data-ofb-attach]")!;
+    const nameEl = root.querySelector<HTMLElement>("[data-ofb-name]")!;
+    const modeEl = root.querySelector<HTMLElement>("[data-ofb-mode]")!;
+    const noteEl = root.querySelector<HTMLElement>("[data-ofb-note]")!;
+
+    const setVec = (el: SVGLineElement, dx: number, dy: number, len: number) => {
+      el.setAttribute("x1", String(CX));
+      el.setAttribute("y1", String(CY - 8));
+      el.setAttribute("x2", String(CX + dx * len));
+      el.setAttribute("y2", String(CY - 8 + dy * len));
+    };
+
+    function update() {
+      const deg = +slider.value;
+      const rad = (deg * Math.PI) / 180;
+      surface.setAttribute("transform", `rotate(${deg} ${CX} ${CY})`);
+      // Ant clings to the surface: rotate it about the same contact point so it
+      // ends up upside down underneath the ceiling.
+      ant.setAttribute("transform", `rotate(${deg} ${CX} ${CY}) translate(${CX} ${CY - 8})`);
+
+      // Gravity is always straight down (world frame).
+      setVec(grav, 0, 1, 46);
+
+      // The substrate's outward normal rotates with it; attachment opposes the
+      // load that would pull the ant off, so it points back into the surface.
+      const nx = Math.sin(rad), ny = -Math.cos(rad); // outward normal
+      setVec(attach, -nx, -ny, 40);
+
+      // Wind drag acts along the surface (tangent), shown in the rotated frame.
+      const tx = Math.cos(rad), ty = Math.sin(rad);
+      setVec(wind, tx, ty, 38);
+
+      const stage = deg < 45 ? FLOOR : deg < 135 ? WALL : CEILING;
+      nameEl.textContent = stage.name;
+      modeEl.textContent = stage.mode;
+      noteEl.textContent = stage.note;
+    }
+
+    slider.addEventListener("input", update);
+    update();
+  });
+</script>

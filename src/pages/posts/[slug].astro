@@ -8,6 +8,11 @@ import Aside from "../../components/mdx/Aside.astro";
 import Figure from "../../components/mdx/Figure.astro";
 import DemoFrame from "../../components/mdx/DemoFrame.astro";
 import CodeCaption from "../../components/mdx/CodeCaption.astro";
+import WindCalculator from "../../components/mdx/WindCalculator.astro";
+import OrientationWidget from "../../components/mdx/OrientationWidget.astro";
+import SpeciesChart from "../../components/mdx/SpeciesChart.astro";
+import DampingCurve from "../../components/mdx/DampingCurve.astro";
+import WindSandbox from "../../components/mdx/WindSandbox.astro";
 import { getPosts } from "../../utils/posts";
 
 export const getStaticPaths = (async () => {
@@ -23,7 +28,18 @@ const allPosts = await getPosts();
 const { Content, headings } = await render(post);
 
 // MDX components available to every post without per-file imports.
-const components = { Callout, Aside, Figure, DemoFrame, CodeCaption };
+const components = {
+  Callout,
+  Aside,
+  Figure,
+  DemoFrame,
+  CodeCaption,
+  WindCalculator,
+  OrientationWidget,
+  SpeciesChart,
+  DampingCurve,
+  WindSandbox,
+};
 const isReview = post.data.type === "review";
 ---
 

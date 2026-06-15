@@ -1,0 +1,159 @@
+---
+/**
+ * Ranked bar chart of the 11 Stark et al. (2018) species. A metric toggle
+ * switches between relative grip (× body weight), absolute shear force, and the
+ * modeled equivalent wind speed. The point of the toggle is the reordering:
+ * tiny Crematogaster dominate on relative grip, but the giant Paraponera wins
+ * on absolute force. Bars re-sort and re-scale on switch.
+ */
+import { SPECIES } from "../../utils/ant-wind";
+---
+
+<div class="spc reticle" data-species-chart>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <div class="spc__head">
+    <span class="spc__title" data-spc-title>Grip relative to body weight</span>
+    <div class="spc__seg" data-spc-seg>
+      <button type="button" data-metric="ratio" class="is-active">× body weight</button>
+      <button type="button" data-metric="force">absolute force</button>
+      <button type="button" data-metric="wind">equiv. wind</button>
+    </div>
+  </div>
+
+  <div class="spc__rows">
+    {SPECIES.map((s, i) => (
+      <div class="spc__row" data-spc-row={i}>
+        <span class="spc__name">{s.short}</span>
+        <div class="spc__bar-track">
+          <span class="spc__bar" data-spc-bar></span>
+        </div>
+        <span class="spc__val" data-spc-val></span>
+      </div>
+    ))}
+  </div>
+  <p class="spc__cap" data-spc-cap>
+    Smaller species carry the highest grip relative to their own weight. The
+    largest ant in the set, the bullet ant, sits at the bottom here.
+  </p>
+</div>
+
+<style>
+  .spc {
+    position: relative;
+    margin: var(--space-7) 0;
+    padding: var(--space-6);
+    background: var(--surface-1);
+    border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .spc__head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-5);
+  }
+  .spc__title { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--ink-1); }
+  .spc__seg { display: flex; gap: 4px; }
+  .spc__seg button {
+    background: var(--surface-inset); color: var(--ink-3);
+    border: var(--border-hair) solid var(--line-2); border-radius: var(--radius-sm);
+    padding: 6px 10px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;
+    transition: color .15s var(--ease-out), background .15s var(--ease-out), border-color .15s var(--ease-out);
+  }
+  .spc__seg button:hover { color: var(--ink-1); border-color: var(--line-3); }
+  .spc__seg button.is-active { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+
+  .spc__rows { display: flex; flex-direction: column; gap: 7px; }
+  .spc__row {
+    display: grid; grid-template-columns: 116px minmax(0, 1fr) 76px;
+    align-items: center; gap: 10px;
+  }
+  .spc__name { font-family: var(--font-mono); font-size: 12px; font-style: italic; color: var(--ink-2); text-align: right; }
+  .spc__bar-track { height: 16px; background: var(--surface-inset); border-radius: var(--radius-xs); overflow: hidden; }
+  .spc__bar {
+    display: block; height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--accent-deep), var(--accent));
+    border-radius: var(--radius-xs);
+    transition: width .5s var(--ease-out);
+  }
+  .spc__val { font-family: var(--font-mono); font-size: 12px; color: var(--ink-1); text-align: right; font-variant-numeric: tabular-nums; }
+  .spc__cap { font-size: 13px; color: var(--ink-3); margin: var(--space-5) 0 0; }
+  @media (max-width: 560px) {
+    .spc__row { grid-template-columns: 92px minmax(0, 1fr) 60px; gap: 6px; }
+    .spc__name { font-size: 11px; }
+  }
+</style>
+
+<script>
+  import { SPECIES, bodyWeight, windSpeedForForce, toMph, G } from "../../utils/ant-wind";
+
+  type Metric = "ratio" | "force" | "wind";
+
+  // Precompute every metric per species so toggling is instant.
+  const data = SPECIES.map((s) => {
+    const massKg = s.massMg * 1e-6;
+    const forceN = (s.maxLoadG / 1000) * G; // measured max shear load in N
+    return {
+      short: s.short,
+      ratio: s.ratio,
+      forceMn: forceN * 1e3, // mN
+      windMph: toMph(windSpeedForForce(s.ratio * bodyWeight(massKg), massKg)),
+    };
+  });
+
+  const META: Record<Metric, { title: string; cap: string; get: (d: typeof data[number]) => number; fmt: (n: number) => string }> = {
+    ratio: {
+      title: "Grip relative to body weight",
+      cap: "Smaller species carry the highest grip relative to their own weight. The largest ant in the set, the bullet ant, sits at the bottom here.",
+      get: (d) => d.ratio,
+      fmt: (n) => `${n}×`,
+    },
+    force: {
+      title: "Absolute shear force",
+      cap: "Flip to absolute force and the order inverts. The big bullet ant resists the most total load; the featherweight Crematogaster the least. Same animals, opposite ranking.",
+      get: (d) => d.forceMn,
+      fmt: (n) => `${n.toFixed(1)} mN`,
+    },
+    wind: {
+      title: "Modeled equivalent wind speed",
+      cap: "Converted to wind, the gap compresses: force enters the drag equation under a square root, so a 30× spread in grip becomes a far smaller spread in mph.",
+      get: (d) => d.windMph,
+      fmt: (n) => `${n.toFixed(0)} mph`,
+    },
+  };
+
+  document.querySelectorAll<HTMLElement>("[data-species-chart]").forEach((root) => {
+    const rows = [...root.querySelectorAll<HTMLElement>("[data-spc-row]")];
+    const titleEl = root.querySelector<HTMLElement>("[data-spc-title]")!;
+    const capEl = root.querySelector<HTMLElement>("[data-spc-cap]")!;
+
+    function draw(metric: Metric) {
+      const m = META[metric];
+      const max = Math.max(...data.map(m.get));
+      titleEl.textContent = m.title;
+      capEl.textContent = m.cap;
+
+      const order = data
+        .map((d, i) => ({ i, v: m.get(d) }))
+        .sort((a, b) => b.v - a.v);
+
+      order.forEach((o, rank) => {
+        const row = rows[o.i];
+        const v = m.get(data[o.i]);
+        row.style.order = String(rank);
+        row.querySelector<HTMLElement>("[data-spc-bar]")!.style.width = `${(v / max) * 100}%`;
+        row.querySelector<HTMLElement>("[data-spc-val]")!.textContent = m.fmt(v);
+      });
+    }
+
+    root.querySelectorAll<HTMLButtonElement>("[data-spc-seg] button").forEach((b) =>
+      b.addEventListener("click", () => {
+        root.querySelectorAll("[data-spc-seg] button").forEach((x) => x.classList.remove("is-active"));
+        b.classList.add("is-active");
+        draw(b.dataset.metric as Metric);
+      }),
+    );
+
+    draw("ratio");
+  });
+</script>

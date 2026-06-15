@@ -1,0 +1,349 @@
+---
+/**
+ * Interactive wind-dislodgment calculator. Pick a species, orientation,
+ * engagement state, and surface, and it solves the drag equation for the
+ * equivalent steady wind speed, then maps it onto the Beaufort / Saffir-Simpson
+ * scale. The shear numbers (smooth glass, full engagement) reproduce the
+ * published table exactly; the surface and engagement knobs are clearly-labeled
+ * modeling assumptions, not measured constants.
+ */
+import { SPECIES } from "../../utils/ant-wind";
+---
+
+<div class="awc reticle" data-ant-wind-calc>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <div class="awc__grid">
+    <div class="awc__controls">
+      <label class="awc__field">
+        <span class="awc__label">// species</span>
+        <select data-awc="species">
+          {SPECIES.map((s, i) => (
+            <option value={i}>{s.name} ({s.ratio}× body wt)</option>
+          ))}
+        </select>
+      </label>
+
+      <fieldset class="awc__field">
+        <span class="awc__label">// orientation</span>
+        <div class="awc__seg" data-awc-seg="orientation">
+          <button type="button" data-val="ground" class="is-active">Floor</button>
+          <button type="button" data-val="wall">Wall</button>
+          <button type="button" data-val="ceiling">Ceiling</button>
+        </div>
+      </fieldset>
+
+      <label class="awc__field" data-awc-ceiling hidden>
+        <span class="awc__label">// ceiling: normal-adhesion reserve</span>
+        <select data-awc="ceiling">
+          <option value="0.5">Tarsal hairs only (&lt;0.5× wt)</option>
+          <option value="40">Smooth pad, low (40× wt)</option>
+          <option value="100" selected>Smooth pad, mid (100× wt)</option>
+          <option value="150">Smooth pad, high (150× wt)</option>
+        </select>
+      </label>
+
+      <fieldset class="awc__field">
+        <span class="awc__label">// engagement</span>
+        <div class="awc__seg" data-awc-seg="legs">
+          <button type="button" data-val="6" class="is-active">All 6 legs</button>
+          <button type="button" data-val="4">4 legs</button>
+          <button type="button" data-val="3">Tripod</button>
+        </div>
+        <label class="awc__check">
+          <input type="checkbox" data-awc="walking" />
+          <span>Casually walking (hair arrays, not pads)</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="awc__field">
+        <span class="awc__label">// surface <em>(modeling knob)</em></span>
+        <div class="awc__seg awc__seg--wrap" data-awc-seg="surface">
+          <button type="button" data-val="1" class="is-active">Smooth glass</button>
+          <button type="button" data-val="0.7">Rough bark</button>
+          <button type="button" data-val="0.4">Wet leaf</button>
+          <button type="button" data-val="0.25">Dusty / waxy</button>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="awc__readout">
+      <div class="awc__verdict" data-awc-verdict>
+        <span class="awc__scale-chip" data-awc-chip>SS5</span>
+        <span class="awc__band" data-awc-bandlabel>Category 5 hurricane</span>
+      </div>
+      <div class="awc__big">
+        <span class="awc__mph" data-awc-mph>273</span>
+        <span class="awc__unit">mph</span>
+      </div>
+      <div class="awc__sub" data-awc-ms>122 m/s · equivalent steady wind</div>
+      <p class="awc__blurb" data-awc-blurb>The strongest storms on the planet.</p>
+
+      <div class="awc__meter">
+        <div class="awc__meter-track">
+          <span class="awc__meter-tick" style="left:8.6%"></span>
+          <span class="awc__meter-tick" style="left:29%"></span>
+          <span class="awc__meter-tick" style="left:62%"></span>
+          <span class="awc__meter-fill" data-awc-fill></span>
+          <span class="awc__meter-marker" data-awc-marker></span>
+        </div>
+        <div class="awc__meter-labels">
+          <span>breeze</span><span>gale</span><span>hurricane</span><span>record</span>
+        </div>
+      </div>
+
+      <details class="awc__math">
+        <summary>show the math</summary>
+        <dl data-awc-math></dl>
+      </details>
+    </div>
+  </div>
+</div>
+
+<style>
+  .awc {
+    position: relative;
+    margin: var(--space-7) 0;
+    padding: var(--space-6);
+    background: var(--surface-1);
+    border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .awc__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: var(--space-7);
+  }
+  @media (max-width: 720px) {
+    .awc__grid { grid-template-columns: 1fr; gap: var(--space-6); }
+  }
+  .awc__controls { display: flex; flex-direction: column; gap: var(--space-5); }
+  .awc__field { display: flex; flex-direction: column; gap: var(--space-2); border: 0; padding: 0; margin: 0; }
+  .awc__label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+  .awc__label em { color: var(--accent); font-style: normal; }
+  .awc select {
+    width: 100%;
+    background: var(--surface-inset);
+    color: var(--ink-1);
+    border: var(--border-hair) solid var(--line-2);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .awc select:focus-visible { outline: none; box-shadow: var(--ring-inset); border-color: var(--accent); }
+  .awc__seg { display: flex; gap: 4px; }
+  .awc__seg--wrap { flex-wrap: wrap; }
+  .awc__seg button {
+    flex: 1 1 auto;
+    background: var(--surface-inset);
+    color: var(--ink-3);
+    border: var(--border-hair) solid var(--line-2);
+    border-radius: var(--radius-sm);
+    padding: 7px 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: color .15s var(--ease-out), border-color .15s var(--ease-out), background .15s var(--ease-out);
+  }
+  .awc__seg button:hover { color: var(--ink-1); border-color: var(--line-3); }
+  .awc__seg button.is-active {
+    color: var(--on-accent);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .awc__check {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 12px; color: var(--ink-2);
+    margin-top: 4px; cursor: pointer;
+  }
+  .awc__check input { accent-color: var(--accent); width: 14px; height: 14px; }
+
+  .awc__readout {
+    display: flex; flex-direction: column;
+    background: var(--surface-inset);
+    border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-sm);
+    padding: var(--space-5);
+  }
+  .awc__verdict { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .awc__scale-chip {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    letter-spacing: .08em;
+    color: var(--on-accent); background: var(--accent);
+    padding: 2px 7px; border-radius: var(--radius-xs);
+  }
+  .awc__band { font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); }
+  .awc__big { display: flex; align-items: baseline; gap: 8px; line-height: 1; }
+  .awc__mph {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(48px, 9vw, 76px);
+    color: var(--accent-bright);
+    font-variant-numeric: tabular-nums;
+  }
+  .awc__unit { font-family: var(--font-display); font-size: 22px; color: var(--ink-3); }
+  .awc__sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-4); margin-top: 6px; }
+  .awc__blurb { font-size: 14px; color: var(--ink-2); margin: 10px 0 var(--space-5); min-height: 2.6em; }
+
+  .awc__meter { margin-top: auto; }
+  .awc__meter-track {
+    position: relative; height: 8px;
+    background: linear-gradient(90deg, var(--surface-3), var(--accent-deep), var(--accent), var(--accent-bright));
+    border-radius: var(--radius-pill);
+    overflow: visible;
+  }
+  .awc__meter-tick { position: absolute; top: -3px; width: 1px; height: 14px; background: var(--line-3); }
+  .awc__meter-marker {
+    position: absolute; top: 50%; width: 14px; height: 14px;
+    background: var(--ink-1); border: 2px solid var(--bg-base);
+    border-radius: 50%; transform: translate(-50%, -50%);
+    box-shadow: var(--glow-soft);
+    transition: left .35s var(--ease-out);
+  }
+  .awc__meter-fill { display: none; }
+  .awc__meter-labels {
+    display: flex; justify-content: space-between; margin-top: 8px;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-4);
+  }
+
+  .awc__math { margin-top: var(--space-5); }
+  .awc__math summary {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-4); cursor: pointer;
+  }
+  .awc__math dl {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
+    margin: 10px 0 0; font-family: var(--font-mono); font-size: 12px;
+  }
+  .awc__math dt { color: var(--ink-3); }
+  .awc__math dd { margin: 0; color: var(--ink-1); text-align: right; font-variant-numeric: tabular-nums; }
+  .awc.is-stuck .awc__mph { color: var(--red); }
+</style>
+
+<script>
+  import {
+    SPECIES, bodyWeight, frontalArea, windSpeedForForce, toMph, windBand,
+    fmtMph, HAIR_ARRAY_SHEAR, MAX_RECORDED_GUST_MPH,
+  } from "../../utils/ant-wind";
+
+  // Log scale for the meter marker: 5 mph -> 0%, record gust -> 100%.
+  const LO = Math.log(5);
+  const HI = Math.log(MAX_RECORDED_GUST_MPH);
+  const meterPct = (mph: number) =>
+    Math.max(0, Math.min(100, ((Math.log(Math.max(mph, 5)) - LO) / (HI - LO)) * 100));
+
+  document.querySelectorAll<HTMLElement>("[data-ant-wind-calc]").forEach((root) => {
+    const state = {
+      species: 0,
+      orientation: "ground" as "ground" | "wall" | "ceiling",
+      ceiling: 100,
+      legs: 6,
+      walking: false,
+      surface: 1,
+    };
+
+    const $ = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const speciesSel = $<HTMLSelectElement>('[data-awc="species"]');
+    const ceilingSel = $<HTMLSelectElement>('[data-awc="ceiling"]');
+    const ceilingField = $<HTMLElement>("[data-awc-ceiling]");
+    const walkingBox = $<HTMLInputElement>('[data-awc="walking"]');
+
+    function setSeg(group: string, val: string) {
+      root.querySelectorAll<HTMLButtonElement>(`[data-awc-seg="${group}"] button`).forEach((b) =>
+        b.classList.toggle("is-active", b.dataset.val === val),
+      );
+    }
+
+    function render() {
+      const sp = SPECIES[state.species];
+      const massKg = sp.massMg * 1e-6;
+      const W = bodyWeight(massKg);
+
+      // Capacity in body weights, before surface/leg modifiers.
+      let capacityBW: number;
+      if (state.orientation === "ceiling") {
+        capacityBW = state.walking ? Math.min(state.ceiling, HAIR_ARRAY_SHEAR) : state.ceiling;
+      } else {
+        capacityBW = state.walking ? Math.min(sp.ratio, HAIR_ARRAY_SHEAR) : sp.ratio;
+      }
+
+      const legFrac = state.legs / 6;
+      const effectiveN = capacityBW * W * state.surface * legFrac;
+
+      // Gravity eats one body weight on walls (shear budget) and ceilings (normal load).
+      const resistN = state.orientation === "ground" ? effectiveN : effectiveN - W;
+
+      const ms = windSpeedForForce(resistN, massKg);
+      const mph = toMph(ms);
+      const stuck = resistN <= 0;
+
+      const mphEl = $("[data-awc-mph]");
+      const msEl = $("[data-awc-ms]");
+      const blurb = $("[data-awc-blurb]");
+      const chip = $("[data-awc-chip]");
+      const bandLabel = $("[data-awc-bandlabel]");
+      const marker = $<HTMLElement>("[data-awc-marker]");
+
+      root.classList.toggle("is-stuck", stuck);
+
+      if (stuck) {
+        mphEl.textContent = "0";
+        msEl.textContent = "can't even hold its own weight here";
+        chip.textContent = ", ";
+        bandLabel.textContent = "Falls under gravity alone";
+        blurb.textContent =
+          "This attachment mode can't support the ant against gravity in this orientation, so no wind is needed. Tarsal hairs alone make a poor ceiling.";
+        marker.style.left = "0%";
+      } else {
+        const band = windBand(mph);
+        mphEl.textContent = fmtMph(mph);
+        msEl.textContent = `${ms.toFixed(0)} m/s · equivalent steady wind`;
+        chip.textContent = band.scale;
+        bandLabel.textContent = band.label;
+        blurb.textContent = band.blurb;
+        marker.style.left = `${meterPct(mph)}%`;
+      }
+
+      const A = frontalArea(massKg);
+      $("[data-awc-math]").innerHTML = [
+        ["body mass", `${sp.massMg} mg`],
+        ["body weight", `${(W * 1e6).toFixed(1)} µN`],
+        ["capacity used", `${capacityBW.toFixed(1)}× wt`],
+        ["surface × legs", `${state.surface} × ${legFrac.toFixed(2)}`],
+        ["net resisting force", `${(resistN * 1e3).toFixed(3)} mN`],
+        ["frontal area", `${(A * 1e6).toFixed(3)} mm²`],
+      ]
+        .map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`)
+        .join("");
+    }
+
+    speciesSel.addEventListener("change", () => { state.species = +speciesSel.value; render(); });
+    ceilingSel.addEventListener("change", () => { state.ceiling = +ceilingSel.value; render(); });
+    walkingBox.addEventListener("change", () => { state.walking = walkingBox.checked; render(); });
+
+    root.querySelectorAll<HTMLButtonElement>('[data-awc-seg="orientation"] button').forEach((b) =>
+      b.addEventListener("click", () => {
+        state.orientation = b.dataset.val as typeof state.orientation;
+        setSeg("orientation", b.dataset.val!);
+        ceilingField.hidden = state.orientation !== "ceiling";
+        render();
+      }),
+    );
+    root.querySelectorAll<HTMLButtonElement>('[data-awc-seg="legs"] button').forEach((b) =>
+      b.addEventListener("click", () => { state.legs = +b.dataset.val!; setSeg("legs", b.dataset.val!); render(); }),
+    );
+    root.querySelectorAll<HTMLButtonElement>('[data-awc-seg="surface"] button').forEach((b) =>
+      b.addEventListener("click", () => { state.surface = +b.dataset.val!; setSeg("surface", b.dataset.val!); render(); }),
+    );
+
+    render();
+  });
+</script>
