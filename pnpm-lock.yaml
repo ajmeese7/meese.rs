@@ -33,6 +33,9 @@ importers:
       pagefind:
         specifier: ^1.5.2
         version: 1.5.2
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       tsx:
         specifier: ^4.22.4
         version: 4.22.4
@@ -42,6 +45,9 @@ importers:
       wrangler:
         specifier: ^4.99.0
         version: 4.99.0
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
 
 packages:
 

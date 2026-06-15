@@ -1,6 +1,8 @@
 ---
 title: "Bun v1.2"
-description: "A genuinely fast all-in-one runtime that collapses three tools into one, with a few rough edges you will still feel in production."
+description:
+  "A genuinely fast all-in-one runtime that collapses three tools into one, with a few rough edges
+  you will still feel in production."
 date: 2026-06-10
 type: review
 topics:
@@ -33,19 +35,27 @@ review:
   criteria:
     - name: "Performance"
       score: 4.8
-      note: "Cold starts and install times are in a different class. This is the headline, and it delivers."
+      note:
+        "Cold starts and install times are in a different class. This is the headline, and it
+        delivers."
     - name: "Developer experience"
       score: 4.5
-      note: "One binary for run/test/bundle/install. The ergonomics are excellent once it is in your hands."
+      note:
+        "One binary for run/test/bundle/install. The ergonomics are excellent once it is in your
+        hands."
     - name: "Node compatibility"
       score: 3.8
-      note: "Most things work. The 5% that does not tends to surface late, in a dependency you did not write."
+      note:
+        "Most things work. The 5% that does not tends to surface late, in a dependency you did not
+        write."
     - name: "Ecosystem & tooling"
       score: 3.5
       note: "Growing fast, but CI images, hosts, and observability still assume Node first."
     - name: "Stability"
       score: 3.5
-      note: "Far steadier than a year ago. I would still pin versions and read the changelog before upgrading."
+      note:
+        "Far steadier than a year ago. I would still pin versions and read the changelog before
+        upgrading."
   pros:
     - "Install and test times that genuinely change your loop"
     - "One tool replaces npm + tsx + jest + esbuild"
@@ -56,25 +66,26 @@ review:
     - "Some hosts / CI runners still need manual setup"
     - "Smaller plugin ecosystem than the Node incumbents"
     - "Moves fast, minor versions can shift behavior"
-  bottomLine: "If you are starting something new, reach for Bun and enjoy the speed. If you are migrating a large, mature Node service, pilot it on a non-critical path first, the wins are real, but so is the long tail of compatibility."
+  bottomLine:
+    "If you are starting something new, reach for Bun and enjoy the speed. If you are migrating a
+    large, mature Node service, pilot it on a non-critical path first, the wins are real, but so is
+    the long tail of compatibility."
 ---
 
 ## The pitch
 
-Bun wants to be the only tool in your JavaScript toolchain, and for the common
-path it actually is. `bun install` is fast enough that you stop tabbing away to
-wait, and `bun test` runs a real suite in the time the Node equivalent spends
-booting.
+Bun wants to be the only tool in your JavaScript toolchain, and for the common path it actually is.
+`bun install` is fast enough that you stop tabbing away to wait, and `bun test` runs a real suite in
+the time the Node equivalent spends booting.
 
 ## Where it shines
 
-Greenfield services, scripts, and CI install steps are the sweet spot. If your
-dependency tree is mainstream, you get the speed with none of the pain, and the
-single-binary story removes a surprising amount of config.
+Greenfield services, scripts, and CI install steps are the sweet spot. If your dependency tree is
+mainstream, you get the speed with none of the pain, and the single-binary story removes a
+surprising amount of config.
 
 ## Where it bites
 
-The failure mode is specific: a transitive dependency reaches for a Node API
-that Bun implements slightly differently, and you debug someone else's code. It
-is rarer than it used to be, but it is the reason this is a four-star tool and
-not a five.
+The failure mode is specific: a transitive dependency reaches for a Node API that Bun implements
+slightly differently, and you debug someone else's code. It is rarer than it used to be, but it is
+the reason this is a four-star tool and not a five.

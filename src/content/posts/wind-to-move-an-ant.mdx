@@ -1,6 +1,8 @@
 ---
 title: "How much wind does it take to blow an ant off a wall?"
-description: "I went looking for the gap between floor, wall, and ceiling. The grip numbers had a different answer than I expected."
+description:
+  "I went looking for the gap between floor, wall, and ceiling. The grip numbers had a different
+  answer than I expected."
 date: 2026-06-14
 type: lab
 topics:
@@ -15,27 +17,55 @@ tags:
 draft: false
 ---
 
-The question I started with was about orientation. An ant on the floor has gravity pressing it into the surface. An ant on a wall has gravity trying to drag it down the surface. An ant upside down on a ceiling has gravity trying to pull it straight off. So a wall should be harder than a floor, and a ceiling harder still, and I wanted a number for how much harder.
+The question I started with was about orientation. An ant on the floor has gravity pressing it into
+the surface. An ant on a wall has gravity trying to drag it down the surface. An ant upside down on
+a ceiling has gravity trying to pull it straight off. So a wall should be harder than a floor, and a
+ceiling harder still, and I wanted a number for how much harder.
 
-The number turned out to be boring, and the reason it is boring is the interesting part. When an ant is fully gripped onto a smooth surface, it can resist tens to hundreds of times its own body weight. Gravity only ever costs it one body weight. Subtracting one from several hundred does almost nothing, so the floor-to-wall penalty mostly disappears. What actually decides whether the wind wins is not the angle of the surface. It is the *failure mode* the wind is allowed to exploit, and whether the ant is gripped at all.
+The number turned out to be boring, and the reason it is boring is the interesting part. When an ant
+is fully gripped onto a smooth surface, it can resist tens to hundreds of times its own body weight.
+Gravity only ever costs it one body weight. Subtracting one from several hundred does almost
+nothing, so the floor-to-wall penalty mostly disappears. What actually decides whether the wind wins
+is not the angle of the surface. It is the _failure mode_ the wind is allowed to exploit, and
+whether the ant is gripped at all.
 
-This is a modeling piece, not an experiment. Nobody put these ants in a wind tunnel. The grip measurements come from published biomechanics work, and I am running them through the standard drag equation to convert "force the ant can resist" into "wind speed that would produce that force." Every assumption is on the table below, and the interactive pieces use the same math throughout.
+This is a modeling piece, not an experiment. Nobody put these ants in a wind tunnel. The grip
+measurements come from published biomechanics work, and I am running them through the standard drag
+equation to convert "force the ant can resist" into "wind speed that would produce that force."
+Every assumption is on the table below, and the interactive pieces use the same math throughout.
 
 ## What gets measured, and what does not
 
-Ant feet are not one thing. Each tarsus (the foot segment) carries a soft adhesive pad called the arolium plus arrays of stiff tarsal hairs, and the two do different jobs. [Endlein and Federle (2015)](https://doi.org/10.1371/journal.pone.0141269) pulled this apart in the weaver ant *Oecophylla smaragdina*: the hair arrays generated friction of about **3.1 times body weight** on smooth surfaces, but their pure adhesion (resisting a straight pull away from the surface) was **less than half a body weight**. Hairs are good at shear and bad at hanging. The arolium is what does the real adhesive holding.
+Ant feet are not one thing. Each tarsus (the foot segment) carries a soft adhesive pad called the
+arolium plus arrays of stiff tarsal hairs, and the two do different jobs.
+[Endlein and Federle (2015)](https://doi.org/10.1371/journal.pone.0141269) pulled this apart in the
+weaver ant _Oecophylla smaragdina_: the hair arrays generated friction of about **3.1 times body
+weight** on smooth surfaces, but their pure adhesion (resisting a straight pull away from the
+surface) was **less than half a body weight**. Hairs are good at shear and bad at hanging. The
+arolium is what does the real adhesive holding.
 
-The best cross-species dataset is [Stark, Arstingstall, and Yanoviak (2018)](https://doi.org/10.1242/jeb.171843). They pulled 580 workers from 11 tropical arboreal species along a vertical glass plate and recorded the maximum shear load before the ant slid. The glass was deliberately smoother than the ants' claw tips, which takes claws out of the picture and isolates pad-and-secretion grip. Those are the numbers worth modeling, with one caveat I will keep repeating: they are best-case, fully-engaged, clean-smooth-glass numbers.
+The best cross-species dataset is
+[Stark, Arstingstall, and Yanoviak (2018)](https://doi.org/10.1242/jeb.171843). They pulled 580
+workers from 11 tropical arboreal species along a vertical glass plate and recorded the maximum
+shear load before the ant slid. The glass was deliberately smoother than the ants' claw tips, which
+takes claws out of the picture and isolates pad-and-secretion grip. Those are the numbers worth
+modeling, with one caveat I will keep repeating: they are best-case, fully-engaged,
+clean-smooth-glass numbers.
 
 Two ways to read that dataset, and they disagree:
 
 <SpeciesChart />
 
-Relative grip rewards the small. A featherweight *Crematogaster* holds hundreds of times its own weight; the giant bullet ant *Paraponera clavata*, two thousand times heavier, manages about 21. Flip to absolute force and the ranking inverts, because 21 times a big number still beats 600 times a tiny one. Neither view is wrong. They answer different questions, and the wind question cares about the third tab.
+Relative grip rewards the small. A featherweight _Crematogaster_ holds hundreds of times its own
+weight; the giant bullet ant _Paraponera clavata_, two thousand times heavier, manages about 21.
+Flip to absolute force and the ranking inverts, because 21 times a big number still beats 600 times
+a tiny one. Neither view is wrong. They answer different questions, and the wind question cares
+about the third tab.
 
 ## Turning grip into wind
 
-Aerodynamic drag follows the [standard quadratic form](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/):
+Aerodynamic drag follows the
+[standard quadratic form](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/):
 
 ```
 F = ½ · ρ · C_d · A · v²
@@ -47,69 +77,138 @@ Solve for the wind speed that matches a given resisting force:
 v = √( 2·F / (ρ · C_d · A) )
 ```
 
-`F` is the grip the ant can hold, in newtons. `ρ` is air density, `C_d` is the drag coefficient, `A` is the ant's frontal area facing the wind. The output `v` is the steady wind that would generate exactly that much drag on the body.
+`F` is the grip the ant can hold, in newtons. `ρ` is air density, `C_d` is the drag coefficient, `A`
+is the ant's frontal area facing the wind. The output `v` is the steady wind that would generate
+exactly that much drag on the body.
 
 <Callout type="context" title="The assumptions, stated once">
-Air density `ρ = 1.225 kg/m³` (sea level). Drag coefficient `C_d = 1.0`, the textbook bluff-body default. Frontal area scales isometrically from a reference ant (3.0 mm² for an 8.2 mg worker, `A = A_ref · (m/m_ref)^⅔`). These are deliberately plain choices. The point is to compare apples to apples across species, not to claim a wind-tunnel-certified threshold for any one ant.
+  Air density `ρ = 1.225 kg/m³` (sea level). Drag coefficient `C_d = 1.0`, the textbook bluff-body
+  default. Frontal area scales isometrically from a reference ant (3.0 mm² for an 8.2 mg worker, `A
+  = A_ref · (m/m_ref)^⅔`). These are deliberately plain choices. The point is to compare apples to
+  apples across species, not to claim a wind-tunnel-certified threshold for any one ant.
 </Callout>
 
-Run *Crematogaster crinosa* through it (1.03 mg, 0.7 g max shear load) and you get 122 m/s, about **273 mph**. That is past the [strongest surface wind gust ever reliably recorded on Earth](https://wmo.asu.edu/content/world-maximum-surface-wind-gust) (253 mph, Cyclone Olivia, 1996). A fully gripped ant on clean glass is, in this model, harder to blow off than any wind we have ever measured. That is the headline, and it is also where the honesty has to kick in, because "fully gripped on clean glass" is doing enormous work in that sentence.
+Run _Crematogaster crinosa_ through it (1.03 mg, 0.7 g max shear load) and you get 122 m/s, about
+**273 mph**. That is past the
+[strongest surface wind gust ever reliably recorded on Earth](https://wmo.asu.edu/content/world-maximum-surface-wind-gust)
+(253 mph, Cyclone Olivia, 1996). A fully gripped ant on clean glass is, in this model, harder to
+blow off than any wind we have ever measured. That is the headline, and it is also where the honesty
+has to kick in, because "fully gripped on clean glass" is doing enormous work in that sentence.
 
-Here is the whole model in one control panel. Pick a species, an orientation, how engaged the ant is, and what it is standing on:
+Here is the whole model in one control panel. Pick a species, an orientation, how engaged the ant
+is, and what it is standing on:
 
 <WindCalculator />
 
-The species and orientation knobs are grounded in the measured data. The engagement and surface knobs are not measurements, they are modeling assumptions, and the panel labels them as such. Stark et al. only tested clean glass. The "wet leaf" and "dusty" factors are illustrative scalings to show direction and rough magnitude, not values anyone pulled off an instrument. The literature is clear that [wetting lowers shear adhesion](https://doi.org/10.1098/rsos.181540), often a lot, but it does not hand you a clean multiplier, so I am not going to pretend it does.
+The species and orientation knobs are grounded in the measured data. The engagement and surface
+knobs are not measurements, they are modeling assumptions, and the panel labels them as such. Stark
+et al. only tested clean glass. The "wet leaf" and "dusty" factors are illustrative scalings to show
+direction and rough magnitude, not values anyone pulled off an instrument. The literature is clear
+that [wetting lowers shear adhesion](https://doi.org/10.1098/rsos.181540), often a lot, but it does
+not hand you a clean multiplier, so I am not going to pretend it does.
 
 ## Why the wind speeds stay so high
 
-The square in the drag equation cuts both ways. Going from `F` to `v` means taking a square root, which compresses the spread hard. A tenfold increase in grip buys you only about 3.2 times the wind speed. Drag it around:
+The square in the drag equation cuts both ways. Going from `F` to `v` means taking a square root,
+which compresses the spread hard. A tenfold increase in grip buys you only about 3.2 times the wind
+speed. Drag it around:
 
 <DampingCurve />
 
-This is why the species table reads 108 to 273 mph instead of spanning two orders of magnitude the way the raw grip ratios (21 to 680) do. A 30-fold range in grip becomes less than a 3-fold range in wind. It is also why arguing about whether an ant holds 200 or 400 body weights barely moves the wind number. The square root does not care.
+This is why the species table reads 108 to 273 mph instead of spanning two orders of magnitude the
+way the raw grip ratios (21 to 680) do. A 30-fold range in grip becomes less than a 3-fold range in
+wind. It is also why arguing about whether an ant holds 200 or 400 body weights barely moves the
+wind number. The square root does not care.
 
 ## Where orientation actually lives
 
-Now the part I went in for. On a floor, gravity presses the ant down into the surface and the wind has to beat the full shear grip to slide it sideways. On a wall, gravity pulls along the surface, so it spends one body weight out of the shear budget before the wind shows up. The wall threshold relative to the floor is `√((R−1)/R)`, where `R` is grip in body weights. For the bullet ant at `R ≈ 21`, that is a 2.4% reduction. For *Crematogaster* at `R ≈ 680`, it is 0.07%. The wall is not meaningfully harder than the floor for a gripped ant.
+Now the part I went in for. On a floor, gravity presses the ant down into the surface and the wind
+has to beat the full shear grip to slide it sideways. On a wall, gravity pulls along the surface, so
+it spends one body weight out of the shear budget before the wind shows up. The wall threshold
+relative to the floor is `√((R−1)/R)`, where `R` is grip in body weights. For the bullet ant at
+`R ≈ 21`, that is a 2.4% reduction. For _Crematogaster_ at `R ≈ 680`, it is 0.07%. The wall is not
+meaningfully harder than the floor for a gripped ant.
 
-The ceiling is where it changes, and not because of one extra body weight. It changes because the failure mode changes. Slide the surface around and watch which forces are fighting which:
+The ceiling is where it changes, and not because of one extra body weight. It changes because the
+failure mode changes. Slide the surface around and watch which forces are fighting which:
 
 <OrientationWidget />
 
-On the floor and the wall, the wind is trying to make the ant *slide*, and shear grip resists sliding. On the ceiling, gravity pulls the ant straight off the surface, so survival depends on normal adhesion and peel resistance instead of shear. This is exactly where the hair arrays fail: strong in shear, weak in pull-off. An ant relying on hair friction can hold a wall and fall off a ceiling, and the calculator shows it. Put the calculator on "ceiling," set the reserve to "tarsal hairs only," and the readout drops to zero, because half a body weight of adhesion cannot even hold the ant's own weight upside down, let alone fight wind. The arolium is what makes ceilings survivable, and ceiling performance swings from "falls under gravity alone" to "shrugs off a hurricane" depending entirely on how much pad is in contact.
+On the floor and the wall, the wind is trying to make the ant _slide_, and shear grip resists
+sliding. On the ceiling, gravity pulls the ant straight off the surface, so survival depends on
+normal adhesion and peel resistance instead of shear. This is exactly where the hair arrays fail:
+strong in shear, weak in pull-off. An ant relying on hair friction can hold a wall and fall off a
+ceiling, and the calculator shows it. Put the calculator on "ceiling," set the reserve to "tarsal
+hairs only," and the readout drops to zero, because half a body weight of adhesion cannot even hold
+the ant's own weight upside down, let alone fight wind. The arolium is what makes ceilings
+survivable, and ceiling performance swings from "falls under gravity alone" to "shrugs off a
+hurricane" depending entirely on how much pad is in contact.
 
-So orientation matters, but it matters by switching which capacity is on the hook, not by stacking up gravity penalties.
+So orientation matters, but it matters by switching which capacity is on the hook, not by stacking
+up gravity penalties.
 
 ## Play with it
 
-Same threshold math, but now you can crank a wind slider and watch the ant lean into the gust and eventually lose. Below the modeled threshold it holds. Above it, the floor and wall ants slide off downwind and the ceiling ant peels and drops:
+Same threshold math, but now you can crank a wind slider and watch the ant lean into the gust and
+eventually lose. Below the modeled threshold it holds. Above it, the floor and wall ants slide off
+downwind and the ceiling ant peels and drops:
 
 <WindSandbox />
 
-It is set to *Cephalotes atratus* on the floor by default, which gives you a believable mid-range threshold to find. The point is tactile: the threshold is a hard edge, and where that edge sits depends on the species and the orientation, not on cranking the wind a little harder.
+It is set to _Cephalotes atratus_ on the floor by default, which gives you a believable mid-range
+threshold to find. The point is tactile: the threshold is a hard edge, and where that edge sits
+depends on the species and the orientation, not on cranking the wind a little harder.
 
 ## What this is not
 
-The high numbers are upper bounds, and treating them as field thresholds would be wrong. A few reasons the real world is gentler:
+The high numbers are upper bounds, and treating them as field thresholds would be wrong. A few
+reasons the real world is gentler:
 
-- **Clean glass is a lie.** Stark et al. used it on purpose to isolate pad grip. Real bark and leaves are wet, dusty, waxy, and rough. [Roughness can help by giving claws something to catch, or hurt by keeping the pad from making contact](https://doi.org/10.1093/icb/icaa078). The sign depends on the scale of the texture versus the scale of the foot.
-- **Walking ants are not gripped ants.** The big numbers assume all six tarsi engaged and the body aligned with the load. An ant mid-stride on three legs, using hair friction rather than seated pads, is operating at a small fraction of that and comes off far easier.
-- **Wind is not steady.** The model uses constant freestream drag. Real gusts are turbulent, they apply torque, and a peeling moment can start a detachment at a force well below the straight-pull threshold. The ceiling estimates are the most optimistic for exactly this reason.
-- **Near a surface, the air slows down.** An ant pressed flush to a wall sits inside the boundary layer where local air speed is well below freestream, which pushes the *real* wind needed even higher than the isolated-body model says.
+- **Clean glass is a lie.** Stark et al. used it on purpose to isolate pad grip. Real bark and
+  leaves are wet, dusty, waxy, and rough.
+  [Roughness can help by giving claws something to catch, or hurt by keeping the pad from making contact](https://doi.org/10.1093/icb/icaa078).
+  The sign depends on the scale of the texture versus the scale of the foot.
+- **Walking ants are not gripped ants.** The big numbers assume all six tarsi engaged and the body
+  aligned with the load. An ant mid-stride on three legs, using hair friction rather than seated
+  pads, is operating at a small fraction of that and comes off far easier.
+- **Wind is not steady.** The model uses constant freestream drag. Real gusts are turbulent, they
+  apply torque, and a peeling moment can start a detachment at a force well below the straight-pull
+  threshold. The ceiling estimates are the most optimistic for exactly this reason.
+- **Near a surface, the air slows down.** An ant pressed flush to a wall sits inside the boundary
+  layer where local air speed is well below freestream, which pushes the _real_ wind needed even
+  higher than the isolated-body model says.
 
-The defensible version of the answer is conditional. A casually walking ant on a wet or dusty surface can be moved by a strong gust. A fully braced ant on a favorable surface resists forces that, converted to wind, land in hurricane territory and beyond. The orientation it is sitting at barely enters into it, until the surface goes overhead and the whole problem becomes about peel instead of slide.
+The defensible version of the answer is conditional. A casually walking ant on a wet or dusty
+surface can be moved by a strong gust. A fully braced ant on a favorable surface resists forces
+that, converted to wind, land in hurricane territory and beyond. The orientation it is sitting at
+barely enters into it, until the surface goes overhead and the whole problem becomes about peel
+instead of slide.
 
 ---
 
-*Modeling synthesis, no new experiments. The grip and adhesion numbers come from the published measurements below; the wind speeds are derived from them under the assumptions stated above, not measured.*
+_Modeling synthesis, no new experiments. The grip and adhesion numbers come from the published
+measurements below; the wind speeds are derived from them under the assumptions stated above, not
+measured._
 
 ## References
 
-- Endlein, T., & Federle, W. (2015). On heels and toes: how ants climb with adhesive pads and tarsal friction hair arrays. *PLOS ONE*, 10(11), e0141269. [doi:10.1371/journal.pone.0141269](https://doi.org/10.1371/journal.pone.0141269)
-- Stark, A. Y., Arstingstall, K., & Yanoviak, S. P. (2018). Adhesive performance of tropical arboreal ants varies with substrate temperature. *Journal of Experimental Biology*, 221, jeb171843. [doi:10.1242/jeb.171843](https://doi.org/10.1242/jeb.171843)
-- Stark, A. Y., & Yanoviak, S. P. (2018). Adhesion and running speed of a tropical arboreal ant (*Cephalotes atratus*) on wet substrates. *Royal Society Open Science*, 5, 181540. [doi:10.1098/rsos.181540](https://doi.org/10.1098/rsos.181540)
-- Stark, A. Y., & Yanoviak, S. P. (2020). Adhesion and running speed of a tropical arboreal ant (*Cephalotes atratus*) on rough, narrow, and inclined substrates. *Integrative and Comparative Biology*, 60(4), 829–839. [doi:10.1093/icb/icaa078](https://doi.org/10.1093/icb/icaa078)
-- Federle, W., Baumgartner, W., & Hölldobler, B. (2004). Biomechanics of ant adhesive pads: frictional forces are rate- and temperature-dependent. *Journal of Experimental Biology*, 207(1), 67–74. [doi:10.1242/jeb.00716](https://doi.org/10.1242/jeb.00716)
-- NASA Glenn Research Center. The drag equation. [grc.nasa.gov](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/)
-- World Meteorological Organization. World record wind gust: 113.3 m/s (253 mph), Barrow Island, Australia, 10 April 1996 (Tropical Cyclone Olivia). [wmo.asu.edu](https://wmo.asu.edu/content/world-maximum-surface-wind-gust)
+- Endlein, T., & Federle, W. (2015). On heels and toes: how ants climb with adhesive pads and tarsal
+  friction hair arrays. _PLOS ONE_, 10(11), e0141269.
+  [doi:10.1371/journal.pone.0141269](https://doi.org/10.1371/journal.pone.0141269)
+- Stark, A. Y., Arstingstall, K., & Yanoviak, S. P. (2018). Adhesive performance of tropical
+  arboreal ants varies with substrate temperature. _Journal of Experimental Biology_, 221,
+  jeb171843. [doi:10.1242/jeb.171843](https://doi.org/10.1242/jeb.171843)
+- Stark, A. Y., & Yanoviak, S. P. (2018). Adhesion and running speed of a tropical arboreal ant
+  (_Cephalotes atratus_) on wet substrates. _Royal Society Open Science_, 5, 181540.
+  [doi:10.1098/rsos.181540](https://doi.org/10.1098/rsos.181540)
+- Stark, A. Y., & Yanoviak, S. P. (2020). Adhesion and running speed of a tropical arboreal ant
+  (_Cephalotes atratus_) on rough, narrow, and inclined substrates. _Integrative and Comparative
+  Biology_, 60(4), 829–839. [doi:10.1093/icb/icaa078](https://doi.org/10.1093/icb/icaa078)
+- Federle, W., Baumgartner, W., & Hölldobler, B. (2004). Biomechanics of ant adhesive pads:
+  frictional forces are rate- and temperature-dependent. _Journal of Experimental Biology_, 207(1),
+  67–74. [doi:10.1242/jeb.00716](https://doi.org/10.1242/jeb.00716)
+- NASA Glenn Research Center. The drag equation.
+  [grc.nasa.gov](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/)
+- World Meteorological Organization. World record wind gust: 113.3 m/s (253 mph), Barrow Island,
+  Australia, 10 April 1996 (Tropical Cyclone Olivia).
+  [wmo.asu.edu](https://wmo.asu.edu/content/world-maximum-surface-wind-gust)

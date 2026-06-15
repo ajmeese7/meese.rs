@@ -7,11 +7,13 @@
   "packageManager": "pnpm@11.2.2",
   "scripts": {
     "dev": "astro dev",
-    "build": "pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",
+    "build": "pnpm format:check && pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",
     "preview": "astro preview",
     "check": "astro check",
     "validate:content": "tsx scripts/validate-content.ts",
-    "generate:graph": "tsx scripts/generate-graph.ts"
+    "generate:graph": "tsx scripts/generate-graph.ts",
+    "format": "prettier --write \"src/content/posts/**/*.{md,mdx}\"",
+    "format:check": "prettier --check \"src/content/posts/**/*.{md,mdx}\""
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
@@ -23,8 +25,10 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "pagefind": "^1.5.2",
+    "prettier": "^3.8.4",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.99.0",
+    "yaml": "^2.9.0"
   }
 }

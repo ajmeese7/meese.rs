@@ -1,0 +1,11 @@
+{
+  "//": "Format-on-save is scoped to MDX/Markdown only, so Prettier never restyles TS, JSON, or .astro files (no plugins installed for those). Prose wraps to printWidth from .prettierrc.json.",
+  "[mdx]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  }
+}
