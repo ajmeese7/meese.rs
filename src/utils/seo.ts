@@ -27,7 +27,7 @@ export interface SeoMeta {
 const SITE_NAME = "meese.rs";
 
 /** Posts get a per-post card (1200x630, see src/pages/og/[...route].ts).
- *  Every other page uses the static hero card (1280x630). */
+ *  Every other page uses the static hero card (1200x630). */
 function ogImage(path: string): {
   image: string;
   imageWidth: number;
@@ -36,7 +36,7 @@ function ogImage(path: string): {
   const match = path.match(/^\/posts\/(.+?)\/?$/);
   return match
     ? { image: `/og/posts/${match[1]}.png`, imageWidth: 1200, imageHeight: 630 }
-    : { image: "/social.png", imageWidth: 1280, imageHeight: 630 };
+    : { image: "/social.png", imageWidth: 1200, imageHeight: 630 };
 }
 
 export function buildSeo(input: SeoInput): SeoMeta {
