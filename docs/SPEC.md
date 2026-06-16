@@ -618,6 +618,7 @@ supersededBy: string
 canonicalUrl: string
 externalUrl: string
 hideFromFeed: boolean
+unlisted: boolean       # live, shareable URL but hidden from listings + sitemap, noindex
 review:                 # required when type: review (see below)
   subject: string
   version: string
@@ -686,6 +687,7 @@ const posts = defineCollection({
       canonicalUrl: z.string().url().optional(),
       externalUrl: z.string().url().optional(),
       hideFromFeed: z.boolean().default(false),
+      unlisted: z.boolean().default(false),
       review: reviewSchema.optional(),
     })
     .refine((d) => d.type !== 'review' || d.review !== undefined, {

@@ -83,6 +83,23 @@ Practical guidance: if you would want a reader to browse everything under it, ma
 
 ---
 
+## 5. Visibility
+
+Separate axis from type and status: these fields decide whether a post is built at all, and where it surfaces once it is. Read them as a ladder from private to public.
+
+| Field | Built in prod? | In listings/feeds/search/graph? | Reachable by URL? | Use it when |
+|---|---|---|---|---|
+| `draft: true` | No, dev only | No | No (no route exists) | Work in progress. Visible in `pnpm dev`, never shipped. |
+| `unlisted: true` | Yes | No, and dropped from the sitemap + marked `noindex` | Yes | You want to share a link before (or instead of) publishing: a live URL that shows up nowhere on the site. |
+| `hideFromFeed: true` | Yes | Skips the main feed only; still in topic/type pages, search, graph | Yes | A published post you want off the homepage and `/latest`, but otherwise browseable. |
+| (none of the above) | Yes | Yes | Yes | A normal published post. |
+
+`externalUrl:` is a separate case: the post is a pointer to somewhere else, so it gets no local page and its cards/feeds link straight out.
+
+The split is enforced in [`src/utils/posts.ts`](../src/utils/posts.ts): `getBuildablePosts()` is the build/asset set and includes unlisted posts (so the page and its OG image render), while `getPosts()` is the listing default and excludes them, so every feed, topic, type page, count, graph, and backlink inherits the exclusion for free.
+
+---
+
 ## Quick frontmatter example
 
 ```yaml

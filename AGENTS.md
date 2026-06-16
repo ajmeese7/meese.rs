@@ -48,8 +48,10 @@ pnpm generate:graph    # write public/graph.json snapshot (also served dynamical
   `--border-default`), never raw palette values. The accent is themeable via
   `data-theme`; default is `neon-violet`.
 - Reading pages ship zero client JS; search and graph may use JS.
-- Drafts (`draft: true`) are excluded from production build, feeds, sitemap,
-  search, and graph.
+- Drafts (`draft: true`) are excluded from the production build entirely.
+  Unlisted posts (`unlisted: true`) build to a live, shareable URL but stay out
+  of every feed, listing, topic, search index, graph, and the sitemap, and ship
+  with `noindex`. See `docs/CONTENT.md` §5 for the full visibility ladder.
 
 ## Do not
 
