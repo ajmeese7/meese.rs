@@ -1,0 +1,164 @@
+---
+/**
+ * The air next to the wall. An ant pressed to a surface sits at the bottom of a
+ * turbulent boundary layer, inside the slowed near-wall air, not out in the
+ * freestream the drag model assumes. The 1/7-power profile shows how little
+ * wind the ant actually feels, and because drag goes as v squared, the gust
+ * needed to move it runs well above the isolated-body threshold. Curve and ant
+ * are server-rendered; both sliders are interactive.
+ *
+ * The block is `blw`, not `bl`: the reticle's bottom-left tick is `.tick.bl`,
+ * and a `bl` block class would scope the card's padding/border onto that tick.
+ */
+import { blFractionAt, blMeanFraction, fromMph, ANT_HEIGHT } from "../../utils/ant-aero";
+
+// Plot geometry (SVG user units).
+const PX0 = 58, PX1 = 300, PY_TOP = 24, PY_BOT = 216;
+const HMAX_MM = 30; // visible height window
+const ANT_MM = ANT_HEIGHT * 1000; // 2.5 mm
+const DEFAULT_MPH = 108, DEFAULT_FETCH = 1.0;
+
+const xOf = (frac: number) => PX0 + frac * (PX1 - PX0);
+const yOf = (mm: number) => PY_BOT - (mm / HMAX_MM) * (PY_BOT - PY_TOP);
+
+const U0 = fromMph(DEFAULT_MPH);
+const N = 48;
+const profile: string[] = [];
+for (let i = 0; i <= N; i++) {
+  const mm = (i / N) * HMAX_MM;
+  const frac = blFractionAt(U0, mm / 1000, DEFAULT_FETCH);
+  profile.push(`${xOf(frac).toFixed(1)},${yOf(mm).toFixed(1)}`);
+}
+const curve0 = `M ${profile.join(" L ")}`;
+const mean0 = blMeanFraction(U0, ANT_HEIGHT, DEFAULT_FETCH);
+const uGrid = [0, 0.25, 0.5, 0.75, 1];
+---
+
+<div class="blw reticle" data-boundary
+  data-px0={PX0} data-px1={PX1} data-pytop={PY_TOP} data-pybot={PY_BOT}
+  data-hmax={HMAX_MM} data-antmm={ANT_MM}>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <svg class="blw__svg" viewBox="0 0 380 244" role="img"
+    aria-label="Wind speed versus height above the wall, with the ant inside the boundary layer">
+    {uGrid.map((u) => (
+      <line class="blw__grid" x1={xOf(u)} y1={PY_TOP} x2={xOf(u)} y2={PY_BOT} />
+    ))}
+    {uGrid.map((u) => (
+      <text class="blw__xlab" x={xOf(u)} y={PY_BOT + 13} text-anchor="middle">{u}</text>
+    ))}
+    <text class="blw__axis" x={(PX0 + PX1) / 2} y={PY_BOT + 28} text-anchor="middle">local wind ÷ freestream (u / U)</text>
+    <text class="blw__ylab" transform={`rotate(-90 16 ${(PY_TOP + PY_BOT) / 2})`} x="16" y={(PY_TOP + PY_BOT) / 2} text-anchor="middle">height above wall</text>
+    <text class="blw__yhi" x={PX0 - 6} y={PY_TOP + 4} text-anchor="end">{HMAX_MM} mm</text>
+    <text class="blw__yhi" x={PX0 - 6} y={PY_BOT} text-anchor="end">0</text>
+
+    <!-- ant slice: the bottom 2.5 mm the body occupies -->
+    <rect class="blw__antband" x={PX0} y={yOf(ANT_MM)} width={PX1 - PX0} height={PY_BOT - yOf(ANT_MM)} data-blw-antband />
+    <ellipse class="blw__ant" cx={PX0 + 26} cy={yOf(ANT_MM / 2)} rx="11" ry={Math.max(3, (PY_BOT - yOf(ANT_MM)) / 2.2)} />
+    <ellipse class="blw__ant" cx={PX0 + 12} cy={yOf(ANT_MM / 2)} rx="5" ry={Math.max(2.2, (PY_BOT - yOf(ANT_MM)) / 3)} />
+
+    <path d={curve0} class="blw__curve" fill="none" data-blw-curve />
+    <line class="blw__free" x1={xOf(1)} y1={PY_TOP} x2={xOf(1)} y2={PY_BOT} />
+    <circle class="blw__dot" cx={xOf(mean0)} cy={yOf(ANT_MM / 2)} r="4.5" data-blw-dot />
+    <text class="blw__free-lab" x={xOf(1) + 6} y={PY_TOP + 10} text-anchor="start">freestream U</text>
+  </svg>
+
+  <div class="blw__panel">
+    <label class="blw__field">
+      <span data-blw-windlab>freestream gust</span>
+      <input type="range" min="10" max="273" value={DEFAULT_MPH} step="1" data-blw-wind
+        aria-label="Freestream wind speed in miles per hour" />
+    </label>
+    <label class="blw__field">
+      <span data-blw-fetchlab>wall run upwind</span>
+      <input type="range" min="10" max="300" value={DEFAULT_FETCH * 100} step="5" data-blw-fetch
+        aria-label="Length of wall the wind has run along, in centimeters" />
+    </label>
+    <p class="blw__readout" data-blw-readout></p>
+  </div>
+</div>
+
+<style>
+  .blw {
+    position: relative; margin: var(--space-7) 0; padding: var(--space-6);
+    background: var(--surface-1); border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .blw__svg { width: 100%; height: auto; background: var(--surface-inset); border-radius: var(--radius-sm); }
+  .blw__grid { stroke: var(--line-1); stroke-width: 1; }
+  .blw__xlab, .blw__yhi { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-4); }
+  .blw__axis, .blw__ylab { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-3); letter-spacing: .06em; }
+  .blw__antband { fill: var(--accent-wash); }
+  .blw__ant { fill: var(--ink-3); }
+  .blw__curve { stroke: var(--accent); stroke-width: 2.5; }
+  .blw__free { stroke: var(--line-3); stroke-width: 1; stroke-dasharray: 3 3; }
+  .blw__free-lab { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-4); }
+  .blw__dot { fill: var(--ink-1); stroke: var(--accent-bright); stroke-width: 2; }
+  .blw__panel { margin-top: var(--space-5); display: grid; gap: var(--space-3); }
+  .blw__field { display: grid; grid-template-columns: 140px 1fr; align-items: center; gap: var(--space-3); }
+  .blw__field span { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+  .blw input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .blw__readout { font-size: 14px; color: var(--ink-2); margin: 8px 0 0; min-height: 4.5em; line-height: 1.55; }
+  .blw__readout b { color: var(--accent-bright); font-family: var(--font-mono); }
+  @media (max-width: 460px) {
+    .blw__field { grid-template-columns: 1fr; gap: var(--space-1); }
+  }
+</style>
+
+<script>
+  import { blFractionAt, blThickness, blMeanFraction, thresholdMultiplier, ANT_HEIGHT } from "../../utils/ant-aero";
+
+  const toMs = (mph: number) => mph / 2.236936;
+
+  document.querySelectorAll<HTMLElement>("[data-boundary]").forEach((root) => {
+    const PX0 = +root.dataset.px0!, PX1 = +root.dataset.px1!;
+    const PY_TOP = +root.dataset.pytop!, PY_BOT = +root.dataset.pybot!;
+    const HMAX_MM = +root.dataset.hmax!, ANT_MM = +root.dataset.antmm!;
+    const xOf = (frac: number) => PX0 + frac * (PX1 - PX0);
+    const yOf = (mm: number) => PY_BOT - (mm / HMAX_MM) * (PY_BOT - PY_TOP);
+
+    const wind = root.querySelector<HTMLInputElement>("[data-blw-wind]")!;
+    const fetch = root.querySelector<HTMLInputElement>("[data-blw-fetch]")!;
+    const windLab = root.querySelector<HTMLElement>("[data-blw-windlab]")!;
+    const fetchLab = root.querySelector<HTMLElement>("[data-blw-fetchlab]")!;
+    const curve = root.querySelector<SVGPathElement>("[data-blw-curve]")!;
+    const dot = root.querySelector<SVGCircleElement>("[data-blw-dot]")!;
+    const out = root.querySelector<HTMLElement>("[data-blw-readout]")!;
+
+    const N = 48;
+
+    function update() {
+      const mph = +wind.value;
+      const U = toMs(mph);
+      const x = +fetch.value / 100; // cm -> m
+      windLab.textContent = `freestream ${mph} mph`;
+      fetchLab.textContent = `wall run ${x.toFixed(2)} m`;
+
+      const pts: string[] = [];
+      for (let i = 0; i <= N; i++) {
+        const mm = (i / N) * HMAX_MM;
+        const frac = blFractionAt(U, mm / 1000, x);
+        pts.push(`${xOf(frac).toFixed(1)},${yOf(mm).toFixed(1)}`);
+      }
+      curve.setAttribute("d", `M ${pts.join(" L ")}`);
+
+      const mean = blMeanFraction(U, ANT_HEIGHT, x);
+      dot.setAttribute("cx", String(xOf(mean)));
+
+      const deltaMm = blThickness(U, x) * 1000;
+      const mult = thresholdMultiplier(U, ANT_HEIGHT, x);
+      const localMph = mph * mean;
+      out.innerHTML =
+        `The slowed layer is <b>${deltaMm.toFixed(0)} mm</b> deep, and the ant stands in its bottom ` +
+        `${(ANT_MM / Math.max(deltaMm, ANT_MM) * 100).toFixed(0)}%. Across its body it feels a mean ` +
+        `<b>${localMph.toFixed(0)} mph</b>, about <b>${mean.toFixed(2)}×</b> the freestream. Drag scales ` +
+        `with the square of that, so the gust needed to dislodge it is roughly <b>${mult.toFixed(1)}×</b> ` +
+        `the isolated-body threshold.`;
+    }
+
+    wind.addEventListener("input", update);
+    fetch.addEventListener("input", update);
+    update();
+  });
+</script>
