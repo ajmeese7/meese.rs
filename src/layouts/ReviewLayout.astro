@@ -33,7 +33,7 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
   tags={d.tags}
   topics={d.topics}
 >
-  <div class="shell" data-pagefind-body>
+  <div class="shell" data-pagefind-body={d.unlisted ? undefined : ""}>
     <PagefindMeta post={post} />
     <BackLink href="/reviews/" label="reviews" />
 
