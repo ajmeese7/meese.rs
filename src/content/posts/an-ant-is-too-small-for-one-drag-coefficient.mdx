@@ -22,18 +22,16 @@ draft: false
 unlisted: true
 ---
 
-The [last post](/posts/wind-to-move-an-ant) turned ant grip into a wind speed using one value I
-waved through: a drag coefficient of 1.0. A bluff body, meaning a blunt shape that drags a wide
-turbulent wake instead of slipping through the air, runs a drag coefficient somewhere around 1, so
-1.0 is the round stand-in. I flagged it as the soft assumption and moved on.
+An engineer friend read the [last post](/posts/wind-to-move-an-ant) and called out the one value I
+waved through: a drag coefficient of 1.0, the round figure for a bluff body that drags a wide
+turbulent wake instead of slipping through the air. His hunch was that an ant is dominated by
+friction drag rather than form drag, at least head-on, which would make 1.0 the wrong starting
+point.
 
-It is the soft assumption for a reason. An engineer friend read the last post and pushed on exactly
-that coefficient. His hunch was that an ant is dominated by friction drag rather than form drag, at
-least head-on, which would make any single bluff-body number the wrong starting point. Pinning that
-down turns out stranger than the hunch, because an ant is the wrong size to carry one drag
+Chasing it down turns out stranger than the hunch. An ant is the wrong size to carry one drag
 coefficient at all. Its body, its legs, and the adhesive hairs on its feet differ in length by a
 factor of a thousand, so at one wind speed they sit in three flow regimes at once. A single `C_d`
-was always a fiction. Whether it is a fiction that changed the answer is the part worth working out.
+was always a fiction. Whether it changed the answer is what this post works out.
 
 ## Where an ant actually lives
 
