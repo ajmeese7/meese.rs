@@ -9,7 +9,7 @@ import { loadPosts } from "./lib/frontmatter";
 import { buildGraph, graphNodeColor, type GraphPost } from "../src/utils/graph";
 
 const posts: GraphPost[] = loadPosts()
-  .filter((p) => !p.data.draft)
+  .filter((p) => !p.data.draft && !p.data.unlisted)
   .map((p) => ({
     id: p.id,
     body: p.body,

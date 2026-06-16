@@ -11,6 +11,7 @@ interface Props {
   modifiedTime?: Date;
   tags?: string[];
   topics?: string[];
+  noindex?: boolean;
 }
 const {
   title,
@@ -20,6 +21,7 @@ const {
   modifiedTime,
   tags = [],
   topics = [],
+  noindex = false,
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://meese.rs");
@@ -37,6 +39,7 @@ const seo = buildSeo({
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
 
 <!-- Self-hosted @font-face + preload for the render-critical weights. -->
 <Font cssVariable="--font-display" preload={[{ weight: 400, style: "normal" }, { weight: 700, style: "normal" }]} />

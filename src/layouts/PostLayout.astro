@@ -49,13 +49,14 @@ if (supersededTarget) {
   title={d.title}
   description={d.description}
   type="article"
+  noindex={d.unlisted}
   current={d.type === "guide" ? "guides" : d.type === "note" ? "notes" : undefined}
   publishedTime={d.date}
   modifiedTime={d.updated}
   tags={d.tags}
   topics={d.topics}
 >
-  <article class="shell post" data-pagefind-body>
+  <article class="shell post" data-pagefind-body={d.unlisted ? undefined : ""}>
     <PagefindMeta post={post} />
     <BackLink href="/latest/" label="index" />
 

@@ -4,6 +4,7 @@ description:
   "I went looking for the gap between floor, wall, and ceiling. The grip numbers had a different
   answer than I expected."
 date: 2026-06-14
+updated: 2026-06-16
 type: lab
 topics:
   - biomechanics
@@ -83,10 +84,11 @@ is the ant's frontal area facing the wind. The output `v` is the steady wind tha
 exactly that much drag on the body.
 
 <Callout type="context" title="The assumptions, stated once">
-  Air density `ρ = 1.225 kg/m³` (sea level). Drag coefficient `C_d = 1.0`, the textbook bluff-body
-  default. Frontal area scales isometrically from a reference ant (3.0 mm² for an 8.2 mg worker, `A
-  = A_ref · (m/m_ref)^⅔`). These are deliberately plain choices. The point is to compare apples to
-  apples across species, not to claim a wind-tunnel-certified threshold for any one ant.
+  Air density `ρ = 1.225 kg/m³` (sea level). Drag coefficient `C_d = 1.0`, the round figure for a
+  bluff, non-streamlined body. Frontal area scales isometrically from a reference ant (3.0 mm² for
+  an 8.2 mg worker, `A = A_ref · (m/m_ref)^⅔`). These are deliberately plain choices. The point is
+  to compare apples to apples across species, not to claim a wind-tunnel-certified threshold for any
+  one ant.
 </Callout>
 
 Run _Crematogaster crinosa_ through it (1.03 mg, 0.7 g max shear load) and you get 122 m/s, about
@@ -178,6 +180,11 @@ reasons the real world is gentler:
 - **Near a surface, the air slows down.** An ant pressed flush to a wall sits inside the boundary
   layer where local air speed is well below freestream, which pushes the _real_ wind needed even
   higher than the isolated-body model says.
+- **The drag coefficient is a stand-in.** `C_d = 1.0` is the round number for a bluff body, but a
+  real ant is hairy and trails legs and antennae into the flow, so its true coefficient is probably
+  higher and changes with which way it faces the wind. That pushes the real threshold down, but only
+  as the square root of `C_d`, so even doubling or tripling it leaves the headline in extreme-wind
+  territory.
 
 The defensible version of the answer is conditional. A casually walking ant on a wet or dusty
 surface can be moved by a strong gust. A fully braced ant on a favorable surface resists forces

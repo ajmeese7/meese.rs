@@ -1,0 +1,154 @@
+---
+/**
+ * Where an ant's features live on the Reynolds axis. Body, legs, and tarsal
+ * hairs span three orders of magnitude in size, so at any one wind speed they
+ * sit in different flow regimes at once. Drag the wind and watch the body cross
+ * into the inertial band (where a constant Cd holds) while the hairs never
+ * leave the viscous/transitional muck. Bands are server-rendered; the markers
+ * are interactive.
+ */
+import { reynolds, L_BODY, L_LEG, L_HAIR, fromMph } from "../../utils/ant-aero";
+
+// Plot geometry (SVG user units).
+const PX0 = 60, PX1 = 366, PY_TOP = 44, PY_BOT = 168;
+const RE_MIN = 1e-2, RE_MAX = 1e5;
+const DEFAULT_MPH = 30;
+
+const lx = (re: number) => Math.log10(re);
+const xOf = (re: number) =>
+  PX0 + ((lx(re) - lx(RE_MIN)) / (lx(RE_MAX) - lx(RE_MIN))) * (PX1 - PX0);
+
+// Regime band edges at Re = 1 and Re = 1000.
+const bands = [
+  { x0: RE_MIN, x1: 1, cls: "viscous", label: "viscous" },
+  { x0: 1, x1: 1e3, cls: "trans", label: "transitional" },
+  { x0: 1e3, x1: RE_MAX, cls: "inertial", label: "inertial" },
+];
+
+const lanes = [
+  { key: "body", name: "body", L: L_BODY, y: 70 },
+  { key: "legs", name: "legs · antennae", L: L_LEG, y: 104 },
+  { key: "hairs", name: "tarsal hairs", L: L_HAIR, y: 138 },
+];
+
+const decades = [-2, -1, 0, 1, 2, 3, 4, 5];
+const v0 = fromMph(DEFAULT_MPH);
+---
+
+<div class="rey reticle" data-reynolds
+  data-px0={PX0} data-px1={PX1} data-remin={RE_MIN} data-remax={RE_MAX}>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <svg class="rey__svg" viewBox="0 0 380 196" role="img"
+    aria-label="Reynolds number of the ant's body, legs, and hairs across wind speed">
+    {bands.map((b) => (
+      <rect class={`rey__band rey__band--${b.cls}`}
+        x={xOf(b.x0)} y={PY_TOP} width={xOf(b.x1) - xOf(b.x0)} height={PY_BOT - PY_TOP} />
+    ))}
+    {bands.map((b) => (
+      <text class={`rey__bandlab rey__bandlab--${b.cls}`}
+        x={(xOf(b.x0) + xOf(b.x1)) / 2} y={PY_TOP - 8} text-anchor="middle">{b.label}</text>
+    ))}
+
+    {decades.map((d) => (
+      <line class="rey__grid" x1={xOf(10 ** d)} y1={PY_TOP} x2={xOf(10 ** d)} y2={PY_BOT} />
+    ))}
+    {decades.map((d) => (
+      <text class="rey__xlab" x={xOf(10 ** d)} y={PY_BOT + 13} text-anchor="middle">10{d < 0 ? "⁻" : ""}{Math.abs(d)}</text>
+    ))}
+    <text class="rey__axis" x={(PX0 + PX1) / 2} y={194} text-anchor="middle">Reynolds number</text>
+
+    {lanes.map((ln) => (
+      <>
+        <text class="rey__lane" x={PX0 - 8} y={ln.y + 3} text-anchor="end">{ln.name}</text>
+        <line class="rey__track" x1={PX0} y1={ln.y} x2={PX1} y2={ln.y} />
+        <circle class="rey__dot" data-rey-dot={ln.key} cx={xOf(reynolds(v0, ln.L))} cy={ln.y} r="5" />
+      </>
+    ))}
+  </svg>
+
+  <div class="rey__panel">
+    <input type="range" min="0" max="1000" value="430" step="1" data-rey-slider
+      aria-label="Wind speed in miles per hour" />
+    <p class="rey__readout" data-rey-readout></p>
+  </div>
+</div>
+
+<style>
+  .rey {
+    position: relative; margin: var(--space-7) 0; padding: var(--space-6);
+    background: var(--surface-1); border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .rey__svg { width: 100%; height: auto; background: var(--surface-inset); border-radius: var(--radius-sm); }
+  .rey__band--viscous { fill: var(--red-wash); }
+  .rey__band--trans { fill: var(--gold-wash); }
+  .rey__band--inertial { fill: var(--green-wash); }
+  .rey__bandlab { font-family: var(--font-mono); font-size: 9px; letter-spacing: .04em; }
+  .rey__bandlab--viscous { fill: var(--red); }
+  .rey__bandlab--trans { fill: var(--gold); }
+  .rey__bandlab--inertial { fill: var(--green); }
+  .rey__grid { stroke: var(--line-1); stroke-width: 1; }
+  .rey__xlab { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-4); }
+  .rey__axis { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-3); letter-spacing: .08em; }
+  .rey__lane { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-3); }
+  .rey__track { stroke: var(--line-2); stroke-width: 1; stroke-dasharray: 2 3; }
+  .rey__dot { fill: var(--ink-1); stroke: var(--accent); stroke-width: 2; transition: fill .15s; }
+  .rey__dot[data-regime="viscous"] { stroke: var(--red); }
+  .rey__dot[data-regime="trans"] { stroke: var(--gold); }
+  .rey__dot[data-regime="inertial"] { stroke: var(--green); }
+  .rey__panel { margin-top: var(--space-5); }
+  .rey input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .rey__readout { font-size: 14px; color: var(--ink-2); margin: 12px 0 0; min-height: 3.5em; line-height: 1.55; }
+  .rey__readout b { color: var(--accent-bright); font-family: var(--font-mono); }
+</style>
+
+<script>
+  import { reynolds, regimeOf, L_BODY, L_LEG, L_HAIR } from "../../utils/ant-aero";
+
+  // Slider 0..1000 maps to 1..130 mph with a log feel.
+  const MPH_MIN = 1, MPH_MAX = 130;
+  const sliderToMph = (v: number) => MPH_MIN * Math.pow(MPH_MAX / MPH_MIN, v / 1000);
+  const toMs = (mph: number) => mph / 2.236936;
+  const regClass = (re: number) => (re < 1 ? "viscous" : re < 1000 ? "trans" : "inertial");
+  const fmtRe = (re: number) => (re >= 100 ? Math.round(re).toLocaleString() : re >= 1 ? re.toFixed(0) : re.toFixed(2));
+
+  document.querySelectorAll<HTMLElement>("[data-reynolds]").forEach((root) => {
+    const PX0 = +root.dataset.px0!, PX1 = +root.dataset.px1!;
+    const RE_MIN = +root.dataset.remin!, RE_MAX = +root.dataset.remax!;
+    const lx = (re: number) => Math.log10(re);
+    const xOf = (re: number) => PX0 + ((lx(re) - lx(RE_MIN)) / (lx(RE_MAX) - lx(RE_MIN))) * (PX1 - PX0);
+
+    const slider = root.querySelector<HTMLInputElement>("[data-rey-slider]")!;
+    const out = root.querySelector<HTMLElement>("[data-rey-readout]")!;
+    const lanes = [
+      { key: "body", L: L_BODY },
+      { key: "legs", L: L_LEG },
+      { key: "hairs", L: L_HAIR },
+    ];
+
+    function update() {
+      const mph = sliderToMph(+slider.value);
+      const v = toMs(mph);
+      for (const ln of lanes) {
+        const re = reynolds(v, ln.L);
+        const dot = root.querySelector<SVGCircleElement>(`[data-rey-dot="${ln.key}"]`)!;
+        // Clamp the marker into the visible axis so it never slides off-plot.
+        const reClamped = Math.min(Math.max(re, RE_MIN), RE_MAX);
+        dot.setAttribute("cx", String(xOf(reClamped)));
+        dot.setAttribute("data-regime", regClass(re));
+      }
+      const reBody = reynolds(v, L_BODY);
+      const reHair = reynolds(v, L_HAIR);
+      out.innerHTML =
+        `At <b>${mph.toFixed(0)} mph</b> the body sits at Re <b>${fmtRe(reBody)}</b>, ` +
+        `${regimeOf(reBody).label}, while the tarsal hairs sit at Re <b>${fmtRe(reHair)}</b>, ` +
+        `${regimeOf(reHair).label}. The quadratic drag equation only earns its keep once a ` +
+        `feature clears the green band, and the hairs never do.`;
+    }
+
+    slider.addEventListener("input", update);
+    update();
+  });
+</script>

@@ -60,7 +60,9 @@ if (errors.length) {
 }
 
 const drafts = posts.filter((p) => p.data.draft).length;
+const unlisted = posts.filter((p) => p.data.unlisted).length;
 console.log(
   `✓ content ok, ${posts.length} posts, ${ids.size} unique slugs` +
-    (drafts ? `, ${drafts} draft(s) (excluded from production build)` : ""),
+    (drafts ? `, ${drafts} draft(s) (excluded from production build)` : "") +
+    (unlisted ? `, ${unlisted} unlisted (live URL, hidden from listings)` : ""),
 );

@@ -21,6 +21,7 @@ export interface ParsedPost {
     date?: string;
     updated?: string;
     draft: boolean;
+    unlisted: boolean;
     topics: string[];
     tags: string[];
     related: { slug: string }[];
@@ -65,6 +66,7 @@ function parse(file: string, id: string): ParsedPost {
     date: str(fm.date),
     updated: str(fm.updated),
     draft: fm.draft === true,
+    unlisted: fm.unlisted === true,
     topics: strList(fm.topics),
     tags: strList(fm.tags),
     related,

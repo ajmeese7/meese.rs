@@ -1,0 +1,105 @@
+---
+/**
+ * Skin friction vs form drag on the body as wind speed changes. The engineer's
+ * pushback was that an ant might be friction-dominated head-on. It is, but only
+ * in air too slow to threaten a gripped ant: friction outweighs form just below
+ * walking-breeze speed, and form takes over the moment the wind matters. Bar is
+ * rendered server-side; the split is interactive.
+ */
+import { frictionShare, fromMph } from "../../utils/ant-aero";
+
+const BX0 = 14, BX1 = 366, BY = 30, BH = 34; // bar geometry
+const DEFAULT_MPH = 20;
+const share0 = frictionShare(fromMph(DEFAULT_MPH));
+const split0 = BX0 + (1 - share0) * (BX1 - BX0); // form on the left, friction on the right
+---
+
+<div class="spl reticle" data-dragsplit data-bx0={BX0} data-bx1={BX1}>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <svg class="spl__svg" viewBox="0 0 380 84" role="img"
+    aria-label="Share of total drag carried by form drag versus skin friction">
+    <rect class="spl__form" x={BX0} y={BY} width={split0 - BX0} height={BH} rx="3" data-spl-form />
+    <rect class="spl__fric" x={split0} y={BY} width={BX1 - split0} height={BH} rx="3" data-spl-fric />
+    <line class="spl__seam" x1={split0} y1={BY - 5} x2={split0} y2={BY + BH + 5} data-spl-seam />
+    <text class="spl__klab spl__klab--form" x={BX0 + 4} y={BY - 8} text-anchor="start">form (pressure) drag</text>
+    <text class="spl__klab spl__klab--fric" x={BX1 - 4} y={BY - 8} text-anchor="end">skin friction</text>
+    <text class="spl__pct" x={BX0 + 4} y={BY + BH + 16} text-anchor="start" data-spl-formpct></text>
+    <text class="spl__pct" x={BX1 - 4} y={BY + BH + 16} text-anchor="end" data-spl-fricpct></text>
+  </svg>
+
+  <div class="spl__panel">
+    <input type="range" min="0" max="1000" value="500" step="1" data-spl-slider
+      aria-label="Wind speed in miles per hour" />
+    <p class="spl__readout" data-spl-readout></p>
+  </div>
+</div>
+
+<style>
+  .spl {
+    position: relative; margin: var(--space-7) 0; padding: var(--space-6);
+    background: var(--surface-1); border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .spl__svg { width: 100%; height: auto; background: var(--surface-inset); border-radius: var(--radius-sm); }
+  .spl__form { fill: var(--accent); }
+  .spl__fric { fill: var(--line-3); }
+  .spl__seam { stroke: var(--ink-1); stroke-width: 1.5; }
+  .spl__klab { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .03em; }
+  .spl__klab--form { fill: var(--accent-bright); }
+  .spl__klab--fric { fill: var(--ink-3); }
+  .spl__pct { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-2); }
+  .spl__panel { margin-top: var(--space-5); }
+  .spl input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .spl__readout { font-size: 14px; color: var(--ink-2); margin: 12px 0 0; min-height: 4em; line-height: 1.55; }
+  .spl__readout b { color: var(--accent-bright); font-family: var(--font-mono); }
+</style>
+
+<script>
+  import { frictionShare } from "../../utils/ant-aero";
+
+  // Slider 0..1000 maps to 1..130 mph with a log feel.
+  const MPH_MIN = 1, MPH_MAX = 130;
+  const sliderToMph = (v: number) => MPH_MIN * Math.pow(MPH_MAX / MPH_MIN, v / 1000);
+  const toMs = (mph: number) => mph / 2.236936;
+
+  document.querySelectorAll<HTMLElement>("[data-dragsplit]").forEach((root) => {
+    const BX0 = +root.dataset.bx0!, BX1 = +root.dataset.bx1!;
+    const slider = root.querySelector<HTMLInputElement>("[data-spl-slider]")!;
+    const form = root.querySelector<SVGRectElement>("[data-spl-form]")!;
+    const fric = root.querySelector<SVGRectElement>("[data-spl-fric]")!;
+    const seam = root.querySelector<SVGLineElement>("[data-spl-seam]")!;
+    const formPct = root.querySelector<SVGTextElement>("[data-spl-formpct]")!;
+    const fricPct = root.querySelector<SVGTextElement>("[data-spl-fricpct]")!;
+    const out = root.querySelector<HTMLElement>("[data-spl-readout]")!;
+
+    function update() {
+      const mph = sliderToMph(+slider.value);
+      const fric_s = frictionShare(toMs(mph));
+      const form_s = 1 - fric_s;
+      const split = BX0 + form_s * (BX1 - BX0);
+
+      form.setAttribute("width", String(Math.max(0, split - BX0)));
+      fric.setAttribute("x", String(split));
+      fric.setAttribute("width", String(Math.max(0, BX1 - split)));
+      seam.setAttribute("x1", String(split));
+      seam.setAttribute("x2", String(split));
+      formPct.textContent = `${Math.round(form_s * 100)}% form`;
+      fricPct.textContent = `${Math.round(fric_s * 100)}% friction`;
+
+      const verdict =
+        fric_s > 0.5
+          ? `Friction is winning, but this is a <b>${mph.toFixed(0)} mph</b> drift no gripped ant would notice`
+          : `Form drag carries <b>${Math.round(form_s * 100)}%</b> of it at <b>${mph.toFixed(0)} mph</b>`;
+      out.innerHTML =
+        `${verdict}. Skin friction and form drag trade places near <b>1 mph</b>; ` +
+        `everywhere above that, pressure on the frontal area dominates the body. ` +
+        `The split is a first-order estimate (laminar plate, wetted area ~6× frontal), ` +
+        `so read the crossover, not the decimals.`;
+    }
+
+    slider.addEventListener("input", update);
+    update();
+  });
+</script>

@@ -1,5 +1,5 @@
 import { OGImageRoute } from "astro-og-canvas";
-import { getPosts } from "../../utils/posts";
+import { getBuildablePosts } from "../../utils/posts";
 
 // Brand palette (RGB) pulled from src/styles/tokens/colors.css.
 const BG_VOID: [number, number, number] = [6, 7, 10]; // --bg-void
@@ -20,7 +20,7 @@ interface OgPage {
 
 // One card per locally-rendered post, keyed `posts/<id>` -> /og/posts/<id>.png.
 // Non-post pages use the static hero card (public/social.png) instead.
-const posts = await getPosts();
+const posts = await getBuildablePosts();
 const pages: Record<string, OgPage> = {};
 for (const post of posts) {
   if (post.data.externalUrl) continue; // no local page, no card

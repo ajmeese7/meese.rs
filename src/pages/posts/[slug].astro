@@ -1,22 +1,26 @@
 ---
 import type { GetStaticPaths } from "astro";
 import { render } from "astro:content";
+
+import Aside from "../../components/mdx/Aside.astro";
+import BoundaryLayer from "../../components/mdx/BoundaryLayer.astro";
+import Callout from "../../components/mdx/Callout.astro";
+import CodeCaption from "../../components/mdx/CodeCaption.astro";
+import DampingCurve from "../../components/mdx/DampingCurve.astro";
+import DemoFrame from "../../components/mdx/DemoFrame.astro";
+import DragSplit from "../../components/mdx/DragSplit.astro";
+import Figure from "../../components/mdx/Figure.astro";
+import OrientationWidget from "../../components/mdx/OrientationWidget.astro";
 import PostLayout from "../../layouts/PostLayout.astro";
 import ReviewLayout from "../../layouts/ReviewLayout.astro";
-import Callout from "../../components/mdx/Callout.astro";
-import Aside from "../../components/mdx/Aside.astro";
-import Figure from "../../components/mdx/Figure.astro";
-import DemoFrame from "../../components/mdx/DemoFrame.astro";
-import CodeCaption from "../../components/mdx/CodeCaption.astro";
-import WindCalculator from "../../components/mdx/WindCalculator.astro";
-import OrientationWidget from "../../components/mdx/OrientationWidget.astro";
+import ReynoldsRegime from "../../components/mdx/ReynoldsRegime.astro";
 import SpeciesChart from "../../components/mdx/SpeciesChart.astro";
-import DampingCurve from "../../components/mdx/DampingCurve.astro";
+import WindCalculator from "../../components/mdx/WindCalculator.astro";
 import WindSandbox from "../../components/mdx/WindSandbox.astro";
-import { getPosts } from "../../utils/posts";
+import { getPosts, getBuildablePosts } from "../../utils/posts";
 
 export const getStaticPaths = (async () => {
-  const posts = await getPosts();
+  const posts = await getBuildablePosts();
   // Posts that point elsewhere don't get a local page.
   return posts
     .filter((p) => !p.data.externalUrl)
@@ -29,15 +33,18 @@ const { Content, headings } = await render(post);
 
 // MDX components available to every post without per-file imports.
 const components = {
-  Callout,
   Aside,
-  Figure,
-  DemoFrame,
+  BoundaryLayer,
+  Callout,
   CodeCaption,
-  WindCalculator,
-  OrientationWidget,
-  SpeciesChart,
   DampingCurve,
+  DemoFrame,
+  DragSplit,
+  Figure,
+  OrientationWidget,
+  ReynoldsRegime,
+  SpeciesChart,
+  WindCalculator,
   WindSandbox,
 };
 const isReview = post.data.type === "review";

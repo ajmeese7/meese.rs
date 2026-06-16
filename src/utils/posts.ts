@@ -19,13 +19,27 @@ export function byFeedOrder(a: Post, b: Post): number {
   return b.data.date.getTime() - a.data.date.getTime();
 }
 
-/** All publishable posts (draft-aware), feed-ordered. */
-export async function getPosts(): Promise<Post[]> {
+/**
+ * Every post built into a page (draft-aware), feed-ordered. Includes `unlisted`
+ * posts: they get a live URL, they just never surface in a listing. Only the
+ * routes that must emit them (`/posts/[slug]` and their OG images) should call
+ * this. Anything user-facing should use `getPosts`.
+ */
+export async function getBuildablePosts(): Promise<Post[]> {
   const posts = await getCollection(
     "posts",
     (p) => includeDrafts || !p.data.draft,
   );
   return posts.sort(byFeedOrder);
+}
+
+/**
+ * Listing default: buildable posts minus `unlisted`. Feeds, topics, types,
+ * search, graph, backlinks, and counts all derive from this, so an unlisted
+ * post stays reachable by URL while showing up nowhere on the site.
+ */
+export async function getPosts(): Promise<Post[]> {
+  return (await getBuildablePosts()).filter((p) => !p.data.unlisted);
 }
 
 /** Main feed: everything except `hideFromFeed`. */
