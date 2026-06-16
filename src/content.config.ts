@@ -69,6 +69,10 @@ const posts = defineCollection({
       canonicalUrl: z.string().url().optional(),
       externalUrl: z.string().url().optional(),
       hideFromFeed: z.boolean().default(false),
+      // Unlisted: builds a live, shareable page but appears in no listing,
+      // feed, topic, search index, graph, or sitemap, and is marked noindex.
+      // Sits between `draft` (never built in prod) and a normal published post.
+      unlisted: z.boolean().default(false),
       review: reviewSchema.optional(),
     })
     // A review entry must carry its structured record.

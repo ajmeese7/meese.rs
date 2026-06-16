@@ -1,10 +1,23 @@
 // @ts-check
+import { readdirSync, readFileSync } from "node:fs";
 import { defineConfig, fontProviders } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 
 // Production domain. Cloudflare Pages serves the static `dist/` output.
 const SITE = "https://meese.rs";
+
+// Unlisted posts build to a live, shareable URL but must stay out of the public
+// sitemap. Scan post frontmatter for `unlisted: true` and collect their paths
+// so the sitemap filter can drop them (the pages themselves still get noindex).
+const POSTS_DIR = "./src/content/posts";
+const unlistedPaths = readdirSync(POSTS_DIR)
+  .filter((f) => /\.mdx?$/.test(f))
+  .filter((f) => {
+    const fm = readFileSync(`${POSTS_DIR}/${f}`, "utf8").split(/^---$/m)[1] ?? "";
+    return /^unlisted:\s*true\b/m.test(fm);
+  })
+  .map((f) => `/posts/${f.replace(/\.mdx?$/, "")}/`);
 
 export default defineConfig({
   site: SITE,
@@ -40,12 +53,15 @@ export default defineConfig({
     },
   ],
   // Drafts are excluded from the build via the content query layer (see
-  // src/utils/posts.ts); sitemap mirrors that by filtering dev-only routes.
+  // src/utils/posts.ts); sitemap mirrors that by filtering dev-only routes and
+  // any unlisted posts.
   integrations: [
     mdx(),
     sitemap({
       filter: (page) =>
-        !page.includes("/search") && !page.includes("/graph"),
+        !page.includes("/search") &&
+        !page.includes("/graph") &&
+        !unlistedPaths.some((p) => page.includes(p)),
     }),
   ],
   build: {

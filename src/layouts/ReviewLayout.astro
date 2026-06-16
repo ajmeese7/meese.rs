@@ -26,6 +26,7 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
   title={`${r.subject} review`}
   description={r.tagline ?? d.description}
   type="article"
+  noindex={d.unlisted}
   current="reviews"
   publishedTime={d.date}
   modifiedTime={d.updated}
