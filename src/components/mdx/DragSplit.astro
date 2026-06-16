@@ -90,8 +90,8 @@ const split0 = BX0 + (1 - share0) * (BX1 - BX0); // form on the left, friction o
 
       const verdict =
         fric_s > 0.5
-          ? `friction is winning, but this is a <b>${mph.toFixed(0)} mph</b> drift no gripped ant would notice`
-          : `form drag carries <b>${Math.round(form_s * 100)}%</b> of it at <b>${mph.toFixed(0)} mph</b>`;
+          ? `Friction is winning, but this is a <b>${mph.toFixed(0)} mph</b> drift no gripped ant would notice`
+          : `Form drag carries <b>${Math.round(form_s * 100)}%</b> of it at <b>${mph.toFixed(0)} mph</b>`;
       out.innerHTML =
         `${verdict}. Skin friction and form drag trade places near <b>1 mph</b>; ` +
         `everywhere above that, pressure on the frontal area dominates the body. ` +

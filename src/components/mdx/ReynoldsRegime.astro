@@ -142,9 +142,9 @@ const v0 = fromMph(DEFAULT_MPH);
       const reBody = reynolds(v, L_BODY);
       const reHair = reynolds(v, L_HAIR);
       out.innerHTML =
-        `At <b>${mph.toFixed(0)} mph</b>, the body sits at Re <b>${fmtRe(reBody)}</b> ` +
-        `(${regimeOf(reBody).label}) while the tarsal hairs sit at Re <b>${fmtRe(reHair)}</b> ` +
-        `(${regimeOf(reHair).label}). The quadratic drag equation only earns its keep once a ` +
+        `At <b>${mph.toFixed(0)} mph</b> the body sits at Re <b>${fmtRe(reBody)}</b>, ` +
+        `${regimeOf(reBody).label}, while the tarsal hairs sit at Re <b>${fmtRe(reHair)}</b>, ` +
+        `${regimeOf(reHair).label}. The quadratic drag equation only earns its keep once a ` +
         `feature clears the green band, and the hairs never do.`;
     }
 
