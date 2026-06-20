@@ -1,0 +1,187 @@
+---
+title: "A 63% faster monorepo build, and the bundler never moved"
+description:
+  "How I cut a 36-package monorepo's cold build by 63% by swapping the transpile path to esbuild
+  instead of rewriting the toolchain: the config to copy, how to measure it honestly, the gotchas,
+  and how I got the AI to produce it."
+date: 2026-06-17
+type: lab
+topics:
+  - developer-experience
+  - build-tools
+  - monorepo
+tags:
+  - esbuild
+  - webpack
+  - rush
+draft: true
+featured: true
+related:
+  - slug: review-ponytail
+    reason:
+      "The agent skill that kept this change at the config layer instead of a full toolchain swap."
+---
+
+I filed [issue #161](https://github.com/meese-os/meeseOS/issues/161) against my own project,
+[meeseOS](https://github.com/meese-os/meeseOS), back in 2023. Two sentences: the build is slow, and
+I had been told [Turborepo](https://turbo.build/repo) and [Turbopack](https://turbo.build/pack)
+might speed it up. I never had the cycles to chase it. Turborepo is a monorepo task orchestrator;
+Turbopack is a bundler. Taking my own ticket at face value meant ripping out two load-bearing tools
+at once across a 36-package monorepo and hoping the pair came out faster on the far side.
+
+I handed the ticket to [Claude Code](/posts/review-claude-code), running with the
+[Ponytail](/posts/review-ponytail) skill on full, which biases it toward the smallest change that
+works. It went looking for where the time actually went, and the answer was not the build graph; it
+was the transpile step inside every package. Replacing that one layer with
+[esbuild](https://esbuild.github.io/) dropped the cold build from 21.1 to 7.8 seconds, a 63% cut,
+without touching the orchestrator or the bundler. The full change is
+[PR #202](https://github.com/meese-os/meeseOS/pull/202). Below is the config, the way I measured it,
+and how I got the AI to produce a loader swap instead of a six-week rewrite.
+
+## Why not the tools the ticket named
+
+The two tools in my own ticket were the wrong size for the problem. Turbopack is a bundler welded to
+Next.js, not a drop-in for an arbitrary 28-package [webpack](https://webpack.js.org/) setup, so it
+was a dead end before it started. Turborepo is a task orchestrator with a build cache, which is the
+job [Rush](https://rushjs.io/) already does, and its cache was already on. Migrating to it would
+have been a big, risky rewrite for a benefit I already had. Both are the kind of change you cannot
+half-ship: rewrite every config, revalidate every package, and learn at the very end whether it was
+worth it. The transpile swap is reversible one package at a time.
+
+## Where the time was going
+
+Every webpack package transpiled with `babel-loader`, and the website minified with
+[UglifyJS](https://github.com/mishoo/UglifyJS). Both are slow, and both were doing more work than
+the project needed. The detail that made this worth doing sits in the defaults. None of the packages
+set a [Babel](https://babeljs.io/) target, and with no target `@babel/preset-env` compiles all the
+way down to ES5, so every bundle carried a layer of helper scaffolding for browsers that meeseOS
+does not support. UglifyJS then could not strip that scaffolding back out, because it predates the
+syntax the rest of the code is written in. The transpiler was generating bloat the minifier had no
+way to remove.
+
+## The swap
+
+The fix lives inside each `webpack.config.js`. `babel-loader` becomes `esbuild-loader`, and esbuild
+does the transpile and the minify in Go, which is most of where the wall-clock went. The one thing
+you cannot skip is the target. esbuild defaults to `esnext`, the exact opposite of preset-env's ES5
+default. Leave it at that default and it barely transpiles, so a blind swap ships modern syntax that
+old browsers choke on. Paste in an overly conservative target and you throw the speed win away
+instead. I set it explicitly from the repo's browser-support policy in a root `.browserslistrc`, run
+through [`browserslist-to-esbuild`](https://www.npmjs.com/package/browserslist-to-esbuild) so the
+policy and the build target are one source instead of two that drift. The two backend libraries
+target `node22` instead of a browser list.
+
+```js
+// the esbuild-loader rule each webpack.config.js uses
+{
+  test: /\.js$/,
+  loader: "esbuild-loader",
+  options: { target: BROWSER_TARGET }, // NODE_TARGET ("node22") for the two backend libs
+}
+```
+
+The website needed one more move. UglifyJS came out and esbuild's `EsbuildPlugin` took over JS
+minification, with `CssMinimizerPlugin` left to handle the CSS. UglifyJS had to go regardless of
+speed: it throws a parse error the moment it meets a `class` or an arrow function it was never
+taught to read, which is exactly what a modern esbuild target now emits.
+
+The one block left deliberately untouched is the `babel` config in each `package.json`, which
+belongs to the tests rather than to webpack. `babel-jest` reads it to transpile the suite, so
+pulling it out alongside the loader would quietly change how every test runs for no build-time gain.
+The migration moved the webpack path to esbuild and left the test transform exactly as it was.
+
+## The webpack tuning that was already free
+
+Once the loader was swapped, three webpack 5 settings were sitting there unused.
+
+- A filesystem cache (`cache: { type: "filesystem" }`) so a warm build reuses the last one. The trap
+  is forgetting `buildDependencies: { config: [__filename] }`; without it webpack does not notice
+  when the config itself changes and quietly serves stale output.
+- `devtool` gated by environment: a cheap source map in development and the full `source-map` only
+  in production, instead of paying for full maps on every build.
+- `output.pathinfo: false`, which drops the commented module paths webpack writes into every bundle
+  and that nothing in production reads.
+
+One knob did not survive contact. `resolve.symlinks: false` is a real speed win on most setups, and
+it breaks [pnpm](https://pnpm.io/) 10's virtual store, which resolves dependencies through symlinks
+on purpose. I dropped it and wrote down why, rather than ship a faster build that cannot find half
+its modules.
+
+## Measuring it so the number means something
+
+A build-speed claim is only worth the method behind it. Everything ran on one machine, an Intel Xeon
+Gold 6248 with 64 cores, so the before and after are comparable. The headline is the cold build.
+
+<Callout type="context" title="What counts as a cold build">
+  The benchmark script deletes the Rush build-cache tarballs and every package's
+  `node_modules/.cache` before each run, then takes the median of three. Warm is a single run right
+  after, with the cache populated. Skip the wipe and you are timing the cache, not the build.
+</Callout>
+
+| Metric                   | Before (Babel / UglifyJS) | After (esbuild) | Delta                |
+| ------------------------ | ------------------------- | --------------- | -------------------- |
+| Cold build (median of 3) | 21.1s                     | 7.8s            | -13.3s (-63%)        |
+| Warm build               | 9.6s                      | 4.9s            | -4.7s (-49%)         |
+| Bundle regressions       | n/a                       | 0               | all equal-or-smaller |
+
+Bundle size needed a separate baseline, since the first benchmark captured only timings. The honest
+way to check for regressions was to build the pre-migration commit, record every package's output
+size, then build the migrated tree and diff package by package. No package grew past 5%, and 13 of
+26 shrank between 6.5% and 65.6%. That is the ES5 scaffolding leaving: against a modern target
+esbuild never generates the helper code preset-env was emitting, and what UglifyJS could not strip
+simply is not there. The asset-heavy packages barely moved, which is the right signature. Those
+packages (the games, the wallpapers, the old site) are mostly images, so a leaner JavaScript path
+leaves them about where they were.
+
+## What bit me
+
+Reading 28 configs to change one line each means reading 28 configs, and that surfaced bugs with
+nothing to do with the migration. The website had a `CopyWebpackPlugin` with two `patterns` keys, so
+the second silently overwrote the first and `social.png` had been dropped from the build for who
+knows how long. `CssMinimizerPlugin` was registered twice and minified the production CSS a second
+time for nothing. A `source-map-loader` rule was running over prebuilt dependency bundles whose maps
+point at `.ts` files that never ship, printing `Failed to parse source map` on every build. A
+missing `src/client/.env` crashed the whole build instead of degrading, because the code read
+properties straight off the parse result without checking it existed. None of that was the
+assignment, and all of it was worth fixing while the file was already open.
+
+One honest caveat on the target. A declared `.browserslistrc` is not identical to preset-env's old
+implicit default; the policy I wrote drops Firefox ESR, among others. That is a real change in
+emitted syntax, not a no-op, and I took it on purpose to have one readable support policy instead of
+an accidental one. If you do this, decide your target deliberately rather than inheriting whatever
+the absence of a config used to mean.
+
+## How I got the AI to do _this_ and not a rewrite
+
+This came out as a loader swap and not a Turborepo migration mostly because of how the work was set
+up, not because the model was clever.
+
+Nothing got edited before there was a plan. The work ran through a phased pipeline: research the
+codebase and the migration's known traps, write the plan, then execute in waves. Every wave had to
+pass a full `rush build` and `rush test` before the next one started. Migrating the 28 packages in
+dependency-graph order, foundations first and the big `frontend/client` integrator before the apps,
+meant a wrong target could never propagate more than one wave before the gate caught it. A mismatch
+there is nasty: a package built for a modern target and consumed by one still on the old target
+throws syntax errors in the browser, not at build time.
+
+The loader swap and the webpack tuning landed as two separate passes, not one. Loader first across
+every package, prove the build is green and the bundles are equivalent, then layer the cache and
+devtool changes on top. Couple them and you cannot tell whether a bundle moved because of esbuild or
+because of the cache. Keeping them apart left every number attributable to one cause.
+
+The laziness was deliberate. The same rule was duplicated across all 28 configs. The shared
+`@meese-os/webpack-config` package that holds the canonical target came last, built only once the
+migration was proven rather than up front on a guess. Asked to clean up runtime Babel dependencies,
+it checked 39 manifests, found none in the wrong place, and changed a doc instead of inventing work.
+
+Verification is the one place this style fails, so I did not let it mark its own homework. At one
+point it told me the build could not be checked because the environment secrets were missing, which
+was a guess it had never run a single command to confirm. They were there. One `ls` settled it. Then
+it built the production artifact with `NODE_ENV=production rush build`, served it, and drove a real
+browser to a clean console with the login screen rendered. The same instinct that produces a tight
+diff will skip the test if you let it. That half stays the human's job.
+
+Issue #161 asked for a faster build and guessed at two tools that would have taken weeks and moved
+the whole foundation. The build is 63% faster, the foundation is untouched, and the change is a
+loader line and an explicit target per package. If your monorepo still transpiles through Babel with
+no target set, that is the first place to look.
