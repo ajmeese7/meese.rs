@@ -7,17 +7,75 @@ import sitemap from "@astrojs/sitemap";
 // Production domain. Cloudflare Pages serves the static `dist/` output.
 const SITE = "https://meese.rs";
 
-// Unlisted posts build to a live, shareable URL but must stay out of the public
-// sitemap. Scan post frontmatter for `unlisted: true` and collect their paths
-// so the sitemap filter can drop them (the pages themselves still get noindex).
+// One pass over post frontmatter feeds two build-time filters below.
 const POSTS_DIR = "./src/content/posts";
-const unlistedPaths = readdirSync(POSTS_DIR)
-  .filter((f) => /\.mdx?$/.test(f))
-  .filter((f) => {
-    const fm = readFileSync(`${POSTS_DIR}/${f}`, "utf8").split(/^---$/m)[1] ?? "";
-    return /^unlisted:\s*true\b/m.test(fm);
-  })
-  .map((f) => `/posts/${f.replace(/\.mdx?$/, "")}/`);
+const postFiles = readdirSync(POSTS_DIR).filter((f) => /\.mdx?$/.test(f));
+/** @param {string} f Post filename. */
+const frontmatter = (f) =>
+  readFileSync(`${POSTS_DIR}/${f}`, "utf8").split(/^---$/m)[1] ?? "";
+/** @param {string} f Post filename. */
+const slugOf = (f) => f.replace(/\.mdx?$/, "");
+
+// Unlisted posts build to a live, shareable URL but must stay out of the public
+// sitemap, so the sitemap filter drops their paths (pages still get noindex).
+const unlistedPaths = postFiles
+  .filter((f) => /^unlisted:\s*true\b/m.test(frontmatter(f)))
+  .map((f) => `/posts/${slugOf(f)}/`);
+
+// Drafts aren't built in production (see src/utils/posts.ts), so any published
+// post whose prose links to one would emit a dead /posts/<slug> anchor. Collect
+// draft slugs in prod so the rehype pass below unwraps those links to plain
+// text. Empty in dev, where drafts do build and the links resolve.
+const draftSlugs = new Set(
+  process.env.NODE_ENV === "production"
+    ? postFiles
+        .filter((f) => /^draft:\s*true\b/m.test(frontmatter(f)))
+        .map(slugOf)
+    : [],
+);
+
+/**
+ * Minimal shape of the HAST nodes this pass touches. ponytail: a local typedef
+ * keeps the file dependency-free; @types/hast isn't a direct dep and pnpm won't
+ * reliably resolve it transitively. Widen only if this plugin grows.
+ *
+ * @typedef {object} HastNode
+ * @property {string} type
+ * @property {string} [tagName]
+ * @property {Record<string, unknown>} [properties]
+ * @property {HastNode[]} [children]
+ */
+
+/**
+ * Rehype plugin: unwrap <a href="/posts/<slug>"> anchors that point at a draft,
+ * leaving the link text in place. ponytail: handles bare /posts/<slug> links
+ * (optional trailing slash); add #fragment/?query parsing if those ever link to
+ * drafts. Exported so astro.config.test.mjs can exercise the walk directly.
+ *
+ * @param {Set<string>} slugs
+ */
+export function rehypeStripDraftLinks(slugs) {
+  /**
+   * @param {HastNode} node
+   * @returns {node is HastNode & { children: HastNode[] }}
+   */
+  const isDraftLink = (node) => {
+    if (node.type !== "element" || node.tagName !== "a") return false;
+    const href = node.properties?.href;
+    const m = typeof href === "string" && href.match(/^\/posts\/([a-z0-9-]+)\/?$/i);
+    return Boolean(m && slugs.has(m[1]));
+  };
+  /** @param {HastNode} node */
+  const walk = (node) => {
+    if (!node.children) return;
+    node.children = node.children.flatMap((child) => {
+      if (isDraftLink(child)) return child.children;
+      walk(child);
+      return [child];
+    });
+  };
+  return walk;
+}
 
 export default defineConfig({
   site: SITE,
@@ -56,7 +114,7 @@ export default defineConfig({
   // src/utils/posts.ts); sitemap mirrors that by filtering dev-only routes and
   // any unlisted posts.
   integrations: [
-    mdx(),
+    mdx({ rehypePlugins: [[rehypeStripDraftLinks, draftSlugs]] }),
     sitemap({
       filter: (page) =>
         !page.includes("/search") &&
