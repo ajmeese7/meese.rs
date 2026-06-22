@@ -89,7 +89,7 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
 
         {
           r.criteria.length > 0 && (
-            <>
+            <div>
               <span class="sys-label" style="display:block;margin:34px 0 14px">// score breakdown</span>
               <div class="criteria">
                 {r.criteria.map((c) => (
@@ -103,7 +103,7 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
                   </div>
                 ))}
               </div>
-            </>
+            </div>
           )
         }
 
