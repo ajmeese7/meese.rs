@@ -821,6 +821,10 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
    Post reading page
    ============================================================ */
 .post { padding-top: 28px; }
+/* No TOC means no left rail to balance the reading column, so the full-width
+   shell leaves the article stranded left-of-center. Narrow the whole shell to
+   a single reading column that centers in the viewport. */
+.post--solo { max-width: 80ch; }
 .post__header { max-width: 74ch; margin-bottom: 8px; }
 .post__meta { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
 .post__meta-date { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }

@@ -56,7 +56,10 @@ if (supersededTarget) {
   tags={d.tags}
   topics={d.topics}
 >
-  <article class="shell post" data-pagefind-body={d.unlisted ? undefined : ""}>
+  <article
+    class:list={["shell", "post", { "post--solo": toc.length === 0 }]}
+    data-pagefind-body={d.unlisted ? undefined : ""}
+  >
     <PagefindMeta post={post} />
     <BackLink href="/latest/" label="index" />
 
