@@ -1,0 +1,171 @@
+---
+title: "Ponytail"
+description:
+  "A Claude Code skill that makes the agent reach for the smallest change that works. Tested on a
+  real monorepo build-speed task it could easily have turned into a full toolchain rewrite."
+date: 2026-06-17
+type: review
+topics:
+  - ai-devtools
+  - agents
+  - developer-experience
+tags:
+  - ponytail
+  - claude-code
+  - skills
+draft: true
+featured: true
+related:
+  - slug: a-faster-build-without-the-rewrite
+    reason:
+      "The build-speed PR I tested Ponytail on: a loader swap instead of an orchestrator and bundler
+      migration."
+review:
+  subject: "Ponytail"
+  version: "full"
+  score: 4.6
+  verdict: recommended
+  verdictLabel: "Adopt it"
+  tagline: "Makes your coding agent think like the laziest senior dev in the room."
+  links:
+    - label: repo
+      href: "https://github.com/DietrichGebert/ponytail"
+  meta:
+    - { key: "type", value: "Claude Code skill + SessionStart hook" }
+    - { key: "license", value: "MIT" }
+    - { key: "modes", value: "lite · full · ultra" }
+    - { key: "tested on", value: "meeseOS PR #202" }
+    - { key: "first reviewed", value: "2026-06" }
+  criteria:
+    - name: "Restraint under a vague ask"
+      score: 4.8
+      note:
+        "Handed 'speed up the build' and a ticket suggesting I swap the orchestrator and the
+        bundler, it changed neither and still won."
+    - name: "Effect per line changed"
+      score: 4.7
+      note:
+        "A 63% faster cold build out of a loader-and-plugin swap. The leverage is in what it refuses
+        to touch."
+    - name: "Low ceremony"
+      score: 4.6
+      note:
+        "A SessionStart hook plus a skill. On by default, out of the way, with lite/full/ultra if
+        you want to dial the intensity."
+    - name: "Self-flagged shortcuts"
+      score: 4.3
+      note:
+        "Deliberate shortcuts are supposed to get a `ponytail:` code comment naming the trade-off.
+        Good idea, optional in practice, and this build added none."
+    - name: "Judgment you still own"
+      score: 4.0
+      note: "It makes the code lazy, not the testing. Scope and verification stay with you."
+  pros:
+    - "Pushes the agent toward the smallest change that works, not the most impressive one"
+    - "On by default via a SessionStart hook, with lite/full/ultra intensity levels"
+    - "The native-and-stdlib-first ladder kills speculative abstractions before they start"
+    - "Deletion and 'this does not need to exist' are first-class outcomes"
+  cons:
+    - "It will not set scope or force verification; both stay on you"
+    - "The `ponytail:` shortcut-marking is opt-in and easy to skip"
+    - "Lazy framing can rationalize skipping a test if you let it"
+    - "Best paired with a human who reviews and a plan that bounds the work"
+  bottomLine:
+    "Ponytail does the one thing it promises: it makes a capable agent reach for the smallest change
+    that works instead of the one that looks the most like work. On a real build-speed task it
+    turned a two-tool migration into a loader swap and a 63% faster build. It will not decide what
+    to build or prove that it runs, so keep a human on scope and verification. With that in place,
+    leave it on."
+---
+
+## The pitch
+
+Ponytail is a [Claude Code](/posts/review-claude-code) skill that loads as a SessionStart hook and
+tells the agent to behave like the laziest senior developer in the room, on the theory that the best
+code is the code you never write. It is not a prompt you have to remember to invoke. The hook fires
+every session, the instruction sits in context for every response, and a statusline badge shows
+which intensity is live. There are three: lite, full, and ultra. Full is the default and the one I
+ran.
+
+The mechanism is a ladder, and the agent has to stop at the first rung that holds:
+
+1. Does this need to exist at all?
+2. Can the standard library do it?
+3. Does a native platform feature cover it?
+4. Can an already-installed dependency handle it?
+5. Can it be one line?
+6. Only then, the minimum code that works.
+
+Around the ladder sit a handful of rules with teeth. No abstraction with a single implementation. No
+scaffolding for a "later" that can scaffold for itself. Deletion over addition. The output is meant
+to be code first and at most three lines of explanation after, on the logic that a paragraph
+defending a simplification is complexity smuggled back in as prose. When it does cut a corner on
+purpose, it is told to leave a `// ponytail:` code comment naming the shortcut and when to revisit
+it, so the next reader sees an intentional choice rather than a lazy miss.
+
+It also knows where not to be lazy, which keeps it from doing real damage. Some things are off the
+table for trimming: input validation, error handling that prevents data loss, security,
+accessibility, hardware calibration. Any non-trivial branch is also supposed to leave one runnable
+check behind, and whether it honors that last rule is a separate question I will come back to.
+
+## What it looks like in a real run
+
+I pointed it at a slow build with a ticket that invited a full toolchain swap, and the laziest path
+turned out to be the best one: a transpiler swap that cut the cold build 63% without moving the
+orchestrator or the bundler. The [full case study](/posts/a-faster-build-without-the-rewrite) is its
+own post. What the ladder bought, concretely:
+
+- It rejected both tools my ticket named and changed one layer instead of two foundations.
+- It wrote the same loader rule into all 28 configs and held off on the shared factory until the
+  migration was proven, then built it once. Speculative abstraction is exactly what the top rung
+  kills.
+- Told to clean up runtime Babel dependencies, it scanned 39 package manifests, found none in the
+  wrong place, and changed a single doc. The lazy answer to "do this cleanup" was "there is nothing
+  to clean up, here is the proof."
+- It deleted a source-map loader rather than configure it, and pinned a freshly released loader
+  version rather than float to a same-day release it had not tested.
+- Handed a one-property constant, it declined to stand up a test harness for it and pointed at the
+  reproduction instead, which is the skill's "YAGNI applies to tests too" rule doing what it says.
+
+None of those are dramatic, and that is the point. The bias shows up as a hundred small refusals to
+do more than the task needs, and they add up to a diff you can actually review.
+
+## Where the credit belongs
+
+A fair review has to draw this line. Ponytail was installed on full before any of the build work, so
+it was live throughout. What kept the job small was the agent's own analysis of the issue in a
+planning session. A capable agent with a decent `CLAUDE.md` already leans this way. Plenty of what
+Ponytail encodes (no unrequested abstractions, delete dead code, confirm before adding a dependency)
+is what careful engineers already write into their standing instructions. What the skill adds is
+making that the loud default instead of a rule you hope gets honored, and applying it relentlessly
+at the small scale during execution, which is where most bloat actually accretes. If you already run
+a tight `CLAUDE.md`, Ponytail is an amplifier rather than a revelation. If you do not, it is the
+cheapest way to stop an agent gold-plating.
+
+## Where it bites
+
+It governs what the agent builds, not how honestly it checks the result, and that gap is real. More
+than once the same lazy reflex turned into an unverified claim: a secrets file reported as "missing"
+that one `ls` proved was sitting right there, an experiment called clean before its harness was even
+valid. A human caught each one. The skill's "leave a runnable check behind" rule is about the code
+it writes, not the claims it makes, so it does nothing to stop an agent declaring something done
+without looking. Budget for the same code review you would have done anyway.
+
+Those `ponytail:` comments are the other soft spot. Flagging a deliberate shortcut in a code comment
+so the next reader sees a choice rather than a mistake is a good idea. It is also opt-in, and
+[this PR](https://github.com/meese-os/meeseOS/pull/202) shipped without a single one. A convention
+the agent honors only when it remembers is not one you can count on finding later.
+
+## The rest of the kit
+
+Ponytail is more than the mode. It ships slash commands worth knowing. `/ponytail-review` is a code
+review that hunts only for over-engineering: reinvented standard library, dead flexibility,
+dependencies you did not need. `/ponytail-audit` runs the same lens across a whole repo and ranks
+what to delete. `/ponytail-debt` harvests every `ponytail:` comment into a ledger so the deferred
+shortcuts get tracked instead of quietly rotting into "later means never." The audit and the debt
+ledger are the answer to the opt-in problem above, assuming you actually run them.
+
+Roughly thirty thousand GitHub stars is usually a reason to be suspicious, and this is one of the
+times the hype is mostly earned. Ponytail does one thing well: it makes a capable agent reach for
+the smallest change that works instead of the one that looks the most like work. It will not set
+your scope, and it will not prove the result runs. Keep a human on both and leave it on.
