@@ -124,14 +124,17 @@ Gold 6248 with 64 cores, so the before and after are comparable. The headline is
 | Warm build               | 9.6s                      | 4.9s            | -4.7s (-49%)         |
 | Bundle regressions       | n/a                       | 0               | all equal-or-smaller |
 
-Bundle size needed a separate baseline, since the first benchmark captured only timings. The honest
-way to check for regressions was to build the pre-migration commit, record every package's output
-size, then build the migrated tree and diff package by package. No package grew past 5%, and 13 of
-26 shrank between 6.5% and 65.6%. That is the ES5 scaffolding leaving: against a modern target
-esbuild never generates the helper code preset-env was emitting, and what UglifyJS could not strip
-simply is not there. The asset-heavy packages barely moved, which is the right signature. Those
-packages (the games, the wallpapers, the old site) are mostly images, so a leaner JavaScript path
-leaves them about where they were.
+Bundle size needed its own baseline, because the first benchmark captured only timings. I rebuilt
+the pre-migration commit, recorded every package's output, then built the migrated tree and diffed
+package by package. A 58% drop is suspicious enough to distrust, so I confirmed the baseline was
+production-minified rather than an unminified strawman by building one package both ways and
+matching the byte counts.
+
+No packages grew, and 13 of 26 shrank by between 6.5% and _65.6%_! That is the ES5 scaffolding leaving:
+against a modern target esbuild never generates the helper code preset-env was emitting, and what
+UglifyJS could not strip simply is not there. The asset-heavy packages barely moved, which is the
+right signature. Those packages (the games, the wallpapers, the old site) are mostly images, so a
+leaner JavaScript path leaves them about where they were.
 
 ## What bit me
 
@@ -176,10 +179,13 @@ it checked 39 manifests, found none in the wrong place, and changed a doc instea
 
 Verification is the one place this style fails, so I did not let it mark its own homework. At one
 point it told me the build could not be checked because the environment secrets were missing, which
-was a guess it had never run a single command to confirm. They were there. One `ls` settled it. Then
-it built the production artifact with `NODE_ENV=production rush build`, served it, and drove a real
-browser to a clean console with the login screen rendered. The same instinct that produces a tight
-diff will skip the test if you let it. That half stays the human's job.
+was a guess it had never run a single command to confirm. They were there; one `ls` settled it.
+Booting the result was its own trap: a plain dev `rush build` emits eval-source-map bundles that do
+not run under the desktop's runtime, so the site looked broken and I burned time down a
+content-security-policy rabbit hole before realizing only the production build was ever meant to
+boot. The real proof took ten minutes of `NODE_ENV=production rush build`, serving it, and driving a
+real browser to a clean console with the login screen rendered. The same instinct that produces a
+tight diff will skip the test if you let it. That half stays the human's job.
 
 Issue #161 asked for a faster build and guessed at two tools that would have taken weeks and moved
 the whole foundation. The build is 63% faster, the foundation is untouched, and the change is a
