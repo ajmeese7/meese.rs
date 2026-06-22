@@ -330,7 +330,8 @@ const graphData = {
 
     function endPointer(e: PointerEvent) {
       if (!active.has(e.pointerId)) return;
-      const tap = mode === "pan" && moved < 6 && downNodeId;
+      // A tap on empty space (downNodeId null) clears the selection.
+      const tap = mode === "pan" && moved < 6;
       active.delete(e.pointerId);
       try { svg!.releasePointerCapture(e.pointerId); } catch {}
       if (active.size === 1) {
