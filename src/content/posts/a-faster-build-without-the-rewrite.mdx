@@ -130,11 +130,11 @@ package by package. A 58% drop is suspicious enough to distrust, so I confirmed 
 production-minified rather than an unminified strawman by building one package both ways and
 matching the byte counts.
 
-No packages grew, and 13 of 26 shrank by between 6.5% and _65.6%_! That is the ES5 scaffolding leaving:
-against a modern target esbuild never generates the helper code preset-env was emitting, and what
-UglifyJS could not strip simply is not there. The asset-heavy packages barely moved, which is the
-right signature. Those packages (the games, the wallpapers, the old site) are mostly images, so a
-leaner JavaScript path leaves them about where they were.
+No packages grew, and 13 of 26 shrank by between 6.5% and _65.6%_! That is the ES5 scaffolding
+leaving: against a modern target esbuild never generates the helper code preset-env was emitting,
+and what UglifyJS could not strip simply is not there. The asset-heavy packages barely moved, which
+is the right signature. Those packages (the games, the wallpapers, the old site) are mostly images,
+so a leaner JavaScript path leaves them about where they were.
 
 ## What bit me
 
