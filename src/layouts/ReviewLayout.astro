@@ -76,11 +76,14 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
 
         {
           r.meta.length > 0 && (
-            <div class="review__meta">
+            <dl class="review__meta">
               {r.meta.map((m) => (
-                <span>{m.key}: <b>{m.value}</b></span>
+                <div class="review__meta-item">
+                  <dt>{m.key}</dt>
+                  <dd>{m.value}</dd>
+                </div>
               ))}
-            </div>
+            </dl>
           )
         }
 
