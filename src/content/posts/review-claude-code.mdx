@@ -1,8 +1,10 @@
 ---
-title: "Everything Claude Code"
+title: "Claude Code"
 description:
-  "The terminal-native coding agent that actually ships work, once you learn to scope it."
-date: 2026-05-26
+  "A review of the software Anthropic ships to drive its models, not the models and not the skills
+  you bolt on. The harness is best in class, the memory is the part to steal, and it still will not
+  steer itself."
+date: 2026-06-17
 type: review
 topics:
   - ai-devtools
@@ -13,72 +15,131 @@ tags:
   - agents
   - cli
 draft: true
-featured: true
+featured: false
 review:
   subject: "Claude Code"
-  version: "v2"
-  score: 4.6
+  score: 4.7
   verdict: recommended
-  verdictLabel: "Recommended"
-  tagline:
-    "A terminal-native AI coding agent that plans, edits across files, and runs your toolchain."
+  verdictLabel: "Best in class"
+  tagline: "The terminal-native harness Anthropic ships to drive its models, and the one to beat."
   links:
     - label: repo
       href: "https://github.com/anthropics/claude-code"
     - label: docs
       href: "https://docs.claude.com"
   meta:
-    - { key: "pricing", value: "usage-based" }
     - { key: "runs in", value: "terminal" }
-    - { key: "first reviewed", value: "2026-02" }
-    - { key: "tested on", value: "macOS · Linux" }
+    - { key: "plans", value: "API usage · Pro · Max ($100/$200)" }
+    - { key: "extensible via", value: "skills · hooks · MCP · subagents" }
+    - { key: "memory", value: "plain files, version-controllable" }
   criteria:
-    - name: "Autonomy"
+    - name: "Memory & context"
+      score: 4.8
+      note:
+        "Plain-file project memory you can commit to the repo, so the whole team inherits the
+        lessons instead of relearning them per machine."
+    - name: "Extensibility"
       score: 4.7
       note:
-        "Takes a vague task a long way before it needs you. The further it goes, the more scoping
-        matters."
-    - name: "Output quality"
+        "Skills, hooks, MCP, and subagents make it a platform to shape, not a fixed CLI. The stock
+        floor is the least of it."
+    - name: "Terminal-native"
       score: 4.6
       note:
-        "Edits stay coherent across files and it cleans up after itself more than most tools do."
-    - name: "Steerability"
-      score: 4.5
-      note: "Responds well to a tight spec and an AGENTS.md; flails on ambiguous ones."
-    - name: "Cost control"
-      score: 4.0
-      note: "Usage-based pricing rewards good scoping and quietly punishes letting it wander."
-    - name: "Ecosystem"
+        "Lives in the terminal where the tools already are, scriptable, with no IDE to be chained
+        to."
+    - name: "Steering & config"
       score: 4.2
-      note: "MCP, hooks, and skills make it composable; the surface area is still growing fast."
+      note:
+        "Real control through CLAUDE.md, hooks, and settings; the catch is that the upkeep never
+        stops and it drifts the moment you do."
+    - name: "Cost & plans"
+      score: 3.8
+      note:
+        "Serious parallel work needs the $200/mo tier; the cheaper plan throttles fast. Steep, and
+        still worth it."
+    - name: "Provider portability"
+      score: 3.5
+      note:
+        "Memory and config are Claude-shaped; sharing the same context with other agents needs an
+        AGENTS.md workaround."
   pros:
-    - "Genuinely ships multi-file work, not just snippets"
-    - "Composable via MCP, hooks, and skills"
-    - "Stays in the terminal where the tools already are"
-    - "Reads a repo carefully before it touches anything"
+    - "Plain-file memory you can version-control, so a whole team inherits the accumulated lessons"
+    - "Skills, hooks, MCP, and subagents make it a platform you shape, not a fixed CLI"
+    - "Terminal-native and scriptable, with no IDE lock-in"
+    - "Best in class today, with Anthropic's resources behind the lead"
   cons:
-    - "Costs scale with how loosely you scope it"
-    - "Long autonomous runs need review discipline"
-    - "Moves fast, workflows shift between versions"
-    - "Still rewards users who write good specs"
+    - "Drifts the moment you stop steering; memory and config upkeep is on you"
+    - "Serious parallel work needs the $200/mo plan; the cheaper tier throttles"
+    - "Memory and config are Claude-shaped; cross-agent repos need an AGENTS.md workaround"
+    - "The stock setup leaves token and quality gains on the table until you tune it"
   bottomLine:
-    "The strongest terminal coding agent I have used. Treat it like a fast junior who needs a clear
-    spec and a code review and it pays for itself; let it wander and it will cost you in tokens and
-    cleanup."
+    "The best terminal coding harness available, and the memory is the piece to steal today: keep it
+    in plain files, commit it, and a teammate inherits what you have learned. It will not steer
+    itself, so bring a plan and stay in the loop, and budget for the $200/mo tier if you run real
+    parallel work. With the judgment supplied, nothing else is close."
 ---
 
 ## The pitch
 
-Claude Code lives in your terminal and treats the whole repo as context. Give it a scoped task and
-it plans, edits across files, runs your tests, and iterates, closer to a junior engineer than an
-autocomplete.
+Claude Code is the terminal-native harness Anthropic ships to drive its models. This review is about
+that software, not the models underneath it (those earn their own verdict) and not the skills,
+agents, and workflows you bolt on top (each its own thing). What you are actually buying is the
+harness: the agent loop, the memory, the configuration surface, and the extension points. Judge it
+on how well it lets a careful human aim a capable model, because that is the job it has.
 
-## Where it shines
+## The memory is the part to steal
 
-Migrations, refactors, and "wire this up end-to-end" tasks where the win is coordination across many
-files. An `AGENTS.md` and a tight prompt turn it from impressive to dependable.
+The standout is the memory. Claude Code keeps its project memory in plain files, and that simplicity
+is the whole win, because plain files go into git. Point `autoMemoryDirectory` at a committed
+`.claude/memory` folder and keep the machine-specific `settings.local.json` out of version control.
+Every developer who clones the repo then inherits the same hard-won lessons instead of relearning
+them one machine at a time. I wrote up the exact setup
+[separately](https://medium.com/@ajmeese7/version-controlling-your-claude-memory-for-projects-e91c8c47cb06).
+It sits alongside `CLAUDE.md` and your existing docs rather than replacing them. The division of
+labor is right: the docs explain the system, the memory remembers what went wrong last time.
+
+One caveat is worth planning for. The memory and config are Claude-shaped, so a repo that other
+agents also touch should hand them the same context, for example by symlinking an
+[`AGENTS.md`](https://agents.md) so a Codex or Copilot session is not flying blind. Lock your
+accumulated intelligence to one vendor and you have only traded one dependency for another.
+
+## A platform, not a CLI
+
+Underneath the prompt, Claude Code is extensible in a way the stock experience does not advertise.
+Skills, hooks, MCP servers, and subagents turn it from a chat in a terminal into something you shape
+around your own workflow. The individual pieces you build on it are their own reviews; what matters
+here is that the platform is open enough to build them at all. I avoid the stock setup when I can,
+but running it bare is exactly what surfaced the gains worth chasing: the token waste and the
+missing guardrails that a few hooks and a tight `CLAUDE.md` clean up. The floor is fine. The ceiling
+is the reason to stay.
 
 ## Where it bites
 
-Hand it something vague and it will confidently go too far. The skill here is scoping and review,
-not prompting tricks, budget for both.
+It does not run itself, and anyone selling you a hands-off loop is selling you a maintenance bill.
+Stop steering and stop tending the memory and config, and it drifts. It ignores instructions, takes
+the lazy path, and produces output that looks productive while quietly eroding the maintainability
+and performance of whatever you are building. The fix is not a better prompt, it is a human who
+stays in the loop and a plan written before the agent starts. That plan discipline is not specific
+to Claude Code, but the failure mode it prevents shows up here as fast as anywhere: undefined scope,
+confident output, long-term mess. None of this knocks it far, because the competition has the same
+problem and less to work with. It only means the leverage is real when you supply the judgment.
+
+## Against the field
+
+I have driven the alternatives. [Cursor](https://cursor.com) chains you to the IDE, and I would
+rather steer an agent from anywhere than sit at an editor. [Codex](https://github.com/openai/codex)
+I still use, though through my own
+[Hermes](https://ajmeese7.medium.com/how-i-set-up-multi-user-ai-agents-with-hermes-and-you-can-too-648b52fe20e9)
+agent over Telegram rather than the command line, since steering it from a chat thread beats sitting
+at a prompt. For serious work, Claude Code is what I reach for, from fine-tuning a resume against a
+job posting out of a knowledge base to building enterprise-scale platforms that are not public yet.
+It blows the field away today, and with Anthropic's resources behind it that lead is not likely to
+shrink.
+
+## What it costs
+
+It costs real money. The $200/month plan is what carries serious parallel work; the $100 tier is
+fine for light use, but the limits start getting in the way the moment you run anything complex in
+parallel. It is a steep number to pay, and the quality gap over everything else still makes it the
+easy call.
