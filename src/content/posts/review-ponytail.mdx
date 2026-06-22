@@ -150,10 +150,13 @@ valid. A human caught each one. The skill's "leave a runnable check behind" rule
 it writes, not the claims it makes, so it does nothing to stop an agent declaring something done
 without looking. Budget for the same code review you would have done anyway.
 
-Those `ponytail:` comments are the other soft spot. Flagging a deliberate shortcut in a code comment
-so the next reader sees a choice rather than a mistake is a good idea. It is also opt-in, and
-[this PR](https://github.com/meese-os/meeseOS/pull/202) shipped without a single one. A convention
-the agent honors only when it remembers is not one you can count on finding later.
+Those `ponytail:` comments are the other soft spot, and the real problem is not that the agent never
+leaves them, it is that you cannot count on which way a given run goes. Flagging a deliberate
+shortcut in a code comment so the next reader sees a choice rather than a mistake is a good idea. It
+is also opt-in: [this PR](https://github.com/meese-os/meeseOS/pull/202) shipped without a single one,
+while a separate run hand-rolling a state machine left exactly the comment the skill asks for, naming
+both the trade-off and when to revisit it. A convention the agent honors only when it remembers is
+not one you can count on finding later.
 
 ## The rest of the kit
 
