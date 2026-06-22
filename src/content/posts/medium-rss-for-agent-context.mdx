@@ -1,0 +1,62 @@
+---
+title: "Feed your AI agent your Medium writing"
+description:
+  "Your published articles are great agent context, but the article URLs bounce through Medium's
+  login redirect. The public RSS feed hands over the full text with no auth, so any agent that can
+  fetch a URL can read your public catalog."
+date: 2026-06-17
+type: guide
+topics:
+  - ai-devtools
+  - agents
+  - publishing
+tags:
+  - rss
+  - medium
+  - context
+draft: true
+related:
+  - slug: review-claude-code
+    reason:
+      "Agent-context companion to the version-controlled memory covered in the Claude Code review."
+---
+
+I wanted my AI agent to read my own published articles for context: my voice, the technical
+decisions I had already documented, the prior art I keep re-explaining. Pointing it at a
+[Medium](https://medium.com) URL does not work. The article link bounces through Medium's identity
+redirect (`medium.com/m/global-identity-2`), and a custom domain layered on top bounces the same
+way, so the agent gets a redirect loop instead of the post.
+
+The fix is the RSS feed. Medium publishes a public one for every account, and it carries the whole
+article, not a teaser. For a personal handle it is `medium.com/feed/@username`; for a publication it
+is `medium.com/feed/publication-name`. Each item's `content:encoded` field holds the full post as
+HTML. Any agent that can fetch a URL can read your recent catalog from that single endpoint, with no
+login.
+
+```sh
+# the full text of your latest posts, no auth
+curl -s https://medium.com/feed/@your-handle
+```
+
+There are three ways to wire it in, lightest first:
+
+- Hand the feed URL straight to your agent's fetch tool and let it read what it converts.
+- Drop a few lines that pull the feed and select an article by slug, so a skill loads the right one
+  on demand.
+- Register the feed as a standing resource, so your writing is ambient context instead of something
+  you fetch.
+
+Three limits are worth knowing:
+
+- Member-only posts are the big gap. A paywalled story comes through as a short preview ending in
+  "Continue reading on Medium," not the full text, so the feed only ever hands an agent your free
+  work. If you want it reading your paywalled pieces, keep their sources somewhere it can already
+  reach.
+- The feed carries only your ten or so most recent posts, not the whole archive. For the back
+  catalog, keep the article sources in a repo the agent already reads, or pull them from Medium's
+  account export.
+- `content:encoded` is HTML, so strip the tags before handing it to anything that wants clean text.
+
+The payoff is that the agent argues from what you have actually published instead of guessing at it.
+It is read-only public content, so there is nothing to secure and nothing to leak. Point an agent at
+the feed and your catalog becomes context for free.
