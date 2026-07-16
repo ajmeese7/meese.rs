@@ -6,7 +6,7 @@
   "description": "Static-first technical writing site, field notes from a builder.",
   "packageManager": "pnpm@11.2.2",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --host",
     "build": "pnpm format:check && pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",
     "preview": "astro preview",
     "check": "astro check",
