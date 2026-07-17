@@ -828,7 +828,7 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 .post__header { max-width: 74ch; margin-bottom: 8px; }
 .post__meta { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
 .post__meta-date { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
-.post__title { font-size: var(--text-3xl); line-height: 1.1; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.post__title { font-size: var(--text-3xl); line-height: 1.1; letter-spacing: -0.02em; margin: 0; text-wrap: pretty; }
 .post__lead { font-family: var(--font-body); font-size: var(--text-md); color: var(--ink-2); line-height: 1.6; margin-top: 16px; max-width: 70ch; }
 .post__topics { display: flex; gap: 6px; margin-top: 18px; flex-wrap: wrap; }
 .post__body-grid {

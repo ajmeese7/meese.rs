@@ -149,7 +149,7 @@ a:hover { color: var(--link-hover); }
 
 .prose img { max-width: 100%; border-radius: var(--radius-md); border: var(--border-hair) solid var(--border-default); }
 
-.prose table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.prose table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); background: var(--surface-card); }
 .prose th, .prose td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--border-hair) solid var(--border-default); }
 .prose th { font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--text-muted); }
 

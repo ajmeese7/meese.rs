@@ -1,0 +1,316 @@
+---
+title: "Two days to make the model write my resume, seven weeks to make it stop"
+description: "A corpus the agent may only select from, and a build whose only job is to refuse."
+date: 2026-07-17
+type: essay
+topics:
+  - ai-devtools
+  - agents
+tags:
+  - claude-code
+  - typst
+  - yaml
+  - ats
+  - knowledge-base
+  - career-ops
+  - ai-job-search
+draft: true
+featured: false
+---
+
+{/* DEV NOTE (stripped from build, MDX comments never render): */}
+{/* Working sources, research transcripts, and the full edit history for this post live in */}
+{/* .local/resume-pipeline-article/SOURCES.md (gitignored). Read it before any revision. It records */}
+{/* what has been mined, which claims were fact-checked, unused material, and the two earlier drafts. */}
+
+**Most of the code exists to reject the model's output.**
+
+I was hand-tailoring a resume for every posting worth applying to. Each one meant opening the
+closest previous version, shuffling bullets, surfacing whatever the posting asked for, and re-typing
+the same history into a slightly different shape. The facts never changed. They lived in several
+Word documents at several vintages, and nothing kept them in agreement, so a fix I made in one was
+still wrong everywhere I had not thought to look.
+
+An LLM will write you a fluent, confident resume for any posting you paste at it, and some of it
+will not be true. The version that lets the model write took two days to build, and it was
+worthless. The seven weeks since have gone into a corpus the agent is only allowed to select from,
+and a build that fails on its output.
+
+## Why tailor at all
+
+Almost every company of any size runs your resume through an applicant tracking system (ATS) before
+a human sees it. An ATS parses the PDF into fields, indexes the text, and lets a recruiter search
+and rank candidates by the terms in the posting. Two things follow. The first is that a resume which
+renders beautifully and parses badly is invisible, and nothing tells you it happened. The second is
+that the exact strings matter: a posting asking for "detection engineering" does not match "threat
+hunting" just because you know they overlap.
+
+That is the case against one perfect resume. The terms worth surfacing change with every posting,
+and the bullets worth leading with depend on the archetype of the role, so a single document
+optimized for all of them is optimized for none.
+
+The case for tailoring is not a case for volume. I am not trying to send the most applications; I am
+trying to land one of a small number of jobs I want. Forty-three applications in seven weeks is not
+a spray. Each one is a posting I would take, which means each one is worth an hour of tailoring, and
+doing that hour honestly forty-three times by hand is where the machinery comes in.
+
+## The shape of it
+
+```text
+kb/                     the corpus, hand-written, the only place facts live
+  profile.yaml          name, contact, education, certifications
+  experience.yaml       every bullet I can defend, tagged, per role
+  summaries.yaml        professional-summary variants by framing
+  projects.yaml         projects and published research
+  skills.yaml           technology and skill pools
+  targeting.yaml        role archetypes: which bullets lead for which posting
+  bullets.md            deep reserve, carrying honesty caveats
+base/                   the generic master resume, generated from kb/
+profiles/<name>/        untailored resumes per role family, authored as kb/ refs
+applications/<company>/<position>/
+  job.md                the posting itself
+  resume.yaml           the tailored selection
+  research.md           why this company, what is checkable
+templates/*.typ         Typst render templates (a typesetting language, LaTeX
+                        family, saner syntax)
+tools/*.py              the build: render, convert, and refuse
+```
+
+## The knowledge base is the product
+
+`experience.yaml` is a menu, not a resume. Every bullet I have ever credibly used lives there,
+tagged so a posting can match it:
+
+```yaml
+roles:
+  - company: <previous employer>
+    title: Technical Product Owner
+    dates: 2024 – 2026
+    bullets:
+      - id: data-normalization
+        default: true
+        tags: [data, pipelines, ingestion, normalization, rust, python, scale]
+        text: >-
+          Designed and built the platform's data-ingestion pipeline, turning 22 incompatible
+          security and network telemetry formats into a normalized dataset analysts queried as a
+          single source.
+```
+
+`targeting.yaml` is the part that does the thinking, and it contains no facts at all. It governs
+emphasis and ordering over the pool that already exists:
+
+```yaml
+archetypes:
+  - id: security-engineer
+    label: Senior Security Engineer / Detection Engineer
+    match:
+      titles: [Security Engineer, Detection Engineer, Threat Detection, SOC Engineer]
+      keywords: [detection, signatures, IOC, threat hunting, SIEM, telemetry, adversary]
+    summary: security-engineer
+    lead_bullets: [product-roadmap, detection-hunter, data-normalization]
+    projects: [apateweb, us-cyber-team]
+    keywords: [detection engineering, threat hunting, IOC, telemetry]
+    notes: >-
+      Lead with detection and threat-hunting depth. The product title must not read as pure PM here,
+      so the player-coach bullet leads.
+```
+
+The agent reads the posting, matches it to an archetype, picks four bullets for the most relevant
+role and two or three for the older ones, reorders the skills line so the posting's terms come
+first, and renders. It is not supposed to write the bullet. Every time it did anyway is a file in
+the memory directory.
+
+That constraint is worth the schema, and the incident that bought it makes the better argument.
+Early on, bullet text lived in `kb/` and in a hand-maintained master resume at the same time. I
+deleted a bullet I did not want, and it came back: the agent propagated from a stale copy and
+produced "Designed the platform's next-generation analytics architecture" for a line I had already
+removed. Duplication meant deletion did not take. Now the untailored profiles author their content
+as id references instead of pasted text:
+
+```yaml
+bullets:
+  - ref: data-normalization
+  - ref: k8s-migration
+    text: "override text" # ref kept for provenance; the text wins
+  - "a one-off literal bullet" # passes through unchanged
+```
+
+`resolve_refs.py` flattens those at build time, so fixing the wording once in `experience.yaml`
+updates every profile that references it. Sent applications are exempt and stay literal, because a
+resume someone already received is a historical record, and quietly rewriting it later would
+misrepresent what they read.
+
+The reason the corpus is hand-written is not accuracy, though. It is that I have to sit in the room
+afterward. An application answer once came back citing four of the company's products by name. All
+four exist, every word was true, and I could not have defended a sentence of it, because nothing in
+my research notes explained what any of them were. The agent had written the answer out of its own
+knowledge rather than out of the file I could read. A resume is a promise to talk about it for an
+hour, and I could not make that promise about a sentence I had not written.
+
+## The resume is the easy half
+
+Most postings attach their own questions, and they are where the real writing is. They also differ
+per position at the same company, which I learned the annoying way after assuming one company's
+seven roles shared a form. They do not.
+
+The questions get pulled before anything gets drafted. Ashby-hosted boards are JavaScript rendered,
+and fetching the page gets you the job title and nothing else. The posting and its application form
+both hang off the same object on a public GraphQL endpoint, no auth required:
+
+```graphql
+query P($o: String!, $j: String!) {
+  jobPosting(organizationHostedJobsPageName: $o, jobPostingId: $j) {
+    title
+    descriptionHtml
+    applicationForm {
+      sections {
+        title
+        fieldEntries {
+          field
+          isRequired
+        }
+      }
+    }
+  }
+}
+```
+
+`field` is a JSON blob carrying the question text, its type, and any dropdown values. Strip the
+identity fields nobody thinks about (name, email, over-18, "where did you hear about us") and what
+remains is the actual work: three or four free-text prompts that have to sound like me and be
+defensible in an interview. Those go in a per-company `answers.md` before a word of the resume gets
+touched, because finding out about an essay prompt after you have already tailored the resume is how
+you end up rushing the only part a human is guaranteed to read.
+
+## The build's job is to fail
+
+`just build <slug>` renders the YAML to PDF through Typst, builds a DOCX that mirrors it, and then
+tries to break both.
+
+`ats_check.py` is the one part I got right before being taught. It shipped on day three with the
+original framework, because ATS parsing was a known requirement rather than a lesson. It shells out
+to `pdftotext`, walks the DOCX's XML directly, and diffs what came back out against the source YAML.
+Three checks: the standard headings survived the text layer, every summary and bullet and project
+line is extractable, and how many of the skills the posting names are present, that last one
+advisory. The first two exit non-zero.
+
+Walking the XML was not a stylistic choice. python-docx's `Paragraph.text` skips runs nested inside
+`w:hyperlink`, so the convenient API silently drops the email address and every linked project
+title, which are the lines you can least afford to lose in a parser.
+
+The rest of the build arrived the way real requirements do. Two bullets on one resume opened with
+"Built the platform's", and the fix I wanted was not a reword. I asked for a safeguard instead.
+`repetition_check.py` landed that day: it fails the build when two bullets in the same section open
+with the same word, scoped per section, so an experience bullet and a project bullet that both begin
+"Built" are left alone.
+
+`page_fill.py` came out of a worse afternoon. The agent rendered a thumbnail at 80 DPI, squinted at
+it, and told me the page was 30% empty. The page was 97% full. The miss was not the problem. It had
+reported a verification it never credibly performed, so I made it produce a number instead:
+`page_fill.py` parses `pdftotext -bbox` word coordinates and reports the vertical slack between the
+last line of text and the bottom margin, in inches, with a FULL / SHORT / OVERFLOW verdict. "Fits on
+one page" and "is a full page" are different claims, and only one of them can be measured by eye.
+
+The voice gate is the counterexample, and it is the piece I still do not trust. Seventeen numbered
+checks run on every line before anything renders, enforced by instruction, because I have not found
+a way to make a build fail on "this does not sound like me." It drops out. The agent once told me,
+after the fact, that it had skipped the gate, and my answer to that is the entire argument for the
+three scripts above: clearly the gate isn't good enough if you fucking did it anyway.
+
+## The failures were not the ones I expected
+
+I went in braced for invented degrees and invented employers. Neither ever showed up. Every fact in
+the bad drafts was real, and the wiring between the facts was not.
+
+A cover letter had me owning the security accreditation for a cloud environment, the questionnaires
+and audit responses for every piece of software running in it, in my most recent role. I did that
+work. I did it years earlier, at a different employer, in a different job. Two positions welded into
+one sentence, assembled entirely out of true parts.
+
+Another gave me five years on a team I spent about eighteen months with. Five years was my total
+tenure at that employer, not my time on that team. The number was correct and sitting in the source,
+fastened to the wrong noun.
+
+The same shape produced the worst one. My published research on a malicious redirection campaign
+built on a security vendor's report, and that report put the broader operation at 130,000+ domains.
+My own contribution surfaced roughly 9,500 redirector domains and some new control infrastructure.
+The draft bullet read "research mapping adversary infrastructure across 130,000+ domains." Every
+word of it is checkable. The number is right there in the source. The claim is still a fabrication,
+because the figure belongs to the operation and not to me.
+
+A fact is a value bound to a subject, and the binding is what got lost every time.
+
+A second class had nothing to do with attribution. A warehouse migration I designed and got approved
+never got built, because the company wound down first. The agent wrote it up as shipped more than
+once, including on an application to the company that makes the warehouse. The corpus now carries a
+defensible ceiling on that entry: designed and got stakeholder approval for, never built, never ran
+in production.
+
+Other inventions were not factual claims at all. An answer opened with "The work I am proudest of is
+the multi-tenant isolation I built," a sentence about my interior life the agent had no access to. I
+_did_ build it, but it is certainly not the work I am proudest of. Another draft had me writing Rust
+on my own time, which I do not do. I write Rust at work, when I have to; it is not a language I find
+beauty in. Nobody asked what I do on weekends, and the agent invented an enthusiasm to fill the
+space.
+
+The quietest failures were true and worthless. "Reviewed PRs and design docs as a player-coach" is a
+chore that sits on the job description already. A proudest-work answer came back as a list of
+hardening settings, default-deny network policies, non-root pods, encrypted secrets at rest, all of
+it accurate and none of it an accomplishment. That is just facts.
+
+What connects them is that a rule already existed for each one. The corpus said verify the metric
+against its source. The bullet standard said hard problems only. The voice profile said name the
+thing. Each rule sat there as reference prose, and reference prose gets read as background instead
+of executed. The profile now opens with a mandatory pre-ship gate, and the project memory grew a
+file per correction. There are fifty of them. Reading the gate is not executing the gate.
+
+## Two public tools that had to bet differently
+
+I went looking for prior art seven weeks in, well after the pipeline was doing real work, and found
+two projects that had been solving the same problem in public the whole time. Both predate my repo
+by a few weeks. Nothing here is a response to them, and the convergence is the interesting part.
+
+[career-ops](https://github.com/santifer/career-ops) is the larger by a distance: over 60,000 stars
+and 11,000 forks since April. It runs as Markdown prompt files under whatever agent CLI you use, and
+polls public ATS APIs with zero tokens to build a job pipeline. Before it renders, a real gate runs:
+`verify-cv-facts.mjs` regex-extracts metric-like claims from the generated CV and exits 1 if a
+number is absent from your `cv.md`. It also has a zero-LLM classifier that buckets the posting's
+requirements into existing, supported, and gap, and requires gaps be surfaced to you rather than
+written around. Its manifesto is the same instinct I built the corpus on: "Reformulate, never
+fabricate. An AI that lies for you is not on your side."
+
+The gate is lexical, which caps what it can reach. It extracts percentages, currency, `Nx`
+multipliers, and numbers bound to a closed list of nouns: users, customers, engineers, requests,
+pipelines, and about twenty more. "9,500 domains" is not on that list, so it is never extracted and
+never checked. My 130,000 bullet would have sailed through regardless, because the number was
+sitting in the source document. The accreditation sentence would have sailed through too, and it
+contains no number at all. A regex cannot see who a fact belongs to.
+
+[ai-job-search](https://github.com/MadsLorentzen/ai-job-search) is the tighter of the two, over
+23,000 stars and 7,000 forks, and readable end to end in a sitting. The LLM writes the LaTeX
+directly, a second reviewer agent critiques it and returns structured edits, and then it compiles,
+reads the rendered PDF, and runs `pdftotext -layout` to verify what a parser sees. That last step
+deserves credit. It correctly works out that fontawesome icon glyphs extract as `MOBILE-ALT` noise,
+and that a contact detail carried only by an icon is invisible to an ATS. My `ats_check.py` holds
+the same bar on both PDF and DOCX; I am not claiming novelty there. Its grounding is prompt
+discipline end to end, and the README states the system never fabricates skills or experience. But
+that promise rests on one model instructed not to fabricate and a second model reviewing it, and two
+models that fail the same way will not catch each other.
+
+Neither author had my option, and this is the part worth being fair about. A tool that ships to
+strangers cannot ship a corpus, because a stranger arrives with a PDF, a job link, and nothing
+written down. The tool has to generate, since there is nothing on hand to select from. That is the
+distribution model choosing for them, not a design mistake. Mine works because it serves exactly one
+person whose whole history was already committed to a repository, and it generalizes to nobody. The
+trade runs both directions: they get a product, and I get an architecture with less room in it to be
+wrong.
+
+## Where it landed
+
+Forty-three applications have gone through it. Nothing on the sent ones says anything I did not
+write, though plenty of drafts tried.
+
+Letting the model write took two days. The rest is 1,256 lines of Python whose only job is to
+refuse, a corpus I maintain by hand, fifty files recording what the agent got wrong before I caught
+it, and a build that fails over a repeated word. The agent never fabricated less than the
+architecture allowed. Every time I shrank the architecture, it fabricated less.
