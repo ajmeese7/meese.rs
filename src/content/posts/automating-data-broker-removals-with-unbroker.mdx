@@ -1,0 +1,293 @@
+---
+title: "Trying to automate data-broker removals with Hermes"
+description:
+  "Unbroker scanned 51 people-search sites and tracked every case. One real run also showed how
+  quickly Cloudflare, account gates, and browser identity push the removal work back to a human."
+date: 2026-07-16
+type: lab
+topics:
+  - privacy
+  - agents
+tags:
+  - hermes-agent
+  - unbroker
+  - data-brokers
+  - browser-automation
+  - osint
+draft: true
+featured: false
+---
+
+**The case management works. The broker sites still know exactly how to make automation miserable.**
+
+Data-broker removal is exactly the kind of work I want an agent to eat. The process is repetitive,
+the forms all ask for variations of the same information, and every request needs to be tracked long
+after the interesting part is over. I installed the
+[Unbroker](https://github.com/NousResearch/hermes-agent/tree/main/optional-skills/security/unbroker)
+skill for [Hermes](https://github.com/NousResearch/hermes-agent) to see how much of that work could
+run without me.
+
+The first real pass completed intake and encrypted the private dossier. It refreshed the broker
+registry and scanned 51 people-search sites. The scan found one corroborated Spokeo listing and two
+explicit no-matches. The remaining 48 sites could not be resolved automatically. When I tried to
+remove the Spokeo result, its opt-out page blocked the browser too. The first-pass ledger ended at
+49 blocked cases and zero confirmed removals.
+
+Reasoning was not the bottleneck. Browser identity and session continuity were.
+
+## What Unbroker is trying to do
+
+Unbroker is a Hermes skill backed by a deterministic Python CLI called `pdd.py`. The model handles
+searches and browser interaction. The CLI owns consent and the encrypted identity dossier, then
+tracks broker metadata, disclosure limits, request drafts, verification windows, and the removal
+ledger.
+
+That separation is the strongest part of the design. An agent can forget what it did between runs;
+the ledger cannot. Unbroker also refuses to act without recorded consent and plans the exact fields
+a broker is allowed to receive. It never needs an SSN, and it will not quietly volunteer a
+government ID because a form asked for one halfway through.
+
+The workflow has two phases:
+
+1. Scan every broker first and build an exposure map.
+2. Remove parent brokers before their resold child sites, then verify each removal with a later
+   re-scan.
+
+The ordering matters. One PeopleConnect suppression can cover Intelius, TruthFinder, Instant
+Checkmate, US Search, and a pile of related front ends. Spokeo owns FreePeopleDirectory. Submitting
+child requests before the parent wastes time and discloses the same information again.
+
+The skill also imported 525 registered-broker records for legal-request and email coverage. Those
+records were not the same thing as the 51 people-search sites I scanned. The direct scan checks
+public exposure; the larger registry is a directory of organizations that may need targeted privacy
+requests.
+
+## The installation was not hands-off either
+
+The official skill existed upstream, but the normal install path failed in my environment:
+
+```text
+Fetching: official/security/unbroker
+Error: Could not fetch 'official/security/unbroker' from any source.
+```
+
+Installing by the explicit GitHub path hung until the command timed out. I eventually extracted the
+skill from the trusted Hermes upstream repository and copied it into the local skill directory. I
+ran the deep audit and compiled every Python script before using it. That worked, but it is not the
+install experience implied by an official skill catalog. This review covers Unbroker at commit
+[`5218c8a`](https://github.com/NousResearch/hermes-agent/tree/5218c8a1d35ac6716056ef515d112cefe2b779d6/optional-skills/security/unbroker)
+(2026-07-03), the version that was live when I ran it.
+
+Unbroker then detected `age` and generated a local identity key. The dossier and ledger were
+encrypted at rest, while the audit log recorded field names and state changes without copying the
+personal data into plaintext logs. This setup does not protect against someone who can read the
+entire Hermes home directory and the key beside it. It does keep the dossier out of casual backups,
+searches, and accidental commits.
+
+## What happened during the scan
+
+I split the 51 sites into 11 read-only batches. Each worker ran the planned name, location, phone,
+and email vectors for its assigned brokers. A result only counted when a real card matched more than
+a name. City alone was not enough when a date of birth or street address was unavailable.
+
+| Scan result             | Count | What it meant                                                               |
+| ----------------------- | ----: | --------------------------------------------------------------------------- |
+| Corroborated exposure   |     1 | A Spokeo profile matched the subject's full name and known locations        |
+| Explicit no-match       |     2 | The site's own result pages returned unrelated records or a direct no-match |
+| Blocked or inconclusive |    48 | The worker could not reach or safely disambiguate a real result card        |
+
+The word "blocked" hides several different failures:
+
+- Cloudflare and DataDome returned `403`, `Just a moment`, `Security Challenge`, or `/challenge`
+  pages before any result card loaded.
+- Some sites exposed only a JavaScript shell. The real search lived behind a form submission, an
+  account, or a paid trial.
+- Several privacy matchers required an email-verification loop and date of birth. The read-only scan
+  could not submit those forms just to learn whether a record existed.
+- Reverse-image services required a face upload. Automating that would cross a much more sensitive
+  disclosure boundary.
+- A same-name profile could not be confirmed because the visible card lacked enough identity
+  anchors.
+- A constructed URL returning `404` only proved that the URL pattern was wrong or stale. It did not
+  prove that the subject was absent.
+
+The workers were supposed to use Hermes's native web search and extraction tools. Those tools were
+not exposed in the delegated runtime, so they fell back to DuckDuckGo search plus bounded HTTP
+requests. That fallback kept the scan moving, but it made anti-bot responses even more common and
+reduced what could be confirmed from JavaScript-heavy pages.
+
+## Spokeo made the limitation concrete
+
+One worker found a specific Spokeo profile with the subject's full name and known locations. The
+parent process could not fetch the page directly because Spokeo returned `403`, but the listing URL
+was specific enough to enter the removal queue.
+
+Unbroker's Spokeo playbook is sensible. It submits each unique listing URL separately, confirms the
+email link, waits 24 to 48 hours, and re-scans before claiming removal. It follows the suppression
+with a request to `privacy@spokeo.com` because disappearing from the free search does not prove that
+the retained data was deleted.
+
+The available Hermes browser received `403` on both the listing and the opt-out page. I launched a
+separate Brave browser over the Chrome DevTools Protocol (CDP) and tried again. The headless session
+connected correctly and Spokeo rejected it anyway.
+
+The CDP path exposed another deployment problem. Unbroker initially selected Snap Chromium, which
+could not create its dedicated profile under the hidden Hermes directory because of Snap
+confinement. Non-Snap Brave avoided that failure, but the Hermes gateway had no graphical display
+for a normal headed browser. Headless mode ran, yet it carried the exact fingerprint the broker
+wanted to reject.
+
+Unbroker rendered the removal email correctly. The configured email mode was draft-only, so it could
+not send the message or watch the inbox for a confirmation link. No request left the machine, and
+the ledger correctly stayed at zero confirmed removals.
+
+## `blocked` is doing too much work
+
+The current state model turns very different situations into one terminal-looking value. A scan can
+be blocked while a published privacy email remains usable. A listing can be confirmed while its
+opt-out form is inaccessible. A broker can be reachable but require an account, payment, photo, or
+human judgment. Those cases need different next actions.
+
+Spokeo showed the problem directly. The case had confirmed exposure evidence, then the removal page
+returned `403`. Recording the removal channel as blocked replaced the case's actionable `found`
+state in the queue, even though the listing URL and official privacy email were still present. The
+engine stopped emitting actions and moved the whole case into the human digest.
+
+I would split that state into three independent dimensions:
+
+- **Exposure:** unknown, found, not found, or ambiguous.
+- **Access:** readable, anti-bot blocked, account-gated, or human-verification required.
+- **Removal:** not started, drafted, submitted, awaiting confirmation, processing, or verified.
+
+A confirmed listing with a blocked form would then remain a confirmed listing. The planner could
+move straight to the broker's published privacy email instead of erasing the distinction that makes
+the email actionable.
+
+## Going back with Browserbase
+
+I configured Browserbase after the first run and repeated the blocked-broker pass. The current
+`browse` CLI authenticated with only `BROWSERBASE_API_KEY`; it resolved the Browserbase project
+without a project-ID variable. Hermes's bundled Browserbase readiness check still expected both
+values, so the rerun bypassed that stale integration and drove the supported remote CLI directly.
+
+The first controlled retry changed the Spokeo result from "the page returns `403`" to "the page
+loads." A plain Browserbase session opened both the corroborated profile and the official opt-out
+form. That was a real improvement, but it did not finish the removal. Spokeo presented reCAPTCHA,
+and after one normal checkbox interaction the challenge rejected the session as an automated query.
+I did not retry-loop or attempt to bypass it.
+
+The full landing-page retry covered all 49 previously blocked cases:
+
+| Browserbase landing result | Count | What the rerun established                                  |
+| -------------------------- | ----: | ----------------------------------------------------------- |
+| Anti-bot challenge         |    14 | The cloud browser still stopped before a usable page        |
+| Search surface reachable   |    16 | The site loaded, but still needed broker-specific mechanics |
+| Account or trial gate      |    12 | The useful result path required login, signup, or payment   |
+| Other reachable page       |     7 | The site loaded without exposing a corroborated result card |
+
+Those are access results, not removal results. Browserbase Search also returned hundreds of broad
+web results across name, phone, email, and address queries, but most were directory pages, unrelated
+names, or query echoes. Treating those as exposure evidence would merely replace one failure mode
+with false positives.
+
+Direct site-specific URL checks did produce one new finding. That's Them returned real result cards
+that matched the subject through independent name, location, phone, and email vectors. The opt-out
+page also loaded, but its Cloudflare Turnstile stayed at `Verify you are human` in the plain cloud
+session. No request was submitted. The direct check against Intelius loaded without exposing a
+corroborated card. Five FreePeopleDirectory name/location combinations returned explicit no-result
+pages, while one remained inconclusive. TruePeopleSearch.net's own search form generated a `404`,
+which is a broken search path rather than proof that the subject is absent.
+
+The Browserbase sessions reported zero proxy bytes. In this configuration, Browserbase is a useful
+remote Chrome host, not the residential or Verified browser lane the discovery step actually needs.
+It recovered page access and one additional exposure, but both confirmed removal paths still stopped
+at a human-verification challenge. The rerun ended with two confirmed exposures, zero submitted
+requests, and zero verified removals.
+
+## How much more can be automated
+
+There is a practical path to reduce the 49-site manual list, but no single browser service fixes the
+whole run.
+
+### Use a residential cloud browser for discovery
+
+Browserbase is the right tool for the read-only scan: load result pages, clear the managed
+challenges that accept a normal session, and hand the agent a real card instead of a Cloudflare
+interstitial. That is its intended job when `BROWSERBASE_API_KEY` is configured.
+
+The free tier I ran was not a residential browser, as the rerun showed. A paid residential or
+Verified lane is the version worth wiring in, and even that will not beat DataDome device checks,
+behavioral scoring, or hard interactive challenges.
+
+Unbroker also recognizes Scrapling as a stealth extraction option. It may recover static result
+pages without paying for a cloud browser session, but it does not solve the inbox and
+session-binding problems that appear during removal.
+
+### Drive a real desktop browser for removal
+
+The removal phase needs a different browser. Email links and portals such as PeopleConnect bind
+state to the browser that opened the verification link. A cloud session has no logged-in inbox and
+may lose the device-bound flow when the link crosses environments.
+
+A dedicated Chrome or Brave profile on the operator's desktop solves both problems. Sign into
+webmail once and expose that profile over CDP. Hermes can then use the same residential browser for
+the form, verification email, and final confirmation. The CDP launcher should prefer a non-Snap
+browser when its profile lives under `~/.hermes`. It should also detect that a gateway has no
+graphical display before claiming the browser launched.
+
+### Turn email from a draft into a real lane
+
+Programmatic SMTP and IMAP would have let `pdd.py` send the Spokeo request, poll for replies, score
+the verification link against phishing rules, and put the case back into the re-scan queue.
+Browser-mode email can do the same work without storing a mail password when Hermes is attached to a
+logged-in webmail session.
+
+The planner should use published rights-request addresses even when discovery is blocked. A blind
+request to a broker's own official privacy channel can disclose only the subject's name, state, and
+contact email. That is more useful than turning every Cloudflare wall into a manual search task.
+Third-party or relative records still need confirmation before any request goes out.
+
+The bigger problem was that `setup --auto` picked the lowest-capability email mode silently and
+still called the run ready. Nothing warned before intake that `draft_only` meant Unbroker could
+prepare requests but never send them or complete an inbox-verification loop. A readiness check for a
+hands-off run should separate scan readiness from removal readiness and say so up front, before it
+takes in a dossier.
+
+### Keep the hard challenge human, then resume automatically
+
+The last manual step does not need to become a 49-row spreadsheet. A small local companion could
+open each broker URL in the everyday browser, show the identity anchors needed to reject namesakes,
+and wait for a verdict or screenshot. The human clears the challenge and selects the correct record;
+Hermes records the evidence, fills the least-disclosure fields, and resumes the queue.
+
+The browser session should stay on the machine. Exporting cookies into an agent process would create
+a new security problem to solve the old one.
+
+### Make broker adapters accumulate real mechanics
+
+Many records came from a live cache rather than a curated broker file. Their URLs and requirements
+were documentation-level guesses, not field-tested adapters. One entry pointed "Clustal" at
+`clustal.org`, which is a protein-sequence-alignment tool sitting behind Cloudflare, not a
+people-search site at all. Every successful manual run should capture the canonical search URL, the
+exact required fields, whether email verification is session-bound, and which official email rescues
+a blocked form. That turns the next person's run into a deterministic procedure instead of another
+round of reverse engineering.
+
+## Where Unbroker stands
+
+Unbroker already handles the boring bookkeeping better than a folder of browser bookmarks. It keeps
+consent and limits what each broker receives. The engine also encrypts the dossier, groups parent
+brokers, and schedules the re-scan that is meant to prove a listing actually disappeared. That last
+part is procedure, not a guarantee. `pdd.py record` will stamp a case `confirmed_removed` on the
+agent's say-so without checking that a re-scan happened, so the rule holds only if the agent follows
+it.
+
+The current environment could not deliver the hands-off removal the skill describes. Two listings
+made it through discovery, Spokeo on the first pass and That's Them with Browserbase, and each
+broker blocked every automated path to its opt-out page. Neither request left the automated run, and
+clearing either exposure needs a residential browser or a working email lane the pass never had.
+
+Browserbase for discovery, a real signed-in browser for execution, and SMTP or webmail access for
+verification would move much of the work back into the queue. Hard identity checks and behavioral
+challenges should stay human. Until those paths are wired together, "hands-off" is an aspiration,
+not the state of the tool.
