@@ -6,6 +6,7 @@ import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
 import AuthorByline from "../components/layout/AuthorByline.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
+import ReadTracker from "../components/posts/ReadTracker.astro";
 import { isoDate } from "../utils/dates";
 import { readingTime, postUrl, type Post } from "../utils/posts";
 import { topicUrl } from "../utils/topics";
@@ -171,6 +172,7 @@ if (supersededTarget) {
       </div>
     </div>
   </article>
+  <ReadTracker />
 </BaseLayout>
 
 <script>

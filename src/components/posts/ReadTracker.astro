@@ -1,0 +1,37 @@
+---
+// Fires a single `article_read` event once the reader has both spent
+// MIN_READ_MS on the page and scrolled through most of it, a much honester
+// "read" signal than a pageview. No-ops when the beacon is absent (dev
+// builds, adblock). PostHog attaches $pathname itself, so no props needed
+// beyond the actual time spent.
+---
+
+<script>
+  const MIN_READ_MS = 30_000;
+  const DEPTH_THRESHOLD = 0.6;
+  const start = Date.now();
+  let deepEnough = false;
+  let fired = false;
+
+  type Beacon = { capture: (name: string, props?: Record<string, unknown>) => void };
+
+  const scrolledDepth = () =>
+    (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
+
+  const maybeFire = () => {
+    if (fired) return;
+    if (!deepEnough) deepEnough = scrolledDepth() >= DEPTH_THRESHOLD;
+    const posthog = (window as { posthog?: Beacon }).posthog;
+    if (!deepEnough || Date.now() - start < MIN_READ_MS || !posthog) return;
+    fired = true;
+    removeEventListener("scroll", maybeFire);
+    posthog.capture("article_read", {
+      read_seconds: Math.round((Date.now() - start) / 1000),
+    });
+  };
+
+  addEventListener("scroll", maybeFire, { passive: true });
+  // Short posts can hit the depth threshold without any scrolling; check once
+  // the dwell requirement is met, too.
+  setTimeout(maybeFire, MIN_READ_MS + 250);
+</script>
