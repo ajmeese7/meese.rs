@@ -2,10 +2,15 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "meese-rs",
   "compatibility_date": "2026-06-09",
-  // Static-only site: no Worker script, just serve the prebuilt Astro output.
+  // The Worker only exists to proxy /relay/* to PostHog (see worker/index.ts).
+  // Requests matching a static asset are still served directly from the edge
+  // and never invoke the Worker; everything else falls through to it, and the
+  // Worker hands non-/relay paths back to ASSETS, preserving 404 behavior.
+  "main": "worker/index.ts",
   // `pnpm build` produces `dist/` (astro build + pagefind), uploaded as assets.
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS"
     // No custom 404 page exists yet (no src/pages/404.astro), so leave
     // not_found_handling at the default. Add "not_found_handling": "404-page"
     // once a 404 route is in place.

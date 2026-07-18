@@ -20,3 +20,4 @@ public/graph.json
 # dev files
 WIP.md
 .local/
+.wrangler/
