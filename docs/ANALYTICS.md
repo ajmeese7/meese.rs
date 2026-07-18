@@ -87,6 +87,17 @@ curl.exe -s -X POST http://localhost:8787/relay/e/ -d "data=x"   # event path fo
 
 The beacon itself won't initialize on localhost because of the hostname gate; that is intentional.
 
+## Internal traffic (don't count yourself)
+
+Two layers keep the owner's own browsing out of the numbers:
+
+1. **At the source**: visit `meese.rs/?analytics=off` once per browser/device and the beacon never loads again there (a localStorage flag; undo with `?analytics=on`). Works on mobile, no devtools needed.
+2. **PostHog-side**: the project's test account filters exclude known internal distinct IDs, and every dashboard insight has "filter out internal and test users" enabled. This retroactively hides already-recorded internal traffic. If you browse from a new device before opting it out, grab its distinct ID from the events feed and add it to the test account filters (or ask Claude).
+
+## Version control
+
+PostHog holds the live dashboard; `docs/analytics/dashboard.json` is the committed source of record (dashboard metadata plus every insight's query definition). There is no real IaC story for PostHog dashboards, so the contract is: edit an insight, update the JSON (or ask Claude, who built the dashboard from these exact definitions via the PostHog MCP and can rebuild or diff it the same way).
+
 ## Verifying live data
 
 After deploying, open [Web analytics](https://us.posthog.com/project/431419/web) and filter Host = meese.rs, or ask Claude (the PostHog MCP is wired up) things like "pageviews and article_read counts by path for the last 7 days on meese.rs".
