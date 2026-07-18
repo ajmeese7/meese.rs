@@ -48,7 +48,7 @@ Do not build or prioritize:
 * database-backed runtime search
 * dynamic user accounts
 * per-post “View MDX” links by default
-* analytics proxying or crawler-control overengineering
+* crawler-control overengineering
 * blockchain functionality
 * Medium synchronization
 * anything that requires ongoing server maintenance for the core reading experience
@@ -1793,3 +1793,13 @@ Still owner-side. Placeholders are in place, so none of these block anything:
 ```
 
 Possible v1 work, not in scope now: topic/tag search filters (§23), graph filtering by type/topic, self-hosting fonts so a strict CSP can ship (§31), and the nav feed-consolidation reframe (collapse Latest/Guides/Notes into one `Writing` destination with on-page type filters; §12).
+
+## 47. Analytics
+
+PostHog (Cloud US), proxied first-party. Originally a §2 non-goal ("analytics proxying"), added by owner decision in July 2026.
+
+* `worker/index.ts` forwards `/relay/*` to PostHog's ingest and asset hosts; every other request is served from static assets exactly as before (`wrangler.jsonc` gained `main` and an `ASSETS` binding).
+* The beacon (`src/components/layout/Analytics.astro`) loads `posthog-js` through the proxy and is gated to `location.hostname === "meese.rs"`, so dev, `wrangler dev`, and preview traffic never report.
+* Captured: `$pageview`, `$pageleave` (includes scroll depth), `$web_vitals`, and a custom `article_read` event fired at 60% scroll depth plus 30s dwell (`src/components/posts/ReadTracker.astro`).
+* Anonymous-only: no `identify`, no session recording, no surveys, no autocapture. The PostHog project is currently shared with another app, so insights must filter on `$host = meese.rs`.
+* Operational details, smoke tests, and the migration path to a dedicated project: `docs/ANALYTICS.md`.
