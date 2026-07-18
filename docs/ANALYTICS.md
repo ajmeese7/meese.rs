@@ -27,6 +27,38 @@ browser ── everything else ─────────► static assets, exa
 
 Deliberately off: autocapture, session recording, surveys, `identify` (everything stays anonymous, `person_profiles: "identified_only"` with no identify calls means no person profiles are ever created).
 
+## Scroll depth (continuous, per pageview)
+
+posthog-js records how far each visitor scrolled on every pageview, no extra code needed (verified working with this exact config, `autocapture: false` included). The data rides on the NEXT event after a page is read, usually `$pageleave`, as `$prev_pageview_*` properties keyed by `$prev_pageview_pathname`:
+
+| Property | Meaning |
+|---|---|
+| `$prev_pageview_max_scroll_percentage` | furthest scroll position reached, 0-1 |
+| `$prev_pageview_max_content_percentage` | furthest content viewed, 0-1 (viewport-adjusted, closest to "how much they read") |
+| `$prev_pageview_last_scroll_percentage` / `$prev_pageview_last_content_percentage` | position when leaving |
+
+Average read depth per post, in [SQL insights](https://us.posthog.com/project/431419/sql):
+
+```sql
+SELECT
+    properties.$prev_pageview_pathname AS page,
+    avg(toFloat(properties.$prev_pageview_max_content_percentage)) * 100 AS avg_read_pct,
+    count() AS views
+FROM events
+WHERE event IN ('$pageview', '$pageleave')
+    AND properties.$host = 'meese.rs'
+    AND properties.$prev_pageview_max_content_percentage IS NOT NULL
+    AND timestamp > now() - INTERVAL 30 DAY
+GROUP BY page
+ORDER BY views DESC
+```
+
+This complements rather than replaces `article_read`: the scroll properties give the continuous distribution (average/median depth per post), `article_read` gives a clean binary conversion rate (depth AND dwell), which is easier to trend and to compare across posts.
+
+## Testing gotcha: headless browsers
+
+posthog-js silently drops ALL events in headless browsers (bot filtering on the user agent, `HeadlessChrome` matches the blocklist). `posthog.init` succeeds, `capture()` just no-ops with no console output whatsoever. Any automated browser test of analytics must set `opt_out_useragent_filter: true` in the init config, and a `before_send` hook that returns `null` keeps test events out of the project entirely. Cost of learning this: one long debugging session.
+
 ## Shared PostHog project
 
 The token in `Analytics.astro` is the site's public write-only ingest key. The PostHog project currently receives data from more than one source, so meese.rs data is distinguished by `$host = "meese.rs"` and every insight/dashboard for the site must filter on that host. If a dedicated project ever exists (paid feature), swap the token in `Analytics.astro`; historical data stays behind in the old project.
