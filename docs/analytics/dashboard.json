@@ -1,0 +1,120 @@
+{
+  "_note": "Source of record for the PostHog dashboard 'meese.rs writing analytics'. PostHog holds the live copy; if it is ever lost, recreate it from these definitions via the PostHog API or by handing this file to Claude (PostHog MCP). Internal-user exclusions (test account filters) are configured PostHog-side and intentionally not duplicated here.",
+  "dashboard": {
+    "name": "meese.rs writing analytics",
+    "description": "Readership for meese.rs: traffic, sources, geography, and read-completion. Every insight filters $host = meese.rs (shared PostHog project).",
+    "pinned": true
+  },
+  "insights": [
+    {
+      "name": "Visitors & pageviews (daily)",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "filterTestAccounts": true,
+          "interval": "day",
+          "dateRange": { "date_from": "-30d" },
+          "properties": [{ "type": "event", "key": "$host", "operator": "exact", "value": ["meese.rs"] }],
+          "series": [
+            { "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Unique visitors", "math": "dau" },
+            { "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Pageviews", "math": "total" }
+          ],
+          "trendsFilter": { "display": "ActionsLineGraph" }
+        }
+      }
+    },
+    {
+      "name": "Top pages (30d)",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "filterTestAccounts": true,
+          "dateRange": { "date_from": "-30d" },
+          "properties": [{ "type": "event", "key": "$host", "operator": "exact", "value": ["meese.rs"] }],
+          "series": [{ "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Pageviews", "math": "total" }],
+          "breakdownFilter": { "breakdowns": [{ "type": "event", "property": "$pathname" }], "breakdown_path_cleaning": true, "breakdown_limit": 25 },
+          "trendsFilter": { "display": "ActionsBarValue" }
+        }
+      }
+    },
+    {
+      "name": "Referrer domains (30d)",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "filterTestAccounts": true,
+          "dateRange": { "date_from": "-30d" },
+          "properties": [{ "type": "event", "key": "$host", "operator": "exact", "value": ["meese.rs"] }],
+          "series": [{ "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Pageviews", "math": "total" }],
+          "breakdownFilter": { "breakdowns": [{ "type": "event", "property": "$referring_domain" }], "breakdown_limit": 25 },
+          "trendsFilter": { "display": "ActionsBarValue" }
+        }
+      }
+    },
+    {
+      "name": "Readers by country (30d)",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "filterTestAccounts": true,
+          "dateRange": { "date_from": "-30d" },
+          "properties": [{ "type": "event", "key": "$host", "operator": "exact", "value": ["meese.rs"] }],
+          "series": [{ "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Unique visitors", "math": "dau" }],
+          "breakdownFilter": { "breakdowns": [{ "type": "event", "property": "$geoip_country_code" }] },
+          "trendsFilter": { "display": "WorldMap" }
+        }
+      }
+    },
+    {
+      "name": "Articles read (daily)",
+      "description": "Custom article_read event: 60% scroll depth + 30s dwell on a post or review.",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "filterTestAccounts": true,
+          "interval": "day",
+          "dateRange": { "date_from": "-30d" },
+          "properties": [{ "type": "event", "key": "$host", "operator": "exact", "value": ["meese.rs"] }],
+          "series": [{ "kind": "EventsNode", "event": "article_read", "name": "article_read", "custom_name": "Articles read", "math": "total" }],
+          "trendsFilter": { "display": "ActionsLineGraph" }
+        }
+      }
+    },
+    {
+      "name": "Read-through rate % (posts & reviews)",
+      "description": "article_read events divided by pageviews on /posts/ and /reviews/ paths. How many arrivals become actual reads.",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "filterTestAccounts": true,
+          "interval": "week",
+          "dateRange": { "date_from": "-90d" },
+          "properties": [{ "type": "event", "key": "$host", "operator": "exact", "value": ["meese.rs"] }],
+          "series": [
+            { "kind": "EventsNode", "event": "article_read", "name": "article_read", "custom_name": "Reads", "math": "total" },
+            { "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Article pageviews", "math": "total", "properties": [{ "type": "event", "key": "$pathname", "operator": "regex", "value": "^/(posts|reviews)/" }] }
+          ],
+          "trendsFilter": { "display": "ActionsLineGraph", "formula": "A/B*100" }
+        }
+      }
+    },
+    {
+      "name": "Avg read depth per post (30d)",
+      "description": "Average of $prev_pageview_max_content_percentage per path. How far into each post readers actually get. Live copy also excludes internal distinct IDs (raw SQL bypasses test account filters).",
+      "query": {
+        "kind": "DataVisualizationNode",
+        "display": "ActionsTable",
+        "source": {
+          "kind": "HogQLQuery",
+          "query": "SELECT properties.$prev_pageview_pathname AS page, round(avg(toFloat(properties.$prev_pageview_max_content_percentage)) * 100, 1) AS avg_read_pct, count() AS views FROM events WHERE event IN ('$pageview', '$pageleave') AND properties.$host = 'meese.rs' AND properties.$prev_pageview_max_content_percentage IS NOT NULL AND timestamp > now() - INTERVAL 30 DAY GROUP BY page ORDER BY views DESC LIMIT 50"
+        }
+      }
+    }
+  ]
+}

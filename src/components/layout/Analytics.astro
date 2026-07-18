@@ -7,6 +7,16 @@
 
 <script is:inline>
   (function () {
+    // Owner/internal opt-out: visiting /?analytics=off flags this browser in
+    // localStorage and the beacon never loads again (undo with ?analytics=on).
+    // Works on any device, no devtools required.
+    var FLAG = "meese-analytics-off";
+    try {
+      var mode = new URLSearchParams(location.search).get("analytics");
+      if (mode === "off") localStorage.setItem(FLAG, "1");
+      if (mode === "on") localStorage.removeItem(FLAG);
+      if (localStorage.getItem(FLAG) === "1") return;
+    } catch (e) {}
     if (location.hostname !== "meese.rs") return;
     var s = document.createElement("script");
     s.src = "/relay/static/array.js";
