@@ -10,7 +10,8 @@ browser ── /relay/e, /relay/flags ──► Worker ── us.i.posthog.com  
 browser ── everything else ─────────► static assets, exactly as before
 ```
 
-- `worker/index.ts` is the proxy. `wrangler.jsonc` points `main` at it and binds the static assets as `ASSETS`; requests that match an asset are served straight from the edge and never invoke the Worker, so the reading path is unchanged.
+- `worker/index.ts` is the proxy. `wrangler.jsonc` points `main` at it, binds the static assets as `ASSETS`, and routes only `/relay/*` worker-first; requests that match an asset are served straight from the edge and never invoke the Worker, so the reading path is unchanged.
+- The proxy only forwards the endpoints posthog-js actually uses (`/e`, `/i/v0/e`, `/flags`, `/decide`, `/array`, GET-only `/static`), caps bodies at 1MB, forwards an allowlist of headers rather than everything, and strips `Set-Cookie` both ways. It is not a general relay to PostHog's API.
 - The path is `/relay`, deliberately not "posthog" or "ingest", to stay off path-heuristic filter lists.
 - `src/components/layout/Analytics.astro` (in `BaseLayout` head) loads the SDK through the proxy. It is gated on `location.hostname === "meese.rs"`, so localhost, `wrangler dev`, and any preview deploy send nothing.
 - `src/components/posts/ReadTracker.astro` (in `PostLayout` and `ReviewLayout`) fires one `article_read` event per pageload once the reader hits 60% scroll depth AND 30 seconds on the page. That is the real "reads" metric; pageviews are just arrivals.

@@ -10,7 +10,8 @@
   // `pnpm build` produces `dist/` (astro build + pagefind), uploaded as assets.
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": ["/relay/*"]
     // No custom 404 page exists yet (no src/pages/404.astro), so leave
     // not_found_handling at the default. Add "not_found_handling": "404-page"
     // once a 404 route is in place.

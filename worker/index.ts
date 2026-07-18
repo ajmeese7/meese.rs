@@ -8,6 +8,12 @@ const PROXY_PREFIX = "/relay";
 const API_HOST = "us.i.posthog.com";
 const ASSET_HOST = "us-assets.i.posthog.com";
 
+// Only the endpoints posthog-js actually talks to are forwarded; anything
+// else under /relay is a 404, so the Worker can't be used as a general
+// relay to PostHog's API surface.
+const API_PATHS = ["/e", "/i/v0/e", "/flags", "/decide", "/array"];
+const MAX_BODY_BYTES = 1_000_000; // event batches are a few KB; 1MB is generous
+
 interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
 }
@@ -31,15 +37,25 @@ export default {
 };
 
 function proxyToPosthog(request: Request, url: URL, ctx: Ctx): Promise<Response> {
-  const pathWithSearch = url.pathname.slice(PROXY_PREFIX.length) + url.search;
-  if (pathWithSearch.startsWith("/static/")) {
-    return retrieveStatic(request, pathWithSearch, ctx);
+  const path = url.pathname.slice(PROXY_PREFIX.length);
+  if (path.startsWith("/static/")) {
+    if (request.method !== "GET") return Promise.resolve(new Response(null, { status: 405 }));
+    return retrieveStatic(request, path + url.search, ctx);
   }
-  return forwardRequest(request, pathWithSearch);
+  const isApiPath = API_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+  if (!isApiPath || (request.method !== "GET" && request.method !== "POST")) {
+    return Promise.resolve(new Response(null, { status: 404 }));
+  }
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return Promise.resolve(new Response(null, { status: 413 }));
+  }
+  return forwardRequest(request, path + url.search);
 }
 
 // The SDK bundle (array.js etc.) is hot on every pageview; cache it at the
-// edge instead of round-tripping to PostHog each time.
+// edge instead of round-tripping to PostHog each time. Only clean 200s are
+// cached so an upstream blip can't get pinned as a cached failure.
 async function retrieveStatic(
   request: Request,
   pathWithSearch: string,
@@ -48,18 +64,46 @@ async function retrieveStatic(
   const cached = await edgeCache().match(request);
   if (cached) return cached;
   const response = await fetch(`https://${ASSET_HOST}${pathWithSearch}`);
-  ctx.waitUntil(edgeCache().put(request, response.clone()));
-  return response;
+  if (response.status === 200) {
+    ctx.waitUntil(edgeCache().put(request, response.clone()));
+  }
+  return stripCookies(response);
 }
 
+// Forward only the headers PostHog needs (UA/referrer analytics, geo from the
+// CF/XFF client-IP headers), so nothing a future feature attaches to requests
+// can leak to a third party by default.
+const FORWARDED_HEADERS = [
+  "accept",
+  "accept-language",
+  "content-type",
+  "origin",
+  "referer",
+  "user-agent",
+  "x-forwarded-for",
+  "cf-connecting-ip",
+  "cf-ipcountry",
+];
+
 function forwardRequest(request: Request, pathWithSearch: string): Promise<Response> {
-  const headers = new Headers(request.headers);
-  // First-party cookies are none of PostHog's business.
-  headers.delete("cookie");
+  const headers = new Headers();
+  for (const name of FORWARDED_HEADERS) {
+    const value = request.headers.get(name);
+    if (value !== null) headers.set(name, value);
+  }
   return fetch(`https://${API_HOST}${pathWithSearch}`, {
     method: request.method,
     headers,
     body: request.body,
     redirect: "follow",
-  });
+  }).then(stripCookies);
+}
+
+// PostHog's ingest hosts don't set cookies today, but if they ever do, they
+// must not land as first-party meese.rs cookies through the proxy.
+function stripCookies(response: Response): Response {
+  if (!response.headers.has("set-cookie")) return response;
+  const stripped = new Response(response.body, response);
+  stripped.headers.delete("set-cookie");
+  return stripped;
 }
