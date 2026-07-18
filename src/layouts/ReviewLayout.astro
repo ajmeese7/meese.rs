@@ -6,6 +6,7 @@ import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
 import AuthorByline from "../components/layout/AuthorByline.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
+import ReadTracker from "../components/posts/ReadTracker.astro";
 import { isoDate } from "../utils/dates";
 import { postUrl, type Post } from "../utils/posts";
 import { getBacklinks } from "../utils/backlinks";
@@ -176,4 +177,5 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
       </aside>
     </div>
   </div>
+  <ReadTracker />
 </BaseLayout>

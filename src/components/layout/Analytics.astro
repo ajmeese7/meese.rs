@@ -1,0 +1,31 @@
+---
+// PostHog beacon, loaded through the same-domain /relay proxy (worker/index.ts)
+// so path- and domain-based adblock filter lists don't eat first-party stats.
+// The hostname gate means localhost, `wrangler dev`, and previews never send
+// events; the token is the public write-only ingest key (safe in a public repo).
+---
+
+<script is:inline>
+  (function () {
+    if (location.hostname !== "meese.rs") return;
+    var s = document.createElement("script");
+    s.src = "/relay/static/array.js";
+    s.async = true;
+    s.onload = function () {
+      window.posthog.init("phc_qhyXt5R54ak5n5qbN8jURjQGVvCRY74Z5a6snyQ5y2y3", {
+        api_host: location.origin + "/relay",
+        ui_host: "https://us.posthog.com",
+        defaults: "2025-05-24",
+        // This PostHog project is shared with another app (separated by
+        // $host). Keep this site anonymous-only: never call identify here.
+        person_profiles: "identified_only",
+        autocapture: false,
+        capture_pageleave: true,
+        capture_performance: { web_vitals: true },
+        disable_session_recording: true,
+        disable_surveys: true,
+      });
+    };
+    document.head.appendChild(s);
+  })();
+</script>
