@@ -4,6 +4,14 @@
 //
 // The prefix is deliberately not named "posthog" or "analytics" so filter-list
 // heuristics on the path don't eat first-party events.
+import {
+  handleConfirm,
+  handleSubscribe,
+  handleUnsubscribe,
+  runNewPostDigest,
+  type NewsletterEnv,
+} from "./newsletter";
+
 const PROXY_PREFIX = "/relay";
 const API_HOST = "us.i.posthog.com";
 const ASSET_HOST = "us-assets.i.posthog.com";
@@ -14,7 +22,8 @@ const ASSET_HOST = "us-assets.i.posthog.com";
 const API_PATHS = ["/e", "/i/v0/e", "/flags", "/decide", "/array"];
 const MAX_BODY_BYTES = 1_000_000; // event batches are a few KB; 1MB is generous
 
-interface Env {
+// Env extends NewsletterEnv (DB + Resend secret/vars); see docs/newsletter-setup.md.
+interface Env extends NewsletterEnv {
   ASSETS: { fetch(request: Request): Promise<Response> };
 }
 
@@ -32,7 +41,20 @@ export default {
     if (url.pathname === PROXY_PREFIX || url.pathname.startsWith(`${PROXY_PREFIX}/`)) {
       return proxyToPosthog(request, url, ctx);
     }
+    switch (url.pathname) {
+      case "/newsletter/subscribe":
+        return handleSubscribe(request, env);
+      case "/newsletter/confirm":
+        return handleConfirm(request, env);
+      case "/newsletter/unsubscribe":
+        return handleUnsubscribe(request, env);
+    }
     return env.ASSETS.fetch(request);
+  },
+
+  // Hourly cron: email confirmed subscribers about posts new since last run.
+  async scheduled(_event: unknown, env: Env, ctx: Ctx): Promise<void> {
+    ctx.waitUntil(runNewPostDigest(env));
   },
 };
 

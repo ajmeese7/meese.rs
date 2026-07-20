@@ -10,6 +10,7 @@
     "build": "pnpm format:check && pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",
     "preview": "astro preview",
     "check": "astro check",
+    "test": "tsx --test 'worker/**/*.test.ts'",
     "validate:content": "tsx scripts/validate-content.ts",
     "generate:graph": "tsx scripts/generate-graph.ts",
     "format": "prettier --write \"src/content/posts/**/*.{md,mdx}\"",

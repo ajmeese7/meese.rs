@@ -1,0 +1,250 @@
+---
+/**
+ * Post-footer email signup for the self-owned newsletter (worker/newsletter/).
+ * The form posts to the first-party /newsletter/subscribe route, which stores
+ * the subscriber in D1 (double opt-in) and sends the confirmation via Resend;
+ * an hourly Worker cron diffs feed.json and emails new posts. No per-post work.
+ *
+ * Privacy stance matches the site: nothing third-party loads on render. It works
+ * with zero JS (native POST -> a rendered confirmation page); progressive
+ * enhancement upgrades that to an inline status without leaving the page and
+ * fires an anonymous `newsletter_signup` event IF the first-party PostHog beacon
+ * is already loaded (blocked/opted-out readers simply skip it).
+ *
+ * See docs/newsletter-setup.md for the D1 / Resend / DNS setup.
+ */
+---
+
+<aside class="nl reticle" aria-labelledby="nl-heading">
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <div class="nl__intro">
+    <span class="sys-label nl__label">// subscribe</span>
+    <h2 id="nl-heading" class="nl__title">New posts, in your inbox</h2>
+    <p class="nl__lead">
+      One email when something new goes up. No tracking pixels, no digest spam,
+      unsubscribe in one click. You can also just grab the <a href="/feed.xml">RSS feed</a>.
+    </p>
+  </div>
+
+  <form class="nl__form" method="post" action="/newsletter/subscribe" data-newsletter-form>
+    <label class="nl__field-label sys-label" for="nl-email">email</label>
+    <div class="nl__row">
+      <input
+        id="nl-email"
+        class="nl__input"
+        type="email"
+        name="email"
+        inputmode="email"
+        autocomplete="email"
+        placeholder="you@domain.com"
+        required
+      />
+      <button class="nl__submit" type="submit">Subscribe</button>
+    </div>
+    {/* Honeypot: hidden from humans, bots fill it and get a no-op success. */}
+    <div class="nl__hp" aria-hidden="true">
+      <label for="nl-website">Leave this field empty</label>
+      <input id="nl-website" type="text" name="website" tabindex="-1" autocomplete="off" />
+    </div>
+    <p class="nl__status" data-newsletter-status role="status" aria-live="polite"></p>
+  </form>
+</aside>
+
+<style>
+  .nl {
+    position: relative;
+    margin: var(--space-10) 0 var(--space-6);
+    padding: var(--space-7);
+    background: var(--surface-1);
+    border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .nl__intro {
+    margin-bottom: var(--space-5);
+  }
+  .nl__label {
+    display: block;
+    color: var(--accent);
+    margin-bottom: var(--space-2);
+  }
+  .nl__title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--ink-1);
+    margin: 0 0 var(--space-2);
+    line-height: 1.2;
+  }
+  .nl__lead {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 52ch;
+  }
+  .nl__lead a {
+    color: var(--link);
+  }
+  .nl__field-label {
+    display: block;
+    margin-bottom: var(--space-2);
+  }
+  .nl__row {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .nl__input {
+    flex: 1 1 220px;
+    min-width: 0;
+    background: var(--surface-inset);
+    border: var(--border-hair) solid var(--line-2);
+    border-radius: var(--radius-xs);
+    padding: 0 var(--space-3);
+    height: 40px;
+    color: var(--ink-1);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+  .nl__input::placeholder {
+    color: var(--ink-4);
+  }
+  .nl__input:focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--glow-soft);
+    outline: none;
+  }
+  .nl__submit {
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 0 var(--space-5);
+    background: var(--accent);
+    color: var(--on-accent);
+    border: var(--border-hair) solid var(--accent);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition:
+      background var(--dur-1) var(--ease-out),
+      box-shadow var(--dur-1) var(--ease-out);
+  }
+  .nl__submit:hover {
+    background: var(--accent-bright);
+    box-shadow: var(--glow-soft);
+  }
+  .nl__submit:active {
+    transform: translateY(1px);
+  }
+  .nl__submit[disabled] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .nl__status {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    margin: var(--space-3) 0 0;
+    min-height: 1em;
+  }
+  .nl__status[data-state="ok"] {
+    color: var(--green);
+  }
+  .nl__status[data-state="info"] {
+    color: var(--accent-bright);
+  }
+  .nl__status[data-state="err"] {
+    color: var(--red);
+  }
+  /* Honeypot: kept in the layout for bots to find, off-screen for humans. */
+  .nl__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  // States mirror worker/newsletter.ts (SubscribeState). Copy also mirrors the
+  // no-JS HTML page there; keep the two in sync.
+  type State = "ok" | "exists" | "invalid" | "ratelimited" | "error";
+  const STATUS: Record<State, { visual: "ok" | "info" | "err"; text: string }> = {
+    ok: { visual: "ok", text: "Almost there, check your inbox to confirm." },
+    exists: { visual: "info", text: "You're already subscribed to the list." },
+    invalid: { visual: "err", text: "That email doesn't look right, mind checking it?" },
+    ratelimited: { visual: "err", text: "A lot of signups right now, give it a minute and retry." },
+    error: { visual: "err", text: "Something broke on our end, please try again." },
+  };
+
+  const form = document.querySelector<HTMLFormElement>("[data-newsletter-form]");
+  const status = document.querySelector<HTMLElement>("[data-newsletter-status]");
+
+  if (form && status) {
+    const input = form.querySelector<HTMLInputElement>("input[name='email']");
+    const button = form.querySelector<HTMLButtonElement>("button[type='submit']");
+
+    const show = (state: string) => {
+      const entry = STATUS[state as State] ?? STATUS.error;
+      status.dataset.state = entry.visual;
+      status.textContent = entry.text;
+    };
+
+    // If a no-JS submit redirected back here with ?subscribe=<state>, surface it
+    // and scrub the param so a refresh doesn't replay a stale message.
+    const params = new URLSearchParams(location.search);
+    const initial = params.get("subscribe");
+    if (initial) {
+      show(initial);
+      params.delete("subscribe");
+      const query = params.toString();
+      history.replaceState(null, "", location.pathname + (query ? `?${query}` : "") + location.hash);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      if (!input || !input.value) return; // let native validation handle empties
+      event.preventDefault();
+
+      button?.setAttribute("disabled", "");
+      status.dataset.state = "";
+      status.textContent = "";
+
+      const body = new URLSearchParams({ email: input.value });
+      const honeypot = form.querySelector<HTMLInputElement>("input[name='website']");
+      if (honeypot?.value) body.set("website", honeypot.value);
+
+      try {
+        const res = await fetch(form.action, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Requested-With": "fetch", // tells the Worker to answer with JSON
+            Accept: "application/json",
+          },
+          body,
+        });
+        const data = (await res.json().catch(() => ({ state: "error" }))) as { state?: string };
+        show(data.state ?? "error");
+
+        if (data.state === "ok") {
+          form.reset();
+          // Anonymous, no email attached; only fires if the first-party beacon
+          // is present (never loaded for opted-out / adblocking readers).
+          (window as unknown as { posthog?: { capture?: (e: string) => void } }).posthog?.capture?.(
+            "newsletter_signup",
+          );
+        }
+      } catch {
+        show("error");
+      } finally {
+        button?.removeAttribute("disabled");
+      }
+    });
+  }
+</script>

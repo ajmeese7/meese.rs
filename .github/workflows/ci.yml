@@ -20,6 +20,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm validate:content
       - run: pnpm check
+      - run: pnpm test
       - run: pnpm build
       - name: Verify Pagefind index was generated
         run: test -f dist/pagefind/pagefind.js
