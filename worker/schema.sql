@@ -1,7 +1,7 @@
--- D1 schema for the self-owned newsletter. Wrangler defaults to LOCAL, so the
--- remote apply needs an explicit --remote flag:
---   npx wrangler d1 execute meese-rs-newsletter --remote --file worker/schema.sql   (remote)
---   npx wrangler d1 execute meese-rs-newsletter --local  --file worker/schema.sql   (local dev)
+-- D1 schema for the self-owned newsletter.
+--   local:  npx wrangler d1 execute meese-rs-newsletter --local --file worker/schema.sql
+--   remote: see docs/newsletter-setup.md. The --remote --file import path hits a
+--           wrangler OAuth auth bug (10000); use the --command form documented there.
 
 CREATE TABLE IF NOT EXISTS subscribers (
   id                INTEGER PRIMARY KEY AUTOINCREMENT,

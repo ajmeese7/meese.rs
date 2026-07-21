@@ -29,12 +29,21 @@ This is interactive. The `d1_databases` block is already in `wrangler.jsonc` wit
 - "Would you like Wrangler to add it on your behalf?" answer **No**. We manage the block by hand; letting Wrangler add its own creates a second entry with the wrong binding name.
 - "For local dev, do you want to connect to the remote resource instead of a local resource?" answer **No**. Local dev should use a local copy so tests never touch production data.
 
-Then copy the returned `database_id` into the existing `DB` block in `wrangler.jsonc` (the committed value is already set to the created database; update it only if you recreate the DB). If you accidentally let Wrangler add its own block, delete it and keep only the `DB` one. Apply the schema to both remote and local. Wrangler defaults to local, so the remote apply needs an explicit `--remote`:
+Then copy the returned `database_id` into the existing `DB` block in `wrangler.jsonc` (the committed value is already set to the created database; update it only if you recreate the DB). If you accidentally let Wrangler add its own block, delete it and keep only the `DB` one.
+
+Apply the schema. Local uses `--file` directly:
 
 ```
-npx wrangler d1 execute meese-rs-newsletter --remote --file worker/schema.sql
 npx wrangler d1 execute meese-rs-newsletter --local --file worker/schema.sql
 ```
+
+Remote is trickier. `--remote --file` hits a known wrangler bug: D1's import endpoint rejects the OAuth login token with `Authentication error [code: 10000]`, even for a super-admin token. Use `--command` instead, which goes through the normal query endpoint your token already works with. The `grep` strips the SQL comment lines, which wrangler would otherwise parse as CLI flags:
+
+```
+npx wrangler d1 execute meese-rs-newsletter --remote --command "$(grep -v '^[[:space:]]*--' worker/schema.sql)"
+```
+
+If you would rather keep `--file`: create a Cloudflare API token (dashboard, "Edit Cloudflare Workers" template, which includes D1), then run the `--remote --file` command with `CLOUDFLARE_API_TOKEN` set in the environment. Token auth does not hit the import bug.
 
 ### 2. Set up Resend
 
