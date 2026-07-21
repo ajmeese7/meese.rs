@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 128 128" width="128" height="128">
+  <title>meese.rs</title>
+  <desc>Three-node constellation logomark on a graphite field.</desc>
+
+  <!--
+    BIMI sender avatar. SVG Tiny Portable/Secure (draft-svg-tiny-ps-abrotman),
+    which is why this is not just logomark.svg: tiny-ps forbids role/aria-*,
+    requires version + baseProfile + a non-empty <title>, and forbids x/y on
+    the root. Presentation attributes only, no CSS, no external refs.
+
+    Two deliberate departures from public/logomark.svg:
+      1. Full-bleed opaque background. Clients crop this themselves (circle,
+         rounded square, or square), so transparency renders unpredictably and
+         rounding it here would leave bare corners in square-cropping clients.
+      2. Edges are #454B54 rather than the logomark's #30353C. This asset is
+         displayed at ~40px; at that size #30353C disappears and the mark reads
+         as three unconnected dots instead of a constellation.
+
+    Geometry is logomark.svg scaled 4x and nudged down 4 units so the content
+    is centered on the viewBox, keeping it inside a circle crop.
+  -->
+  <rect x="0" y="0" width="128" height="128" fill="#090A0C"></rect>
+
+  <line x1="32" y1="92" x2="64" y2="40" stroke="#454B54" stroke-width="6"></line>
+  <line x1="64" y1="40" x2="96" y2="80" stroke="#454B54" stroke-width="6"></line>
+  <line x1="32" y1="92" x2="96" y2="80" stroke="#454B54" stroke-width="6"></line>
+  <circle cx="64" cy="40" r="13.6" fill="#9A7CFF"></circle>
+  <circle cx="32" cy="92" r="10.4" fill="#B7A2FF"></circle>
+  <circle cx="96" cy="80" r="11.2" fill="#767D85"></circle>
+</svg>

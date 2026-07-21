@@ -19,6 +19,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm validate:content
+      - run: pnpm validate:bimi
       - run: pnpm check
       - run: pnpm test
       - run: pnpm build
