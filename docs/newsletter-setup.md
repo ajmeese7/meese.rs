@@ -156,7 +156,7 @@ pnpm test
 - Abuse protection on subscribe is two layers, because it is an unauthenticated endpoint that makes us send mail. A per-IP rate limiter (`SUBSCRIBE_LIMIT` in `wrangler.jsonc`, 5 per minute) blunts a flood, and a five-minute per-address cooldown on confirmation resends stops someone aiming repeat submits at a third party's inbox from rotating IPs. A filled `website` honeypot field returns a no-op success. If real spam still gets through, add Cloudflare Turnstile to the form (see the `turnstile-spin` skill).
 - The rate limiter is per-Cloudflare-location and eventually consistent by design, so treat its limit as approximate. It exists to blunt abuse, not to meter anything.
 - Deliverability: send only from the verified `mail.meese.rs` subdomain so the root domain's reputation is isolated. Warm up gradually.
-- Sender logo avatar (BIMI) is deferred and low priority. Gmail only shows a BIMI logo with a paid VMC or CMC certificate ($650+/year); a free BIMI setup (raise DMARC to enforcement, host an SVG Tiny PS version of the logomark, add a `default._bimi` DNS TXT record) lights up the avatar in Apple Mail / Yahoo / Fastmail but not Gmail. It is DNS/ops work, not code, and DMARC enforcement needs a monitoring window first, so it belongs in a separate task, not this one.
+- Sender logo avatar (BIMI) is set up on the free path, so Apple Mail / Yahoo / Fastmail show the logomark instead of a letter tile. Gmail still shows the generic avatar because it requires a paid VMC or CMC certificate ($650+/year). See `bimi.md`.
 
 ## Troubleshooting
 

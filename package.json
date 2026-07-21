@@ -12,6 +12,7 @@
     "check": "astro check",
     "test": "vitest run",
     "validate:content": "tsx scripts/validate-content.ts",
+    "validate:bimi": "tsx scripts/validate-bimi-svg.ts",
     "generate:graph": "tsx scripts/generate-graph.ts",
     "format": "prettier --write \"src/content/posts/**/*.{md,mdx}\"",
     "format:check": "prettier --check \"src/content/posts/**/*.{md,mdx}\""
