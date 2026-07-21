@@ -46,7 +46,14 @@ const seo = buildSeo({
 <Font cssVariable="--font-body" preload={[{ weight: 400, style: "normal" }]} />
 <Font cssVariable="--font-mono" preload={[{ weight: 400, style: "normal" }]} />
 
+<!--
+  SVG first for browsers that take it, .ico behind it for Safari before 26 and
+  for the /favicon.ico crawlers request by convention. Both are generated from
+  favicon.svg by `pnpm generate:icons`.
+-->
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="canonical" href={seo.canonical} />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link

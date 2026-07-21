@@ -14,6 +14,7 @@
     "validate:content": "tsx scripts/validate-content.ts",
     "validate:bimi": "tsx scripts/validate-bimi-svg.ts",
     "generate:graph": "tsx scripts/generate-graph.ts",
+    "generate:icons": "tsx scripts/generate-icons.ts",
     "format": "prettier --write \"src/content/posts/**/*.{md,mdx}\"",
     "format:check": "prettier --check \"src/content/posts/**/*.{md,mdx}\""
   },
