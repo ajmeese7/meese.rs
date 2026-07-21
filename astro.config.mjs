@@ -5,7 +5,8 @@ import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 
-// Production domain. Cloudflare Pages serves the static `dist/` output.
+// Production domain. Cloudflare Workers serves the static `dist/` output as the
+// worker's assets, see wrangler.jsonc.
 const SITE = "https://meese.rs";
 
 // One pass over post frontmatter feeds two build-time filters below.
