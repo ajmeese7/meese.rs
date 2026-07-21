@@ -1,4 +1,4 @@
-import type { FeedItem, NewsletterEnv, SubscribeState } from "./types";
+import type { FeedItem, NewsletterEnv, SentPost, SubscribeState } from "./types";
 
 // Pragmatic shape check, not RFC 5322. Double opt-in is the real gate: a
 // typo'd-but-valid address simply never confirms and is never emailed.
@@ -70,7 +70,26 @@ export function isWithinCooldown(
   return Date.parse(now) - last < windowMs;
 }
 
-// Posts present in the feed but not yet recorded as sent.
-export function selectNewItems(items: FeedItem[], sent: ReadonlySet<string>): FeedItem[] {
-  return items.filter((item) => !sent.has(item.id));
+// Posts owed an email: never seen before, or seen but still missing recipients
+// and not yet out of attempts.
+export function selectQueue(
+  items: readonly FeedItem[],
+  known: ReadonlyMap<string, SentPost>,
+  maxAttempts: number,
+): FeedItem[] {
+  const queued = items.filter((item) => {
+    const record = known.get(item.id);
+    if (!record) return true;
+    return record.completed_at === null && record.attempts < maxAttempts;
+  });
+  // The feed is newest-first; email oldest-first so a multi-post gap arrives in
+  // publication order.
+  return queued.reverse();
+}
+
+export function chunk<T>(items: readonly T[], size: number): T[][] {
+  if (size < 1) throw new RangeError(`chunk size must be at least 1, got ${size}`);
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }

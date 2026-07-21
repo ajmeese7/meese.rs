@@ -53,8 +53,16 @@ export default {
   },
 
   // Hourly cron: email confirmed subscribers about posts new since last run.
-  async scheduled(_event: unknown, env: Env, ctx: Ctx): Promise<void> {
-    ctx.waitUntil(runNewPostDigest(env));
+  // Awaited rather than handed to waitUntil so a failure (missing D1 table, bad
+  // feed response) actually surfaces as a failed cron run instead of an
+  // unhandled rejection behind a green tick.
+  async scheduled(_event: unknown, env: Env): Promise<void> {
+    try {
+      await runNewPostDigest(env);
+    } catch (err) {
+      console.error("newsletter: digest run failed", err);
+      throw err;
+    }
   },
 };
 

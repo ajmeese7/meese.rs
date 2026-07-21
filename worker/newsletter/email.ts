@@ -1,9 +1,16 @@
 // Email delivery via Resend, plus the two templates. Resend is the only
-// provider-specific piece; swapping senders is a change to `sendEmail` alone.
+// provider-specific piece; swapping senders is a change to the two send
+// functions alone.
 import type { FeedItem, NewsletterEnv } from "./types";
+import { escapeHtml } from "./validation";
 
-const RESEND_URL = "https://api.resend.com/emails";
-const DEFAULT_FROM = "meese.rs <posts@mail.meese.rs>";
+const DEFAULT_RESEND_BASE = "https://api.resend.com";
+// Resend's documented ceiling for POST /emails/batch.
+export const BATCH_MAX = 100;
+
+function resendUrl(env: NewsletterEnv, path: string): string {
+  return `${(env.RESEND_BASE_URL ?? DEFAULT_RESEND_BASE).replace(/\/+$/, "")}${path}`;
+}
 
 export interface OutboundEmail {
   to: string;
@@ -13,6 +20,49 @@ export interface OutboundEmail {
   headers?: Record<string, string>;
 }
 
+function fromAddress(env: NewsletterEnv): string {
+  // Falls back to the same address wrangler.jsonc sets, so a missing var can't
+  // silently change the sender.
+  return env.NEWSLETTER_FROM ?? "meese.rs <posts@mail.meese.rs>";
+}
+
+function payload(env: NewsletterEnv, msg: OutboundEmail): Record<string, unknown> {
+  return {
+    from: fromAddress(env),
+    to: msg.to,
+    subject: msg.subject,
+    html: msg.html,
+    text: msg.text,
+    headers: msg.headers,
+  };
+}
+
+async function postToResend(
+  env: NewsletterEnv,
+  url: string,
+  body: unknown,
+  label: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      console.error(`newsletter: Resend send failed ${res.status} for ${label}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`newsletter: Resend request threw for ${label}`, err);
+    return false;
+  }
+}
+
 // Returns true on a delivered send. Without a key (local dev) it logs and
 // returns false so the whole flow can be exercised offline.
 export async function sendEmail(env: NewsletterEnv, msg: OutboundEmail): Promise<boolean> {
@@ -20,39 +70,29 @@ export async function sendEmail(env: NewsletterEnv, msg: OutboundEmail): Promise
     console.warn(`newsletter: RESEND_API_KEY unset, skipped email to ${msg.to} (${msg.subject})`);
     return false;
   }
-  try {
-    const res = await fetch(RESEND_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: env.NEWSLETTER_FROM ?? DEFAULT_FROM,
-        to: msg.to,
-        subject: msg.subject,
-        html: msg.html,
-        text: msg.text,
-        headers: msg.headers,
-      }),
-    });
-    if (!res.ok) {
-      console.error(`newsletter: Resend send failed ${res.status} for ${msg.to}`);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`newsletter: Resend request threw for ${msg.to}`, err);
-    return false;
-  }
+  return postToResend(env, resendUrl(env, "/emails"), payload(env, msg), msg.to);
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+// One request for up to BATCH_MAX recipients. The digest sends this way so a
+// list of any realistic size stays inside both Resend's per-second rate limit
+// and the Worker's per-invocation subrequest budget. All-or-nothing per call:
+// the caller retries the whole group, which is safe because delivery is
+// recorded per recipient.
+export async function sendBatch(env: NewsletterEnv, messages: OutboundEmail[]): Promise<boolean> {
+  if (messages.length === 0) return true;
+  if (messages.length > BATCH_MAX) {
+    throw new RangeError(`batch of ${messages.length} exceeds Resend's limit of ${BATCH_MAX}`);
+  }
+  if (!env.RESEND_API_KEY) {
+    console.warn(`newsletter: RESEND_API_KEY unset, skipped batch of ${messages.length}`);
+    return false;
+  }
+  return postToResend(
+    env,
+    resendUrl(env, "/emails/batch"),
+    messages.map((msg) => payload(env, msg)),
+    `batch of ${messages.length}`,
+  );
 }
 
 // Site design tokens, inlined (email can't use CSS vars). Graphite-dark surfaces

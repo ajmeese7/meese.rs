@@ -28,6 +28,9 @@ export interface NewsletterEnv {
   RESEND_API_KEY?: string;
   NEWSLETTER_FROM?: string;
   SITE_URL?: string;
+  // Resend's API origin. Only overridden by the tests, which point it at a real
+  // local stand-in so delivery and retry behavior can be exercised over HTTP.
+  RESEND_BASE_URL?: string;
 }
 
 export type SubscriberStatus = "pending" | "confirmed" | "unsubscribed";
@@ -43,6 +46,15 @@ export interface Subscriber {
   // When this address was last emailed a confirmation link. Throttles resends so
   // a repeated submit can't be aimed at someone else's inbox.
   confirm_sent_at: string | null;
+}
+
+// One row per post the digest has picked up. `completed_at` is set once every
+// confirmed subscriber has a delivery row (or we've given up on the stragglers).
+export interface SentPost {
+  guid: string;
+  sent_at: string;
+  completed_at: string | null;
+  attempts: number;
 }
 
 // Result the subscribe form renders. Mirrors the STATUS map in NewsletterSignup.astro.
