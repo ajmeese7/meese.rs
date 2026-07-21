@@ -1,0 +1,118 @@
+---
+/**
+ * Static request-flow diagram for the analytics devlog: the reader's browser
+ * only ever talks to meese.rs; assets terminate at the edge cache, and only
+ * /relay traffic continues through the Worker to PostHog. Server-rendered
+ * SVG, no client JS.
+ */
+---
+
+<div class="rfl reticle">
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+
+  <svg
+    class="rfl__svg"
+    viewBox="0 0 420 232"
+    role="img"
+    aria-label="Request flow diagram. The browser requests pages and analytics from meese.rs only. Static assets are served from the edge cache. Requests under /relay pass through a Worker, which forwards allowlisted analytics traffic to PostHog."
+  >
+    <defs>
+      <marker id="rfl-arr-mut" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto">
+        <path d="M0 0 L8 4 L0 8 z" class="rfl__head--mut"></path>
+      </marker>
+      <marker id="rfl-arr-acc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto">
+        <path d="M0 0 L8 4 L0 8 z" class="rfl__head--acc"></path>
+      </marker>
+    </defs>
+
+    <rect class="rfl__box" x="14" y="40" width="96" height="160" rx="4"></rect>
+    <text class="rfl__label" x="62" y="112" text-anchor="middle">READER</text>
+    <text class="rfl__sub" x="62" y="128" text-anchor="middle">adblock on</text>
+
+    <rect class="rfl__box rfl__box--mut" x="170" y="24" width="120" height="52" rx="4"></rect>
+    <text class="rfl__label rfl__label--mut" x="230" y="45" text-anchor="middle">STATIC ASSETS</text>
+    <text class="rfl__sub" x="230" y="61" text-anchor="middle">pages, css, search</text>
+
+    <rect class="rfl__box rfl__box--acc" x="170" y="160" width="120" height="52" rx="4"></rect>
+    <text class="rfl__label rfl__label--acc" x="230" y="181" text-anchor="middle">WORKER</text>
+    <text class="rfl__sub" x="230" y="197" text-anchor="middle">/relay/* only</text>
+
+    <rect class="rfl__box rfl__box--acc" x="330" y="160" width="76" height="52" rx="4"></rect>
+    <text class="rfl__label rfl__label--acc" x="368" y="181" text-anchor="middle">POSTHOG</text>
+    <text class="rfl__sub" x="368" y="197" text-anchor="middle">allowlisted</text>
+
+    <line class="rfl__lane rfl__lane--mut" x1="110" y1="50" x2="166" y2="50" marker-end="url(#rfl-arr-mut)"></line>
+    <line class="rfl__lane rfl__lane--acc" x1="110" y1="186" x2="166" y2="186" marker-end="url(#rfl-arr-acc)"></line>
+    <line class="rfl__lane rfl__lane--acc" x1="290" y1="186" x2="326" y2="186" marker-end="url(#rfl-arr-acc)"></line>
+
+    <text class="rfl__note" x="14" y="224" text-anchor="start">the filter list only ever sees meese.rs</text>
+  </svg>
+</div>
+
+<style>
+  .rfl {
+    position: relative;
+    margin: var(--space-7) 0;
+    padding: var(--space-6);
+    background: var(--surface-1);
+    border: var(--border-hair) solid var(--line-1);
+    border-radius: var(--radius-md);
+  }
+  .rfl__svg {
+    width: 100%;
+    height: auto;
+    background: var(--surface-inset);
+    border-radius: var(--radius-sm);
+  }
+  .rfl__box {
+    fill: var(--surface-1);
+    stroke: var(--line-3);
+    stroke-width: 1;
+  }
+  .rfl__box--mut {
+    stroke: var(--line-2);
+  }
+  .rfl__box--acc {
+    stroke: var(--accent);
+  }
+  .rfl__label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    fill: var(--ink-1);
+  }
+  .rfl__label--mut {
+    fill: var(--ink-2);
+  }
+  .rfl__label--acc {
+    fill: var(--accent-bright);
+  }
+  .rfl__sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    fill: var(--ink-3);
+  }
+  .rfl__lane {
+    stroke-width: 1.5;
+  }
+  .rfl__lane--mut {
+    stroke: var(--line-3);
+  }
+  .rfl__lane--acc {
+    stroke: var(--accent);
+  }
+  .rfl__head--mut {
+    fill: var(--line-3);
+  }
+  .rfl__head--acc {
+    fill: var(--accent);
+  }
+  .rfl__note {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    fill: var(--ink-3);
+  }
+</style>

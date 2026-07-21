@@ -1,0 +1,155 @@
+---
+title: "Analytics for readers who block analytics"
+description:
+  "Pageviews are arrivals, not reads. Wiring PostHog through a same-domain Worker proxy on a static
+  site, a custom read-completion event, and the headless-browser gotcha that ate a debugging
+  session."
+date: 2026-07-21
+type: devlog
+topics:
+  - static-sites
+  - publishing
+  - analytics
+tags:
+  - posthog
+  - cloudflare-workers
+  - adblock
+draft: true
+related:
+  - slug: review-claude-code
+    reason: "The agent that built the proxy, the beacon, and the dashboard under direction."
+---
+
+The spec for this site lists "analytics proxying" under non-goals. That rule was my own, and this
+week I deleted it. Until now the site had zero visibility. I could not tell whether a post got read
+by twelve people or two hundred, and I had no way to know if anyone made it past the intro.
+Cloudflare's free zone analytics counts raw requests, which on a small site mostly means bots. If I
+am going to keep writing here, I want the boring truth: which posts get opened, where readers come
+from, and how far down they get.
+
+## The audience is the constraint
+
+People who read a site like this run adblockers, and the filter lists behind
+[uBlock Origin](https://ublockorigin.com/) and friends (the crowd-maintained rules that decide what
+gets stopped) treat known analytics domains as radioactive. A stock [PostHog](https://posthog.com)
+install would silently lose the exact readers I care about. The fix is first-party ingestion: serve
+the SDK and receive events on your own domain, then forward upstream from the server side, where no
+filter list can see the hostname.
+
+The last time I needed this it lived in an nginx config on another project. meese.rs has no nginx,
+no server at all; it deploys as static assets on
+[Cloudflare Workers](https://workers.cloudflare.com/). The platform handles the no-server problem
+cleanly: point `main` at a Worker script and scope it with `run_worker_first`, and only the proxy
+path ever invokes the Worker. Every other request is served straight from the edge cache, exactly as
+before.
+
+```jsonc
+// wrangler.jsonc
+"main": "worker/index.ts",
+"assets": {
+  "directory": "./dist",
+  "binding": "ASSETS",
+  "run_worker_first": ["/relay/*"]
+}
+```
+
+<RelayFlow />
+
+The path is `/relay`, deliberately not `/posthog` or `/ingest`. Filter lists match on path
+heuristics too, and naming your analytics endpoint "analytics" is volunteering to be blocked.
+
+## An open proxy is a liability
+
+My first version of the Worker passed anything under `/relay/*` through to PostHog. The code review
+pass flagged it immediately: that is an unauthenticated relay to a third-party API, running on my
+Workers quota, with the request body under the caller's control. The hardened version forwards only
+the endpoints [posthog-js](https://github.com/PostHog/posthog-js) speaks: `/e`, `/i/v0/e`, `/flags`,
+`/decide`, `/array`, and a GET-only `/static`. Bodies cap at 1MB, headers are copied from an
+allowlist instead of wholesale, and `Set-Cookie` gets stripped in both directions. A proxy should
+forward the protocol it exists for and nothing else.
+
+The Worker also edge-caches the SDK bundle, about 220KB of JavaScript, so repeat pageviews skip the
+round trip to PostHog. Only clean 200s are stored; a cached upstream error would hand every reader a
+broken SDK until the entry expired. One smoke test kept returning 405 on that bundle until I
+remembered that `curl -I` sends a HEAD request, which the GET-only static path rejects. Browsers
+never HEAD a script tag, so the restriction is free; the confusion was not.
+
+The ingest token ships in the page source, which looks alarming and is by design. PostHog's client
+keys are write-only, so the worst a stranger can do with mine is send fake events into a dataset
+only I can read. The endpoint allowlist and the body cap keep the Worker from amplifying that into a
+real cost.
+
+## Reads, not pageviews
+
+A pageview records an arrival. The event I wanted is a read: 60% scroll depth plus thirty seconds on
+the page, fired once per pageload from a small script on the post and review layouts. A flick-scroll
+to the bottom does not stay long enough, and a tab parked overnight never scrolls, so the count
+means something.
+
+The surprise was how much comes free. With `capture_pageleave` on, posthog-js already records how
+far every visitor scrolled on every pageview, delivered on the next event as
+`$prev_pageview_max_content_percentage` and its siblings. One SQL query turns those properties into
+average read depth per post. The custom event yields a clean conversion rate to trend, and the
+built-in properties carry the full distribution. Together they answer the question I opened with:
+which posts hold readers, and which ones bleed them at the halfway mark.
+
+| Event          | Fires                     | What it answers                |
+| -------------- | ------------------------- | ------------------------------ |
+| `$pageview`    | every page load           | arrivals, referrers, geography |
+| `$pageleave`   | leaving a page            | time on page, how far they got |
+| `$web_vitals`  | once the page settles     | real-user LCP, CLS, INP        |
+| `article_read` | 60% depth plus 30 seconds | whether anyone read the thing  |
+
+## The part that ate the session
+
+Verification is where things went sideways. Every server-side check passed: the SDK proxied through
+`/relay` with the right content type, a bogus event POST came back with PostHog's 400, and the
+blocked paths 404'd. Then I loaded the site in a scripted browser and watched nothing happen.
+`posthog.__loaded` was `true`. `capture()` returned `undefined`. Nothing went out over the network,
+and the SDK's own debug mode had no complaints. I wired a `before_send` hook (the SDK's
+intercept-every-event callback) to record each event; it saw exactly zero.
+
+I chased my own SDK loader first, then a leftover opt-out flag from an earlier test, then free-tier
+quota limits, before looking at the obvious thing: the user agent. The scripted browser was headless
+Chrome (the no-window mode automation tools run), and posthog-js ships a user-agent blocklist that
+quietly drops every event from a headless browser. As a default it is defensible, since bot traffic
+would poison the data the library exists to collect. The failure mode is the problem. Init succeeds,
+capture no-ops, and every symptom points at your own code. One log line in the SDK would have turned
+a debugging session into a minute.
+
+<Callout type="tip" title="Testing analytics in a headless browser">
+  posthog-js drops headless traffic on purpose, so automated tests need `opt_out_useragent_filter:
+  true` in the init config. Pair it with a `before_send` hook that returns `null` and the test can
+  watch every event without a single one reaching the real project.
+</Callout>
+
+## Not counting myself
+
+The first data to arrive was me: one visitor, twenty events, minutes after the deploy. On a site
+this size the author is the biggest traffic source, so filtering myself out is not optional. Three
+layers handle it. The analytics script only initializes on the production hostname, so localhost and
+preview builds never report. Visiting `/?analytics=off` sets a localStorage flag so that browser
+never loads it again; that covers my phone, where there is no devtools console to opt out from.
+PostHog's internal-user filters exclude what I had already recorded before the flag existed.
+
+## The dashboard is not the interface
+
+PostHog's built-in web analytics answers the standard questions, and a custom dashboard carries the
+writing-specific ones: visitors, top pages, referrers, a country map, reads, read-through rate, and
+average depth per post. It was created through the API rather than clicked together, and its
+definitions are committed to the repo as JSON, so the hosted copy is reproducible instead of
+precious.
+
+<Figure
+  src="/images/posts/analytics-for-readers-who-block-analytics/dashboard.png"
+  alt="PostHog dashboard with seven tiles: visitors and pageviews, read-through rate, articles read, referrer domains, average read depth per post, readers by country, and top pages."
+  kind="chart"
+  caption="The dashboard, two days after deploy. The y-axis tops out at 2, which is the honest part."
+/>
+
+The part I like more is that the same data is queryable from the editor. PostHog exposes an MCP
+server (the protocol that hands coding agents tools), which turns "read-through rate by post for the
+last thirty days" into a sentence typed at an agent instead of a filter safari through a web UI.
+
+The spec's non-goal list is one line shorter, and the first honest number I get back will be how few
+people read this post about it.
