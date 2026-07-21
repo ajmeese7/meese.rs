@@ -1,6 +1,7 @@
 // @ts-check
 import { readdirSync, readFileSync } from "node:fs";
 import { defineConfig, fontProviders } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 
@@ -110,11 +111,17 @@ export default defineConfig({
       fallbacks: ["ui-monospace", "SF Mono", "Cascadia Code", "Menlo", "monospace"],
     },
   ],
+  // Plugins live on the processor, not on `mdx({...})`: passing them to the
+  // integration is deprecated and slated for removal in the next Astro major.
+  // `extendMarkdownConfig` defaults to true, so MDX inherits this pipeline.
+  markdown: {
+    processor: unified({ rehypePlugins: [[rehypeStripDraftLinks, draftSlugs]] }),
+  },
   // Drafts are excluded from the build via the content query layer (see
   // src/utils/posts.ts); sitemap mirrors that by filtering dev-only routes and
   // any unlisted posts.
   integrations: [
-    mdx({ rehypePlugins: [[rehypeStripDraftLinks, draftSlugs]] }),
+    mdx(),
     sitemap({
       filter: (page) =>
         !page.includes("/search") &&

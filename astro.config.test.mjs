@@ -1,8 +1,8 @@
-// Self-check for the draft-link rehype pass in astro.config.mjs.
-// Run: node astro.config.test.mjs  (NODE_ENV defaults to non-prod, so the
-// config's own draftSlugs scan stays empty; we pass an explicit set here.)
+// Self-check for the draft-link rehype pass in astro.config.mjs. Runs as the
+// first half of `pnpm test`. (NODE_ENV defaults to non-prod, so the config's
+// own draftSlugs scan stays empty; we pass an explicit set here.)
 import assert from "node:assert/strict";
-import { rehypeStripDraftLinks } from "./astro.config.mjs";
+import config, { rehypeStripDraftLinks } from "./astro.config.mjs";
 
 const link = (href, text) => ({
   type: "element",
@@ -45,3 +45,18 @@ const para = tree.children[0];
 assert.ok(para.children.some((c) => c.type === "text" && c.value === "the draft"));
 
 console.log("ok: draft links unwrapped, others preserved");
+
+// The pass only runs if it's actually mounted on the processor. Astro's next
+// major drops `rehypePlugins` on `mdx({...})` silently, and a config that
+// stopped applying this would ship live links to unbuilt drafts rather than
+// fail loudly, so assert the wiring and not just the walk.
+const processor = config.markdown?.processor;
+assert.equal(processor?.name, "unified", "markdown.processor must be unified()");
+assert.ok(
+  processor.options.rehypePlugins.some(
+    (entry) => (Array.isArray(entry) ? entry[0] : entry) === rehypeStripDraftLinks,
+  ),
+  "rehypeStripDraftLinks is not mounted on markdown.processor",
+);
+
+console.log("ok: draft-link pass is mounted on markdown.processor");
