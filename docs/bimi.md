@@ -19,7 +19,7 @@ The certificate is the only thing gating Gmail. If that ever looks worth four fi
 
 Verified 2026-07-21:
 
-- `_dmarc.meese.rs` is `v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;`. BIMI requires DMARC at enforcement (`p=quarantine` or `p=reject`), and this was already there, so no monitoring window was needed.
+- `_dmarc.meese.rs` is `v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;`. BIMI requires DMARC at enforcement, meaning `p=quarantine` or `p=reject`.
 - Sending domain is `mail.meese.rs` (From: `posts@mail.meese.rs`). DKIM is published at `resend._domainkey.mail.meese.rs`.
 - There is no explicit `_dmarc.mail.meese.rs`. The subdomain inherits `sp=reject` from the org domain, which satisfies BIMI. An explicit record is optional and only worth adding if a validator complains.
 - The BIMI record is live at `default._bimi.mail.meese.rs`.
