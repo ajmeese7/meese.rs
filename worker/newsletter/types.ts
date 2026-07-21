@@ -13,10 +13,18 @@ export interface D1Database {
   batch(statements: D1PreparedStatement[]): Promise<unknown[]>;
 }
 
+// Workers rate limiting binding. Per-colo and eventually consistent by design,
+// which suits us: it exists to blunt abuse, not to meter anything.
+export interface RateLimiter {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 export interface NewsletterEnv {
   DB: D1Database;
-  // Secrets / vars (see docs/newsletter-setup.md). Optional so the Worker degrades
-  // safely in local dev: without a Resend key, emails are logged and skipped.
+  // Secrets / vars / bindings (see docs/newsletter-setup.md). All optional so the
+  // Worker degrades safely in local dev: without a Resend key emails are logged
+  // and skipped, and without the limiter subscribe is simply unthrottled.
+  SUBSCRIBE_LIMIT?: RateLimiter;
   RESEND_API_KEY?: string;
   NEWSLETTER_FROM?: string;
   SITE_URL?: string;
@@ -32,10 +40,17 @@ export interface Subscriber {
   unsubscribe_token: string;
   created_at: string;
   confirmed_at: string | null;
+  // When this address was last emailed a confirmation link. Throttles resends so
+  // a repeated submit can't be aimed at someone else's inbox.
+  confirm_sent_at: string | null;
 }
 
 // Result the subscribe form renders. Mirrors the STATUS map in NewsletterSignup.astro.
-export type SubscribeState = "ok" | "exists" | "invalid" | "error";
+export type SubscribeState = "ok" | "exists" | "invalid" | "ratelimited" | "error";
+
+// Confirming is not unconditional: an old link must not resurrect someone who
+// has since unsubscribed.
+export type ConfirmResult = "ok" | "invalid" | "unsubscribed";
 
 // The subset of JSON Feed fields the digest needs.
 export interface FeedItem {

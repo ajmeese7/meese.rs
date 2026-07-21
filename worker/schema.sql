@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS subscribers (
   confirm_token     TEXT NOT NULL,
   unsubscribe_token TEXT NOT NULL,
   created_at        TEXT NOT NULL,
-  confirmed_at      TEXT
+  confirmed_at      TEXT,
+  confirm_sent_at   TEXT -- last confirmation email, throttles resends
 );
 
 CREATE INDEX IF NOT EXISTS idx_subscribers_status ON subscribers (status);

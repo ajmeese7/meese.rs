@@ -13,11 +13,11 @@
  *
  * See docs/newsletter-setup.md for the D1 / Resend / DNS setup.
  */
+import Reticle from "../posts/Reticle.astro";
 ---
 
 <aside class="nl reticle" aria-labelledby="nl-heading">
-  <span class="tick tl"></span><span class="tick tr"></span>
-  <span class="tick bl"></span><span class="tick br"></span>
+  <Reticle />
 
   <div class="nl__intro">
     <span class="sys-label nl__label">// subscribe</span>
@@ -172,8 +172,8 @@
 </style>
 
 <script>
-  // States mirror worker/newsletter.ts (SubscribeState). Copy also mirrors the
-  // no-JS HTML page there; keep the two in sync.
+  // States mirror SubscribeState in worker/newsletter/types.ts. Copy also mirrors
+  // SUBSCRIBE_COPY in worker/newsletter/pages.ts; keep the two in sync.
   type State = "ok" | "exists" | "invalid" | "ratelimited" | "error";
   const STATUS: Record<State, { visual: "ok" | "info" | "err"; text: string }> = {
     ok: { visual: "ok", text: "Almost there, check your inbox to confirm." },
@@ -224,8 +224,12 @@
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-Requested-With": "fetch", // tells the Worker to answer with JSON
+            // Either header makes the Worker answer with JSON. Accept is the one
+            // that matters; X-Requested-With is the belt to its suspenders, since
+            // a proxy stripping the custom header would otherwise hand this
+            // fetch() an HTML page and turn a successful signup into "error".
             Accept: "application/json",
+            "X-Requested-With": "fetch",
           },
           body,
         });

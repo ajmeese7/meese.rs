@@ -28,7 +28,21 @@
       "database_id": "edf8e7f9-d579-4275-93b7-da46da26d1e3"
     }
   ],
-  // Hourly: diff feed.json against sent posts and email new ones.
+  // Per-IP throttle on POST /newsletter/subscribe. That route is an
+  // unauthenticated "make us send an email" button, so without this anyone can
+  // burn the Resend quota and torch the sending domain's reputation. Per-colo
+  // and eventually consistent, which is fine: it blunts abuse, it isn't an
+  // accounting system. namespace_id is an arbitrary per-Worker identifier.
+  "ratelimits": [
+    {
+      "name": "SUBSCRIBE_LIMIT",
+      "namespace_id": "1001",
+      // `period` only accepts 10 or 60. Five submits a minute is far more than a
+      // human filling in one form and far less than a useful spam cannon.
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
+  // Hourly: diff feed.json against delivered posts and email whatever is owed.
   "triggers": {
     "crons": ["0 * * * *"]
   },
