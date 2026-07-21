@@ -27,11 +27,10 @@ meese.rs
 
 ## 1.5 Known Gaps
 
-The site is built and runs. Three things the rest of this spec describes are not fully in place yet:
+The site is built and runs. Two things the rest of this spec describes are not fully in place yet:
 
-* **Search filters:** only the type filter exists. Topic and tag filters are not built (§23).
-* **No test harness:** content integrity is covered by `scripts/validate-content.ts` and `astro check`; there are no unit tests (§38).
-* **CSP:** not enabled yet, pending a Cloudflare preview pass; Google Fonts is the one external origin to account for (§31).
+* **Search filters:** only the type filter is exposed in the UI. Topic and tag filters are indexed but not built (§23).
+* **CSP:** not enabled yet, pending a Cloudflare preview pass. Fonts are now self-hosted, so the remaining work is hashing the inline scripts (§31).
 
 Everything else in this document describes the shipped system.
 
@@ -128,21 +127,26 @@ Astro Content Collections (glob loader)
 Pagefind
 @astrojs/sitemap
 @astrojs/rss
-Cloudflare Pages (wrangler static-assets)
+Cloudflare Workers (wrangler static assets)
 TypeScript
 pnpm
 ```
 
 Core principles:
 
-* no required runtime server
-* no database for v0
-* no CMS for v0
+* every page is prerendered static HTML
+* no CMS
 * content lives in the repo as MDX files
-* generated pages are static HTML
 * search is generated statically from built HTML
 * backlinks and graph data are generated at build time
 * deployment happens from the public repository
+
+v0 also specified no runtime server and no database. Both have since been taken
+on, deliberately and narrowly: `worker/index.ts` fronts the static assets to
+serve the analytics relay (§47) and the newsletter (§48), and the newsletter
+stores subscribers in Cloudflare D1. Reading a post still touches neither. Any
+further move away from static-first should clear the same bar: it must be
+something that genuinely cannot be done at build time.
 
 ## 7. Repository Visibility
 
@@ -161,7 +165,7 @@ Implications:
 Production host:
 
 ```txt
-Cloudflare Pages
+Cloudflare Workers (Workers Builds)
 ```
 
 Production domain:
@@ -170,34 +174,28 @@ Production domain:
 meese.rs
 ```
 
-The site should deploy from the public repo.
+The site deploys from the public repo.
 
 ### Human input required
 
-The human owner must configure:
+Done. The owner configured domain registration / DNS, the Cloudflare account,
+the repository connection, the production branch, and the dashboard bot and
+security settings.
 
-* domain registration / DNS
-* Cloudflare account/project
-* repository connection
-* production branch
-* Cloudflare Pages build settings
-* any Cloudflare bot/security settings in the dashboard
-
-Suggested build settings:
+Build settings:
 
 ```txt
-Framework preset: Astro
 Build command: pnpm build
 Output directory: dist
 Node version: 24 (pinned via .node-version)
 Production branch: master
 ```
 
-Deployment also carries a `wrangler.jsonc` with a static-assets config so the Cloudflare deploy resolves `dist/` without going through the dashboard onboarding flow.
+`wrangler.jsonc` carries the config, so build settings live in the repo rather than the dashboard: `main` points at `worker/index.ts`, `assets.directory` at `dist/`, and `run_worker_first` lists the paths the worker handles instead of serving a file. Workers Builds is connected to the repo and deploys on merge to `master`.
 
 ## 9. Package Manager
 
-Package manager: **pnpm**, pinned to `pnpm@11.2.2` via the `packageManager` field in `package.json`. Per-project pnpm config (overrides, allowed build scripts) lives in `pnpm-workspace.yaml`, since pnpm 11 ignores the `package.json` "pnpm" field.
+Package manager: **pnpm**, pinned via the `packageManager` field in `package.json`. Per-project pnpm config (overrides, allowed build scripts) lives in `pnpm-workspace.yaml`, since pnpm 11 ignores the `package.json` "pnpm" field.
 
 ## 10. File Structure
 
@@ -211,23 +209,39 @@ meese.rs/
 ├── pnpm-workspace.yaml
 ├── tsconfig.json
 ├── .node-version
+├── vitest.config.ts
 ├── design-system/               approved visual system (handoff bundle)
 ├── docs/
 │   ├── SPEC.md                   this document
-│   └── CONTENT.md                writer reference: type/status/verdict/topic-tag
+│   ├── CONTENT.md                writer reference: type/status/verdict/topic-tag
+│   ├── ANALYTICS.md              first-party analytics via /relay (§47)
+│   ├── newsletter-setup.md       D1 + Resend + cron setup and deploy checklist (§48)
+│   ├── bimi.md                   sender logo: SVG Tiny PS asset + DNS record (§48)
+│   └── analytics/
+│       └── dashboard.json        version-controlled PostHog dashboard definition
 ├── public/
 │   ├── AGENTS.md
 │   ├── llms.txt
 │   ├── robots.txt
 │   ├── _headers
-│   ├── favicon.svg
+│   ├── favicon.svg               primary icon; .ico + apple-touch-icon are generated
+│   ├── favicon.ico
+│   ├── apple-touch-icon.png
 │   ├── logomark.svg
+│   ├── bimi-logo.svg             SVG Tiny PS sender logo (§48)
 │   └── graph.json               generated snapshot (also built live for /graph)
 ├── scripts/
 │   ├── validate-content.ts
+│   ├── validate-bimi-svg.ts      SVG Tiny PS compliance, runs in CI
 │   ├── generate-graph.ts
+│   ├── generate-icons.ts         favicon.ico + apple-touch-icon from favicon.svg
 │   └── lib/
 │       └── frontmatter.ts        shared MDX frontmatter loader (build-time)
+├── worker/
+│   ├── index.ts                  asset serving + /relay + /newsletter, cron entry
+│   ├── newsletter/               handlers · send · db · email · pages · validation
+│   └── schema.sql                D1 schema (subscribers, sent_posts)
+├── test/                         workerd test harness: env, Resend stand-in
 ├── src/
 │   ├── content.config.ts
 │   ├── assets/                   optimized images (author photo, etc.)
@@ -1291,7 +1305,7 @@ If later the owner wants stricter bot rules, adjust after launch.
 
 Do not spend significant implementation time on crawler-control logic during v0.
 
-## 31. Cloudflare Pages `_headers`
+## 31. Static asset `_headers`
 
 `/public/_headers`, a security baseline plus cache-control for the immutable build assets and the search index:
 
@@ -1309,7 +1323,7 @@ Do not spend significant implementation time on crawler-control logic during v0.
   Cache-Control: public, max-age=86400
 ```
 
-CSP is **not enabled yet**. Before it can ship, the policy has to account for three things the build relies on: the inline pre-paint theme-apply script in `<head>` (needs a hash or `'unsafe-inline'`), the Google Fonts CDN (`fonts.googleapis.com` + `fonts.gstatic.com`, until fonts are self-hosted), and the Pagefind index fetched by search (`connect-src`). A workable target once fonts are self-hosted and the inline script is hashed:
+CSP is **not enabled yet**. Before it can ship, the policy has to account for three things the build relies on: the inline pre-paint theme-apply script in `<head>` (needs a hash or `'unsafe-inline'`), the inline `@font-face` style the Astro Fonts API injects (needs `'unsafe-inline'` in `style-src`), and the Pagefind index fetched by search (`connect-src`). Fonts are self-hosted under `/_astro/fonts/`, so `font-src 'self'` covers them and there is no external font origin to allow. The PostHog loader is another inline script to hash; the SDK and its event posts go through same-origin `/relay`, so `script-src`/`connect-src 'self'` already cover them. A workable target once the inline scripts are hashed:
 
 ```txt
 /*
@@ -1476,7 +1490,7 @@ pnpm validate:content
 
 This runs in CI and at the head of `pnpm build`.
 
-> **Gap:** there is no test harness (no Vitest, no `tests/`). Content integrity is covered by this validation script plus `astro check`; there are no unit tests. Wiring up a test runner is the first thing to do if one is wanted.
+The site itself has no unit tests: it is prerendered content, and content integrity is covered by this validation script plus `astro check`. The worker is a different case, since it holds the only runtime logic, so it is tested with Vitest inside workerd against real bindings (§48). `pnpm test`. `scripts/validate-bimi-svg.ts` runs in CI too, guarding an asset whose breakage is invisible from the site (§48).
 
 ## 39. CI Requirements
 
@@ -1492,41 +1506,25 @@ build site
 verify Pagefind index was generated
 ```
 
-Shipped workflow (`.github/workflows/ci.yml`). Actions are pinned to current majors, pnpm is resolved from the `packageManager` pin (no hard-coded version), Node is 24, and the primary branch is `master`:
+Shipped workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). Actions are pinned to current majors, pnpm is resolved from the `packageManager` pin (no hard-coded version), Node is 24, and the primary branch is `master`. It runs, in order:
 
-```yaml
-name: CI
-
-on:
-  pull_request:
-  push:
-    branches:
-      - master
-      - main
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm validate:content
-      - run: pnpm check
-      - run: pnpm build
-      - name: Verify Pagefind index was generated
-        run: test -f dist/pagefind/pagefind.js
+```txt
+pnpm install --frozen-lockfile
+pnpm validate:content
+pnpm validate:bimi
+pnpm check
+pnpm test
+pnpm build
+test -f dist/pagefind/pagefind.js
 ```
 
-`pnpm build` already runs `validate:content` and `generate:graph` internally; the explicit `validate:content` step just fails faster with a clearer message before the full build.
+The workflow file is the source of truth and is deliberately not reproduced here; a copy in this document only drifts from it.
+
+`pnpm build` already runs `validate:content` and `generate:graph` internally; the explicit `validate:content` step just fails faster with a clearer message before the full build. `validate:content`, `validate:bimi`, and `check` are ordered cheapest-first so the fast failures land before the build.
 
 ## 40. Deployment Requirements
 
-Deploy from the public repository to Cloudflare Pages.
+Deploy from the public repository to Cloudflare Workers.
 
 Production branch:
 
@@ -1538,7 +1536,7 @@ A `wrangler.jsonc` with a static-assets config is committed so the Cloudflare de
 
 ### Human input required
 
-The human owner must connect the repository to Cloudflare Pages and configure the `meese.rs` domain.
+Done. The owner connected the repository to Cloudflare Workers Builds and configured the `meese.rs` domain.
 
 ## 41. Launch Checklist
 
@@ -1575,8 +1573,8 @@ Before launch (status as of 2026-06):
 [x] AGENTS.md added (root + public)
 [x] _headers added (CSP still deferred)
 [x] CI passes
-[ ] Cloudflare Pages deploy works            (owner)
-[ ] production domain points to Cloudflare Pages   (owner)
+[x] Cloudflare Workers deploy works          (owner)
+[x] production domain points to Workers      (owner)
 [~] mobile layout tested                     (built mobile-first; needs a device pass)
 [x] accessibility basics checked (skip link, focus states, graph fallback)
 [x] graph page has fallback text
@@ -1592,11 +1590,11 @@ The coding agent must ask for or wait on human input for:
 [ ] final homepage hero copy                             (placeholder shipped, owner to confirm)
 [ ] about page bio copy + author photo                   (placeholder/voice pass + owner photo; §13.5)
 [~] initial canonical topic list                         (inferred from posts; owner to finalize)
-[ ] first real posts to migrate/add                      (11 sample posts seed the build)
-[x] favicon/logo direction                               (logomark.svg + favicon.svg in place)
+[ ] first real posts to migrate/add                      (sample posts seed the build)
+[x] favicon/logo direction                               (logomark + favicon, with .ico/apple-touch generated)
 [~] graph visual style approval                          (style built; owner sign-off pending)
-[ ] Cloudflare account/project setup                     (owner)
-[ ] DNS/domain setup                                     (owner)
+[x] Cloudflare account/project setup                     (owner)
+[x] DNS/domain setup                                     (owner)
 [ ] CSP production testing                               (owner/agent; see §31)
 ```
 
@@ -1720,7 +1718,7 @@ Security headers appear in deployed preview.
 ### Milestone 7: Deploy
 
 ```txt
-Connect repo to Cloudflare Pages.
+Connect repo to Cloudflare Workers Builds.
 Configure build.
 Configure domain.
 Test production deployment.
@@ -1756,7 +1754,7 @@ Feeds and sitemap work.
 - The repository is public and safe to inspect.          held
 ```
 
-Everything except the deploy line is built. Deploy is the one owner-side step (connect the repo to Cloudflare Pages and point the domain). The one functional shortfall against this list is topic/tag search filters (§23).
+Everything here is built and deployed. The one functional shortfall against this list is topic/tag search filters (§23).
 
 ## 45. Guidance for Coding Agent
 
@@ -1787,12 +1785,12 @@ Still owner-side. Placeholders are in place, so none of these block anything:
 - Final homepage hero copy (a design-approved placeholder ships now; §13).
 - Canonical topic list (inferred from posts, with a curated hue map in
   src/utils/topics.ts; §24).
-- Which existing posts to migrate first (11 sample posts seed the build today).
+- Which existing posts to migrate first (sample posts seed the build today).
 - Final favicon/logo mark (a logomark.svg + favicon.svg are in place).
 - About page bio copy and author photo (placeholder ships; §13.5).
 ```
 
-Possible v1 work, not in scope now: topic/tag search filters (§23), graph filtering by type/topic, self-hosting fonts so a strict CSP can ship (§31), and the nav feed-consolidation reframe (collapse Latest/Guides/Notes into one `Writing` destination with on-page type filters; §12).
+Possible v1 work, not in scope now: topic/tag search filters (§23), graph filtering by type/topic, and the nav feed-consolidation reframe (collapse Latest/Guides/Notes into one `Writing` destination with on-page type filters; §12). Fonts are now self-hosted, so the CSP blocker there is cleared (§31).
 
 ## 47. Analytics
 
@@ -1803,3 +1801,17 @@ PostHog (Cloud US), proxied first-party. Originally a §2 non-goal ("analytics p
 * Captured: `$pageview`, `$pageleave` (includes scroll depth), `$web_vitals`, and a custom `article_read` event fired at 60% scroll depth plus 30s dwell (`src/components/posts/ReadTracker.astro`).
 * Anonymous-only: no `identify`, no session recording, no surveys, no autocapture. The PostHog project is currently shared with another app, so insights must filter on `$host = meese.rs`.
 * Operational details, smoke tests, and the migration path to a dedicated project: `docs/ANALYTICS.md`.
+
+## 48. Newsletter
+
+Self-owned email list, no third-party subscription platform. Originally out of scope under the §6 "no database for v0" principle, added by owner decision in July 2026 to let readers follow the site without social media.
+
+* Double opt-in: `POST /newsletter/subscribe` stores a `pending` row and mails a confirmation; `/newsletter/confirm` and `/newsletter/unsubscribe` flip status. Both mutate on POST only, because mail security scanners prefetch every link in an inbound message and would otherwise confirm and unsubscribe readers on their behalf.
+* Storage is Cloudflare D1 (`worker/schema.sql`: `subscribers`, `sent_posts`). An hourly Cron Trigger diffs `/feed.json` against `sent_posts` and mails what is new; the first run seeds the back catalog so activation does not blast the archive.
+* Delivery is Resend, sending only from the `mail.meese.rs` subdomain so the root domain's reputation stays isolated. Emails carry RFC 8058 one-click unsubscribe headers.
+* The form (`src/components/layout/NewsletterSignup.astro`) is a plain HTML POST that works with JavaScript disabled; the fetch path is progressive enhancement over that baseline.
+* Abuse protection is a per-IP rate limiter plus a per-address cooldown on confirmation resends, since the endpoint is unauthenticated and makes us send mail. A honeypot field returns a no-op success.
+* No tracking pixels and no webfont requests in the email templates, so opening one reports nothing back.
+* Sender logo (BIMI) is set up on the free, certificate-less path, which reaches Yahoo/AOL and Fastmail. Gmail and Apple Mail require a paid VMC/CMC; Proton Mail does not implement BIMI and renders the site favicon instead.
+* Worker tests run inside workerd against real bindings (real D1, real rate limiter) via `@cloudflare/vitest-pool-workers`, with a local HTTP stand-in for Resend rather than a mock. `pnpm test`.
+* Operational details, local testing, and the deploy checklist: `docs/newsletter-setup.md` and `docs/bimi.md`.
