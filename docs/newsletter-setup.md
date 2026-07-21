@@ -122,12 +122,17 @@ Watch the `wrangler dev` terminal for the send log lines (`-> N/M delivered`, or
 - Resend's free tier caps sends (currently ~3,000/month, ~100/day). One post to a sub-100 list is well inside that; past ~100 subscribers, batch across the daily limit or move to a paid Resend tier. The cron records a post as sent even if some recipients fail, so a hard cap won't loop the list; failures are logged for follow-up.
 - Bot protection is a honeypot field (a filled `website` field returns a no-op success). Add Cloudflare Turnstile to the form (see the `turnstile-spin` skill) before a real launch if signup spam appears.
 - Deliverability: send only from the verified `mail.meese.rs` subdomain so the root domain's reputation is isolated. Warm up gradually.
+- Sender logo avatar (BIMI) is deferred and low priority. Gmail only shows a BIMI logo with a paid VMC or CMC certificate ($650+/year); a free BIMI setup (raise DMARC to enforcement, host an SVG Tiny PS version of the logomark, add a `default._bimi` DNS TXT record) lights up the avatar in Apple Mail / Yahoo / Fastmail but not Gmail. It is DNS/ops work, not code, and DMARC enforcement needs a monitoring window first, so it belongs in a separate task, not this one.
+
+## Troubleshooting
+
+- **Gmail hides a test email's body behind a "..." toggle.** Gmail threads messages by subject and collapses content identical to something already in the thread, so sending yourself the same post email more than once shows a "Show trimmed content" (`...`) button instead of the full body. It is Gmail deduping within a conversation, not a template bug. Real subscribers get one unique-subject email per post (and `sent_posts` blocks re-sending the same post), so they never hit it. To confirm during testing, resend with any tweaked subject line and it renders in full.
 
 ## Deploy
 
 The repo deploys through Cloudflare Workers Builds on merge to `master`, and the hourly cron starts ticking as soon as it deploys. So before merging, make sure all of these are in place, or the first cron run errors:
 
-1. The remote D1 schema is applied (`wrangler d1 execute meese-rs-newsletter --remote --file worker/schema.sql`). Without the tables, the cron hits a missing-table error every hour.
+1. The remote D1 schema is applied (use the `--remote --command` form from step 1; `--remote --file` hits the import auth bug). Without the tables, the cron hits a missing-table error every hour.
 2. The `RESEND_API_KEY` secret is set (`wrangler secret put RESEND_API_KEY`, or the Cloudflare dashboard under the Worker's Settings). Without it, subscribe and the cron run but every send is skipped.
 3. The `mail.meese.rs` DNS records (SPF/DKIM/DMARC) are verified in Resend, so mail actually delivers.
 
