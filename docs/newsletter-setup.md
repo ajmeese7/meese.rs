@@ -6,15 +6,18 @@ Self-owned email newsletter, no third-party subscription platform. Readers subsc
 
 - `src/components/layout/NewsletterSignup.astro`, the form + progressive-enhancement script, rendered at the end of `PostLayout`.
 - `worker/newsletter/`, the module: `handlers.ts` (subscribe/confirm/unsubscribe), `send.ts` (cron digest), `db.ts` (D1), `email.ts` (Resend + templates), `pages.ts` (landing pages), `validation.ts` (pure helpers).
-- `worker/newsletter.test.ts`, unit tests for the pure helpers (`pnpm exec tsx --test worker/newsletter.test.ts`).
+- `worker/newsletter/*.test.ts`, the tests. They run inside workerd against real bindings (real D1, real rate limiter) via `@cloudflare/vitest-pool-workers`, so they exercise the runtime production uses. `pnpm test`.
+- `test/resend-stub.ts`, a real local HTTP server standing in for Resend and for `feed.json` during tests, plus `test/env.ts` for schema setup and an env that can't reach the live API.
 - `worker/schema.sql`, the D1 schema.
-- `wrangler.jsonc`, D1 binding, hourly cron, `/newsletter/*` routes, and `SITE_URL` / `NEWSLETTER_FROM` vars.
+- `wrangler.jsonc`, D1 binding, subscribe rate limiter, hourly cron, `/newsletter/*` routes, and `SITE_URL` / `NEWSLETTER_FROM` vars.
 
 ## Routes
 
-- `POST /newsletter/subscribe`, form target. Stores a `pending` row, sends a confirmation email. Returns JSON `{ state }` to fetch callers, an HTML page to no-JS posts.
-- `GET /newsletter/confirm?token=`, from the confirmation email. Flips the row to `confirmed`.
-- `GET|POST /newsletter/unsubscribe?token=`, from every post email (POST is the RFC 8058 one-click path). Flips the row to `unsubscribed`.
+- `POST /newsletter/subscribe`, form target. Stores a `pending` row, sends a confirmation email. Returns JSON `{ state }` to fetch callers; a no-JS submit gets a 303 back to the originating post carrying `?subscribe=<state>`, which the form's own script renders inline.
+- `GET|POST /newsletter/confirm?token=`, from the confirmation email. GET renders a one-button form, POST flips the row to `confirmed`.
+- `GET|POST /newsletter/unsubscribe?token=`, from every post email. GET renders a one-button form, POST flips the row to `unsubscribed`. The RFC 8058 one-click header points here and already POSTs, so mail clients act directly.
+
+The GET/POST split on the last two is deliberate. Mail security scanners (Outlook Safe Links, Proofpoint, Barracuda) prefetch every link in an inbound message, so anything that mutates state on GET fires without the reader clicking. That means silently unsubscribed readers, and confirmations recorded against consent nobody gave.
 
 ## One-time setup
 
@@ -45,11 +48,23 @@ npx wrangler d1 execute meese-rs-newsletter --remote --command "$(grep -v '^[[:s
 
 If you would rather keep `--file`: create a Cloudflare API token (dashboard, "Edit Cloudflare Workers" template, which includes D1), then run the `--remote --file` command with `CLOUDFLARE_API_TOKEN` set in the environment. Token auth does not hit the import bug.
 
+#### Migrating an existing database
+
+`CREATE TABLE IF NOT EXISTS` does nothing to a table that already exists, so a database created before the delivery-tracking change needs the columns added by hand. Run this once, against local and remote:
+
+```
+npx wrangler d1 execute meese-rs-newsletter --local --command "ALTER TABLE subscribers ADD COLUMN confirm_sent_at TEXT; ALTER TABLE sent_posts ADD COLUMN completed_at TEXT; ALTER TABLE sent_posts ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0; UPDATE sent_posts SET completed_at = sent_at WHERE completed_at IS NULL; CREATE TABLE IF NOT EXISTS deliveries (guid TEXT NOT NULL, subscriber_id INTEGER NOT NULL, delivered_at TEXT NOT NULL, PRIMARY KEY (guid, subscriber_id));"
+```
+
+The `UPDATE` matters: it marks everything already sent as complete. Without it, every post in the table looks like it still owes an email and the next cron run mails the whole archive to everyone.
+
+If the database has no rows worth keeping, dropping the tables and re-running `schema.sql` is simpler than migrating.
+
 ### 2. Set up Resend
 
 Create a Resend account, then under Domains add and verify `mail.meese.rs` (Resend gives you the SPF, DKIM, and DMARC records; add them in Cloudflare DNS). The `NEWSLETTER_FROM` var in `wrangler.jsonc` must use an address on that verified domain.
 
-Then create the API key under API Keys. The Worker only calls `POST /emails`, so choose:
+Then create the API key under API Keys. The Worker only calls `POST /emails` and `POST /emails/batch`, so choose:
 
 - Permission: **Sending access** (not Full access). This key can only send email, not read or manage your account, so a leak can't do much.
 - Domain: restrict it to **mail.meese.rs**. The domain restriction option only appears when Sending access is selected.
@@ -71,7 +86,17 @@ Without a key the Worker logs and skips every send, so the whole flow can be exe
 
 ### 3. First cron run seeds the back catalog
 
-The first time the cron runs against an empty `sent_posts` table, it records every current post as "sent" and emails nothing. This is deliberate: switching the newsletter on never blasts the archive. Only posts that appear after that first run trigger emails.
+The first time the cron runs against an empty `sent_posts` table, it records every current post as delivered and emails nothing. This is deliberate: switching the newsletter on never blasts the archive. Only posts that appear after that first run trigger emails.
+
+## How delivery works
+
+The cron diffs `feed.json` against `sent_posts` and mails whatever is owed. Three pieces make that safe to retry:
+
+- **Batch sends.** Recipients go out through Resend's `POST /emails/batch`, up to 100 per request. A per-recipient loop would trip Resend's default 2-requests-per-second limit and burn one Worker subrequest per subscriber.
+- **Per-recipient delivery rows.** Every successful send writes a `deliveries` row. A retry only targets subscribers without one, so a partial failure can be re-run without anyone getting the same post twice.
+- **An attempt cap.** A post whose recipients still aren't all delivered is retried on the next hourly tick, up to three attempts, then abandoned with a logged error. Without the cap a permanently failing post would be retried forever; without the retry, a transient blip would silently cost those subscribers the post entirely.
+
+A post is only marked `completed_at` once every confirmed subscriber has a delivery row (or it hit the cap). Subscribers who confirm later do not receive completed posts, which is the same "no back catalog" rule as the seed run.
 
 ## Local testing
 
@@ -101,13 +126,13 @@ Now the store query shows that row (it was empty before only because nobody had 
 npx wrangler d1 execute meese-rs-newsletter --local --command "SELECT email, status, confirm_token FROM subscribers"
 ```
 
-Confirm the subscription with that token (status flips to `confirmed`):
+Confirm the subscription with that token. It must be a POST; a GET only renders the confirmation button, because link scanners follow GETs:
 
 ```
-curl "http://localhost:8788/newsletter/confirm?token=PASTE_CONFIRM_TOKEN"
+curl -X POST "http://localhost:8788/newsletter/confirm?token=PASTE_CONFIRM_TOKEN"
 ```
 
-Fire the cron by hand (`--test-scheduled` exposes `/__scheduled`). The first run seeds every existing post as sent and emails nothing; to simulate a new post, delete one row from `sent_posts` and run it again:
+Fire the cron by hand (`--test-scheduled` exposes `/__scheduled`). The first run seeds every existing post as delivered and emails nothing; to simulate a new post, delete one row from `sent_posts` and run it again:
 
 ```
 curl http://localhost:8788/__scheduled
@@ -115,12 +140,21 @@ npx wrangler d1 execute meese-rs-newsletter --local --command "DELETE FROM sent_
 curl http://localhost:8788/__scheduled
 ```
 
-Watch the `wrangler dev` terminal for the send log lines (`-> N/M delivered`, or `RESEND_API_KEY unset, skipped` without a key).
+Watch the `wrangler dev` terminal for the send log lines (`-> N delivered`, or `RESEND_API_KEY unset, skipped` without a key).
+
+Note that without a key every send "fails", so a post burns its three attempts across three `/__scheduled` calls and is then abandoned. That is the retry path working, not a bug.
+
+The automated suite covers all of this without a dev server, against real D1 and a local Resend stand-in:
+
+```
+pnpm test
+```
 
 ## Limits and hardening
 
-- Resend's free tier caps sends (currently ~3,000/month, ~100/day). One post to a sub-100 list is well inside that; past ~100 subscribers, batch across the daily limit or move to a paid Resend tier. The cron records a post as sent even if some recipients fail, so a hard cap won't loop the list; failures are logged for follow-up.
-- Bot protection is a honeypot field (a filled `website` field returns a no-op success). Add Cloudflare Turnstile to the form (see the `turnstile-spin` skill) before a real launch if signup spam appears.
+- Resend's free tier caps sends (currently ~3,000/month, ~100/day). One post to a sub-100 list is well inside that; past ~100 subscribers, move to a paid Resend tier. Hitting the cap mid-post is a failed batch, so it retries on the next tick and is abandoned after three, with the shortfall logged.
+- Abuse protection on subscribe is two layers, because it is an unauthenticated endpoint that makes us send mail. A per-IP rate limiter (`SUBSCRIBE_LIMIT` in `wrangler.jsonc`, 5 per minute) blunts a flood, and a five-minute per-address cooldown on confirmation resends stops someone aiming repeat submits at a third party's inbox from rotating IPs. A filled `website` honeypot field returns a no-op success. If real spam still gets through, add Cloudflare Turnstile to the form (see the `turnstile-spin` skill).
+- The rate limiter is per-Cloudflare-location and eventually consistent by design, so treat its limit as approximate. It exists to blunt abuse, not to meter anything.
 - Deliverability: send only from the verified `mail.meese.rs` subdomain so the root domain's reputation is isolated. Warm up gradually.
 - Sender logo avatar (BIMI) is deferred and low priority. Gmail only shows a BIMI logo with a paid VMC or CMC certificate ($650+/year); a free BIMI setup (raise DMARC to enforcement, host an SVG Tiny PS version of the logomark, add a `default._bimi` DNS TXT record) lights up the avatar in Apple Mail / Yahoo / Fastmail but not Gmail. It is DNS/ops work, not code, and DMARC enforcement needs a monitoring window first, so it belongs in a separate task, not this one.
 
@@ -132,7 +166,7 @@ Watch the `wrangler dev` terminal for the send log lines (`-> N/M delivered`, or
 
 The repo deploys through Cloudflare Workers Builds on merge to `master`, and the hourly cron starts ticking as soon as it deploys. So before merging, make sure all of these are in place, or the first cron run errors:
 
-1. The remote D1 schema is applied (use the `--remote --command` form from step 1; `--remote --file` hits the import auth bug). Without the tables, the cron hits a missing-table error every hour.
+1. The remote D1 schema is applied (use the `--remote --command` form from step 1; `--remote --file` hits the import auth bug). Without the tables, the cron hits a missing-table error every hour. If the remote database was created before the delivery-tracking change, run the migration in "Migrating an existing database" instead, including its `UPDATE`, or the next cron run mails the whole archive to every subscriber.
 2. The `RESEND_API_KEY` secret is set (`wrangler secret put RESEND_API_KEY`, or the Cloudflare dashboard under the Worker's Settings). Without it, subscribe and the cron run but every send is skipped.
 3. The `mail.meese.rs` DNS records (SPF/DKIM/DMARC) are verified in Resend, so mail actually delivers.
 
