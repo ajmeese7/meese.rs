@@ -11,6 +11,7 @@ public/pagefind/
 # env / local
 .env
 .env.production
+.dev.vars
 .DS_Store
 *.log
 

@@ -10,6 +10,7 @@
     "build": "pnpm format:check && pnpm validate:content && pnpm generate:graph && astro build && pagefind --site dist",
     "preview": "astro preview",
     "check": "astro check",
+    "test": "vitest run",
     "validate:content": "tsx scripts/validate-content.ts",
     "generate:graph": "tsx scripts/generate-graph.ts",
     "format": "prettier --write \"src/content/posts/**/*.{md,mdx}\"",
@@ -26,10 +27,12 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@cloudflare/vitest-pool-workers": "^0.18.6",
     "pagefind": "^1.5.2",
     "prettier": "^3.8.4",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.10",
     "wrangler": "^4.100.0",
     "yaml": "^2.9.0"
   }

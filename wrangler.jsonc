@@ -2,18 +2,53 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "meese-rs",
   "compatibility_date": "2026-06-09",
-  // The Worker only exists to proxy /relay/* to PostHog (see worker/index.ts).
-  // Requests matching a static asset are still served directly from the edge
-  // and never invoke the Worker; everything else falls through to it, and the
-  // Worker hands non-/relay paths back to ASSETS, preserving 404 behavior.
+  // The Worker proxies /relay/* to PostHog and runs the self-owned newsletter
+  // (/newsletter/* routes + an hourly cron; see worker/index.ts and
+  // docs/newsletter-setup.md). Requests matching a static asset are still served
+  // directly from the edge and never invoke the Worker; everything else falls
+  // through to it, and the Worker hands other paths back to ASSETS, preserving
+  // 404 behavior.
   "main": "worker/index.ts",
   // `pnpm build` produces `dist/` (astro build + pagefind), uploaded as assets.
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/relay/*"]
+    "run_worker_first": ["/relay/*", "/newsletter/*"]
     // No custom 404 page exists yet (no src/pages/404.astro), so leave
     // not_found_handling at the default. Add "not_found_handling": "404-page"
     // once a 404 route is in place.
+  },
+  // Newsletter subscriber + sent-post store (created via `wrangler d1 create
+  // meese-rs-newsletter`). The binding MUST stay "DB": the Worker code reads
+  // env.DB. database_id is a resource identifier, not a secret.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "meese-rs-newsletter",
+      "database_id": "edf8e7f9-d579-4275-93b7-da46da26d1e3"
+    }
+  ],
+  // Per-IP throttle on POST /newsletter/subscribe. That route is an
+  // unauthenticated "make us send an email" button, so without this anyone can
+  // burn the Resend quota and torch the sending domain's reputation. Per-colo
+  // and eventually consistent, which is fine: it blunts abuse, it isn't an
+  // accounting system. namespace_id is an arbitrary per-Worker identifier.
+  "ratelimits": [
+    {
+      "name": "SUBSCRIBE_LIMIT",
+      "namespace_id": "1001",
+      // `period` only accepts 10 or 60. Five submits a minute is far more than a
+      // human filling in one form and far less than a useful spam cannon.
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
+  // Hourly: diff feed.json against delivered posts and email whatever is owed.
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+  // Non-secret config. RESEND_API_KEY is a secret (wrangler secret put), not here.
+  "vars": {
+    "SITE_URL": "https://meese.rs",
+    "NEWSLETTER_FROM": "meese.rs <posts@mail.meese.rs>"
   }
 }
