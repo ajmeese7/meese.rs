@@ -1,19 +1,28 @@
 # BIMI sender logo
 
-BIMI (Brand Indicators for Message Identification) puts the site logomark in the sender avatar slot of a reader's inbox instead of a generic letter tile. This is the free path: no certificate, no recurring cost. It is one DNS TXT record plus one static asset.
+BIMI (Brand Indicators for Message Identification) puts the site logomark in the sender avatar slot instead of a generic letter tile, in the inboxes that support it. This is the free path: no certificate, no recurring cost, one DNS TXT record plus one static asset. Which inboxes that actually covers is narrower than it sounds, so read the table before assuming a client will show it.
 
 ## What it does and does not buy
 
-| Client | Shows the logo? |
+| Client | Shows the logo without a certificate? |
 | --- | --- |
-| Apple Mail (iOS 16+/macOS 13+) | Yes |
-| Yahoo / AOL | Yes |
-| Fastmail | Yes |
-| Gmail | **No.** Requires a paid VMC (~$1,350-1,750/yr) or CMC (~$650-1,100/yr) |
+| Yahoo / AOL | Yes, the most permissive of the participating providers |
+| Fastmail | Yes, subject to their own sender reputation checks |
+| Apple Mail | **No.** Requires a BIMI Evidence Document, in practice a VMC |
+| Gmail | **No.** Requires a VMC (~$1,350-1,750/yr) or CMC (~$650-1,100/yr) |
+| Proton Mail | **N/A.** Does not implement BIMI at all, see below |
 
-Gmail is the biggest slice of any consumer list, so treat this as a polish item, not a deliverability fix. It does not affect whether mail lands in the inbox; DMARC/DKIM/SPF do that, and those are already in place (see `newsletter-setup.md`).
+Watch out for a documentation trap on Apple: their [consumer support page](https://support.apple.com/en-us/108340) says a VMC is "not strictly required", which reads like self-asserted BIMI works. Their [sender-facing developer page](https://developer.apple.com/support/bimi) is the one that binds, and it lists "Verified a BIMI Evidence Document (for example, a VMC trusted by the mail provider)" as a required step. Take the developer page.
 
-The certificate is the only thing gating Gmail. If that ever looks worth four figures a year, nothing here has to change except adding `a=https://.../vmc.pem` to the record.
+So the free path buys Yahoo/AOL and Fastmail. Both certificate-gated clients (Gmail, Apple Mail) need the same thing, and adding it later is a one-value change: put the certificate URL in `a=`. Nothing else here has to move.
+
+Treat this as polish, not deliverability. It has no bearing on whether mail reaches the inbox; DMARC/DKIM/SPF do that, and those are already in place (see `newsletter-setup.md`).
+
+### Proton Mail
+
+Proton does not participate in BIMI. It has its own [sender images](https://proton.me/support/sender-images) feature: Proton's servers fetch a favicon from the sender's website, cache it, and show that next to the message. It is on by default, and because Proton fetches it server-side rather than having the client load a remote asset, it is not an open-tracking vector.
+
+The practical consequence is that Proton renders whatever the site serves as a favicon, so `public/favicon.svg` (and any raster fallback) is what matters there, not this file.
 
 ## Current state
 
@@ -64,7 +73,7 @@ The asset must be **live** before the record does anything useful. Consumers fet
 1. Merge to `master`. Workers Builds deploys automatically.
 2. Confirm `curl -sSI https://meese.rs/bimi-logo.svg` returns `200` and `content-type: image/svg+xml`.
 3. Only then does the DNS record matter. (It is already published, so in practice the deploy is the switch that turns this on.)
-4. Validate, then send a real test to an Apple Mail, Yahoo, or Fastmail address.
+4. Validate, then send a real test to a Yahoo or Fastmail address. Those are the two clients the free path reaches, so testing anywhere else proves nothing.
 
 ## Validating
 
@@ -77,7 +86,8 @@ For the record itself, or for a second opinion on the SVG:
 
 ## Troubleshooting
 
-- **Logo does not appear in Gmail.** Expected. Gmail requires a paid VMC/CMC. Not a misconfiguration.
-- **Logo does not appear anywhere.** Check in this order: the asset returns 200 over HTTPS with `image/svg+xml`; DMARC is at `p=quarantine` or better on the org domain; the message actually passed DKIM alignment; the record is on the From subdomain (`mail.meese.rs`) rather than the root.
+- **Logo does not appear in Gmail or Apple Mail.** Expected on the free path. Both require a paid certificate. Not a misconfiguration.
+- **Logo does not appear in Proton Mail.** Expected, and it never will. Proton does not implement BIMI; it shows the site's favicon instead.
+- **Logo does not appear in Yahoo or Fastmail.** These are the two that should work, so this is the case worth debugging. Check in this order: the asset returns 200 over HTTPS with `image/svg+xml`; DMARC is at `p=quarantine` or better on the org domain; the message actually passed DKIM alignment; the record is on the From subdomain (`mail.meese.rs`) rather than the root.
 - **Logo still missing right after deploy.** Consumers cache both the DNS record and a failed logo fetch. Give it a TTL cycle before assuming something is broken.
 - **A validator rejects the SVG after an edit.** Almost always a design tool re-adding `x`/`y` to the root, a `style=` attribute, or `role`/`aria-*`. Re-check against the constraint list above.
