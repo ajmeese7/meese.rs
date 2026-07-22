@@ -22,6 +22,12 @@ graph. Voice: "field notes from a builder."
 - `/graph.json` (nodes + edges)
 - `/llms.txt`
 
+## Source
+
+The site is open source at `https://github.com/ajmeese7/meese.rs`. Post bodies
+live in `src/content/posts/<slug>.mdx`, so the MDX behind any `/posts/<slug>`
+page is readable there.
+
 ## Use
 
 Fine for human reading, normal indexing, and local assistant use (navigating,
