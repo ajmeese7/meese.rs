@@ -75,7 +75,7 @@ src/
 worker/
   index.ts                asset serving + /relay + /newsletter routing, cron entry
   newsletter/             handlers · send · db · email · pages · validation (+ tests)
-  schema.sql              D1 schema (subscribers, sent_posts)
+migrations/               D1 migration chain (wrangler d1 migrations apply)
 test/                     workerd test harness: env, Resend stand-in
 scripts/                  build-time generation + validation (graph, icons, content, BIMI)
 public/                   robots.txt · llms.txt · AGENTS.md · _headers · icons · assets

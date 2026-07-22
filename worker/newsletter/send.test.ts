@@ -1,12 +1,12 @@
 import { env } from "cloudflare:workers";
 import { beforeAll, beforeEach, expect, test } from "vitest";
 
-import { applySchema, resetTables, stub, testEnv } from "../../test/env";
+import { applyMigrations, resetTables, stub, testEnv } from "../../test/env";
 import * as db from "./db";
 import { runNewPostDigest } from "./send";
 import type { FeedItem } from "./types";
 
-beforeAll(applySchema);
+beforeAll(applyMigrations);
 beforeEach(async () => {
   await resetTables();
   await stub.reset();

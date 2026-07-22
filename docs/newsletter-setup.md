@@ -7,8 +7,8 @@ Self-owned email newsletter, no third-party subscription platform. Readers subsc
 - `src/components/layout/NewsletterSignup.astro`, the form + progressive-enhancement script, rendered at the end of `PostLayout`.
 - `worker/newsletter/`, the module: `handlers.ts` (subscribe/confirm/unsubscribe), `send.ts` (cron digest), `db.ts` (D1), `email.ts` (Resend + templates), `pages.ts` (landing pages), `validation.ts` (pure helpers).
 - `worker/newsletter/*.test.ts`, the tests. They run inside workerd against real bindings (real D1, real rate limiter) via `@cloudflare/vitest-pool-workers`, so they exercise the runtime production uses. `pnpm test`.
-- `test/resend-stub.ts`, a real local HTTP server standing in for Resend and for `feed.json` during tests, plus `test/env.ts` for schema setup and an env that can't reach the live API.
-- `worker/schema.sql`, the D1 schema.
+- `test/resend-stub.ts`, a real local HTTP server standing in for Resend and for `feed.json` during tests, plus `test/env.ts`, which rebuilds the database from `migrations/` and supplies an env that can't reach the live API.
+- `migrations/`, the D1 schema as an ordered migration chain, applied with `wrangler d1 migrations apply`. The tests build their database from these same files, so a migration that doesn't produce a working schema fails the suite.
 - `wrangler.jsonc`, D1 binding, subscribe rate limiter, hourly cron, `/newsletter/*` routes, and `SITE_URL` / `NEWSLETTER_FROM` vars.
 
 ## Routes
@@ -34,31 +34,68 @@ This is interactive. The `d1_databases` block is already in `wrangler.jsonc` wit
 
 Then copy the returned `database_id` into the existing `DB` block in `wrangler.jsonc` (the committed value is already set to the created database; update it only if you recreate the DB). If you accidentally let Wrangler add its own block, delete it and keep only the `DB` one.
 
-Apply the schema. Local uses `--file` directly:
+Apply the schema. It lives in `migrations/` as an ordered chain, and wrangler records what it has already run in each database's `d1_migrations` table, so both of these are safe to re-run and will do nothing when there is nothing owed:
 
 ```
-npx wrangler d1 execute meese-rs-newsletter --local --file worker/schema.sql
+npx wrangler d1 migrations apply meese-rs-newsletter --local
 ```
 
-Remote is trickier. `--remote --file` hits a known wrangler bug: D1's import endpoint rejects the OAuth login token with `Authentication error [code: 10000]`, even for a super-admin token. Use `--command` instead, which goes through the normal query endpoint your token already works with. The `grep` strips the SQL comment lines, which wrangler would otherwise parse as CLI flags:
-
 ```
-npx wrangler d1 execute meese-rs-newsletter --remote --command "$(grep -v '^[[:space:]]*--' worker/schema.sql)"
+npx wrangler d1 migrations apply meese-rs-newsletter --remote
 ```
 
-If you would rather keep `--file`: create a Cloudflare API token (dashboard, "Edit Cloudflare Workers" template, which includes D1), then run the `--remote --file` command with `CLOUDFLARE_API_TOKEN` set in the environment. Token auth does not hit the import bug.
+These are two separate databases. Applying to one never touches the other.
 
-#### Migrating an existing database
+`npx wrangler d1 migrations list meese-rs-newsletter --remote` shows what is outstanding without applying anything, and is the fastest way to answer "is production current?".
 
-`CREATE TABLE IF NOT EXISTS` does nothing to a table that already exists, so a database created before the delivery-tracking change needs the columns added by hand. Run this once, against local and remote:
+#### Adding a migration
+
+Never edit an applied migration; wrangler will not re-run it, so the change would land in the files and never in any database. Add a new one:
 
 ```
-npx wrangler d1 execute meese-rs-newsletter --local --command "ALTER TABLE subscribers ADD COLUMN confirm_sent_at TEXT; ALTER TABLE sent_posts ADD COLUMN completed_at TEXT; ALTER TABLE sent_posts ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0; UPDATE sent_posts SET completed_at = sent_at WHERE completed_at IS NULL; CREATE TABLE IF NOT EXISTS deliveries (guid TEXT NOT NULL, subscriber_id INTEGER NOT NULL, delivered_at TEXT NOT NULL, PRIMARY KEY (guid, subscriber_id));"
+npx wrangler d1 migrations create meese-rs-newsletter describe-the-change
 ```
 
-The `UPDATE` matters: it marks everything already sent as complete. Without it, every post in the table looks like it still owes an email and the next cron run mails the whole archive to everyone.
+Write exact DDL, not `CREATE TABLE IF NOT EXISTS`. The tracking table already guarantees a migration runs once, so `IF NOT EXISTS` buys nothing and costs the loud failure you want when a database isn't in the state the migration assumes. That guard is precisely what hid the outage described below.
 
-If the database has no rows worth keeping, dropping the tables and re-running `schema.sql` is simpler than migrating.
+If a migration adds a column that existing rows need populated, backfill it in the same file. `0002_delivery_tracking.sql` is the worked example: without its `UPDATE`, every previously sent post looks like it still owes an email and the next cron run mails the whole archive to everyone.
+
+Then run the local apply and `pnpm test`. The tests rebuild their database from `migrations/`, so a migration that produces a broken schema fails the suite rather than production.
+
+#### Why this is a migration chain and not a schema file
+
+This used to be a single `worker/schema.sql` applied with `d1 execute --file`, and it shipped a production outage on 2026-07-22. Every statement in it was `CREATE TABLE IF NOT EXISTS`, so re-applying it to a database that already existed changed nothing, added no columns, and still printed `5 commands executed successfully`. The remote database sat on the pre-delivery-tracking schema for about 21 hours while `POST /newsletter/subscribe` returned a generic `500 {"state":"error"}` to every visitor, failing on `no column named confirm_sent_at`. Nothing caught it: the apply reported success, the tests built their own database from the same file and passed, and the Worker had no persisted logs.
+
+`d1_migrations` removes the guesswork. `migrations list` answers what production has actually run, instead of asking someone to remember.
+
+Two things worth knowing about the old path, since they still apply to `d1 execute`:
+
+- `--remote --file` hits a wrangler bug where D1's import endpoint rejects the OAuth login token with `Authentication error [code: 10000]`, even for a super-admin token. `migrations apply --remote` does not use that endpoint and works on OAuth login. If you need `d1 execute --remote --file`, create a Cloudflare API token (dashboard, "Edit Cloudflare Workers" template, which includes D1) and set `CLOUDFLARE_API_TOKEN`; token auth does not hit the bug.
+- A database created before migrations existed needs baselining rather than applying: create the tracking table and record the already-applied files, so wrangler does not try to re-run them over live tables.
+
+```
+npx wrangler d1 execute meese-rs-newsletter --remote --command "CREATE TABLE IF NOT EXISTS d1_migrations(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL); INSERT OR IGNORE INTO d1_migrations (name) VALUES ('0001_initial_schema.sql');"
+```
+
+Both databases were baselined through `0002_delivery_tracking.sql` on 2026-07-22, so this is here for a future database, not for these.
+
+#### Verify, don't trust the exit code
+
+`migrations list` reports what wrangler believes. To check what the database actually contains:
+
+```
+npx wrangler d1 execute meese-rs-newsletter --remote --command "SELECT name FROM pragma_table_info('subscribers') UNION ALL SELECT name FROM pragma_table_info('sent_posts') UNION ALL SELECT name FROM sqlite_master WHERE type='table';"
+```
+
+`subscribers` must include `confirm_sent_at`, `sent_posts` must include `completed_at` and `attempts`, and `deliveries` must be listed as a table.
+
+Then exercise the real endpoint, which is the one thing that proves the whole path:
+
+```
+curl -sS -X POST https://meese.rs/newsletter/subscribe -H "content-type: application/json" -H "x-requested-with: fetch" -d "{\"email\":\"you@example.com\"}"
+```
+
+`{"state":"ok"}` means it works. `{"state":"error"}` is the generic 500 the handler returns for any exception; `npx wrangler tail` while re-running it shows the real cause.
 
 ### 2. Set up Resend
 
@@ -104,10 +141,10 @@ A post is only marked `completed_at` once every confirmed subscriber has a deliv
 
 Everything runs against a local D1 copy, no Cloudflare account needed. Without `RESEND_API_KEY` in `.dev.vars`, sends are logged and skipped, so the whole flow works offline.
 
-One-time, apply the schema to the local database:
+Bring the local database up to date (safe to re-run; it applies only what is outstanding):
 
 ```
-npx wrangler d1 execute meese-rs-newsletter --local --file worker/schema.sql
+npx wrangler d1 migrations apply meese-rs-newsletter --local
 ```
 
 Then start the dev server. This is a long-running server, not a command that returns: it holds the terminal showing `Ready on http://localhost:8788` until you press `x` to quit. Leave it running and do everything below in a second terminal.
@@ -168,8 +205,28 @@ pnpm test
 
 The repo deploys through Cloudflare Workers Builds on merge to `master`, and the hourly cron starts ticking as soon as it deploys. So before merging, make sure all of these are in place, or the first cron run errors:
 
-1. The remote D1 schema is applied (use the `--remote --command` form from step 1; `--remote --file` hits the import auth bug). Without the tables, the cron hits a missing-table error every hour. If the remote database was created before the delivery-tracking change, run the migration in "Migrating an existing database" instead, including its `UPDATE`, or the next cron run mails the whole archive to every subscriber.
+1. The remote database is current: `npx wrangler d1 migrations apply meese-rs-newsletter --remote`, then `npx wrangler d1 migrations list meese-rs-newsletter --remote` to confirm nothing is outstanding. A missing table or column does not degrade gracefully; the cron errors every hour and subscribe 500s on every submission.
 2. The `RESEND_API_KEY` secret is set (`wrangler secret put RESEND_API_KEY`, or the Cloudflare dashboard under the Worker's Settings). Without it, subscribe and the cron run but every send is skipped.
 3. The `mail.meese.rs` DNS records (SPF/DKIM/DMARC) are verified in Resend, so mail actually delivers.
 
 The `database_id` is already committed in `wrangler.jsonc`, so the binding itself needs no dashboard step.
+
+### Migrating automatically on deploy
+
+Workers Builds does not migrate anything today; step 1 above is manual. Wiring it into the deploy is possible but needs care, because the obvious version fails silently.
+
+The token Workers Builds generates for itself covers Account Settings (read), Workers Scripts (edit), Workers KV (edit), Workers R2 (edit), and Workers Routes (edit). [It has no D1 permission](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/), `wrangler d1 migrations apply` requires D1:Edit, and [the command fails silently on permission errors](https://github.com/cloudflare/workers-sdk/issues/5077). Adding a bare `migrations apply` to the deploy command therefore reproduces exactly the failure this whole setup exists to prevent: a step that reports success, changes nothing, and lets the code deploy against a stale database.
+
+To do it safely, in the Cloudflare dashboard under the Worker's **Settings > Build**:
+
+1. Create an API token with **D1:Edit**, **Workers Scripts:Edit**, and **Workers Routes:Edit**. All three are needed: setting `CLOUDFLARE_API_TOKEN` overrides authentication for `wrangler deploy` in the same command, not just for the migration.
+2. Add it under **Build Variables and Secrets** as `CLOUDFLARE_API_TOKEN`.
+3. Set the deploy command to re-check the result instead of trusting the exit code, so a silently skipped migration blocks the deploy rather than shipping past it:
+
+```
+npx wrangler d1 migrations apply meese-rs-newsletter --remote && npx wrangler d1 migrations list meese-rs-newsletter --remote 2>&1 | grep -q "No migrations to apply" && npx wrangler deploy
+```
+
+Then confirm the first automated run actually applied something, rather than assuming a green build means it did.
+
+One rule this introduces: migrations run *before* the new code goes live, so the currently deployed Worker briefly runs against the new schema. Additive changes (new tables, new nullable columns) are safe. Dropping or renaming anything the live code still reads breaks production for the length of the deploy, so removals need two deploys: ship the code that stops using the column, then migrate it away.
