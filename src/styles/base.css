@@ -110,7 +110,7 @@ a:hover { color: var(--link-hover); }
 .prose h4 { font-size: var(--text-lg); margin-top: 1.3em; }
 .prose p  { color: var(--text-body); }
 .prose strong { color: var(--text-heading); font-weight: var(--weight-semibold); }
-.prose a { color: var(--link); text-decoration: underline; text-decoration-color: var(--accent-dim); }
+.prose a { color: var(--link); text-decoration: underline; text-decoration-color: var(--accent-deep); }
 .prose a:hover { text-decoration-color: var(--link-hover); }
 
 .prose code {
