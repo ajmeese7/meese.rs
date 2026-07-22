@@ -92,7 +92,7 @@ The first time the cron runs against an empty `sent_posts` table, it records eve
 
 The cron diffs `feed.json` against `sent_posts` and mails whatever is owed. Three pieces make that safe to retry:
 
-- **Batch sends.** Recipients go out through Resend's `POST /emails/batch`, up to 100 per request. A per-recipient loop would trip Resend's default 2-requests-per-second limit and burn one Worker subrequest per subscriber.
+- **Batch sends.** Recipients go out through Resend's `POST /emails/batch`, up to 100 per request. A per-recipient loop burns one Worker subrequest per subscriber and pushes at [Resend's 10-requests-per-second-per-team limit](https://resend.com/docs/api-reference/rate-limit), which returns 429s.
 - **Per-recipient delivery rows.** Every successful send writes a `deliveries` row. A retry only targets subscribers without one, so a partial failure can be re-run without anyone getting the same post twice.
 - **An attempt cap.** A post whose recipients still aren't all delivered is retried on the next hourly tick, up to three attempts, then abandoned with a logged error. Without the cap a permanently failing post would be retried forever; without the retry, a transient blip would silently cost those subscribers the post entirely.
 
