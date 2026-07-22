@@ -122,7 +122,9 @@ if (supersededTarget) {
           {
             backlinks.related.length > 0 && (
               <>
-                <span class="sys-label">// related</span>
+                {/* Label text is an expression, not raw text: inside a Fragment the
+                    Astro compiler drops an element whose text starts with `//`. */}
+                <span class="sys-label">{"// related"}</span>
                 <div class="related-grid">
                   {backlinks.related.map(({ post: p, reason }) => (
                     <a href={postUrl(p)} class="related-card">
@@ -139,7 +141,7 @@ if (supersededTarget) {
           {
             backlinks.mentionedBy.length > 0 && (
               <>
-                <span class="sys-label" style="margin:28px 0 12px">// mentioned by</span>
+                <span class="sys-label" style="margin:28px 0 12px">{"// mentioned by"}</span>
                 <div class="same-topic">
                   {backlinks.mentionedBy.map((p) => (
                     <a href={postUrl(p)}>
@@ -156,7 +158,7 @@ if (supersededTarget) {
           {
             backlinks.sameTopic.length > 0 && (
               <>
-                <span class="sys-label" style="margin:28px 0 12px">// same topic</span>
+                <span class="sys-label" style="margin:28px 0 12px">{"// same topic"}</span>
                 <div class="same-topic">
                   {backlinks.sameTopic.map((p) => (
                     <a href={postUrl(p)}>
