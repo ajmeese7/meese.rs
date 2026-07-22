@@ -608,7 +608,7 @@ Required frontmatter fields:
 ```yaml
 title: string          # non-empty
 description: string     # non-empty
-date: date
+date: date              # publication date, not the writing date; bump it when unlisting a post later
 type: guide | note | devlog | essay | lab | reference | review
 topics: string[]
 tags: string[]
@@ -631,7 +631,7 @@ supersedes:
 supersededBy: string
 canonicalUrl: string
 externalUrl: string
-hideFromFeed: boolean
+hideFromFeed: boolean   # off the homepage, /latest, and the feeds, so no newsletter email either
 unlisted: boolean       # live, shareable URL but hidden from listings + sitemap, noindex
 review:                 # required when type: review (see below)
   subject: string

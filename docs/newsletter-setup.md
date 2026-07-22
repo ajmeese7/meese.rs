@@ -90,7 +90,9 @@ The first time the cron runs against an empty `sent_posts` table, it records eve
 
 ## How delivery works
 
-The cron diffs `feed.json` against `sent_posts` and mails whatever is owed. Three pieces make that safe to retry:
+The cron diffs `feed.json` against `sent_posts` and mails whatever is owed. Because the queue is the feed, a post reaches subscribers only when `draft`, `unlisted`, and `hideFromFeed` are all false; `hideFromFeed: true` publishes a post without emailing anyone. See [CONTENT.md](./CONTENT.md#5-visibility) for the full visibility ladder.
+
+Three pieces make the send safe to retry:
 
 - **Batch sends.** Recipients go out through Resend's `POST /emails/batch`, up to 100 per request. A per-recipient loop burns one Worker subrequest per subscriber and pushes at [Resend's 10-requests-per-second-per-team limit](https://resend.com/docs/api-reference/rate-limit), which returns 429s.
 - **Per-recipient delivery rows.** Every successful send writes a `deliveries` row. A retry only targets subscribers without one, so a partial failure can be re-run without anyone getting the same post twice.

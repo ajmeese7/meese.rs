@@ -91,12 +91,24 @@ Separate axis from type and status: these fields decide whether a post is built 
 |---|---|---|---|---|
 | `draft: true` | No, dev only | No | No (no route exists) | Work in progress. Visible in `pnpm dev`, never shipped. |
 | `unlisted: true` | Yes | No, and dropped from the sitemap + marked `noindex` | Yes | You want to share a link before (or instead of) publishing: a live URL that shows up nowhere on the site. |
-| `hideFromFeed: true` | Yes | Skips the main feed only; still in topic/type pages, search, graph | Yes | A published post you want off the homepage and `/latest`, but otherwise browseable. |
+| `hideFromFeed: true` | Yes | Skips the main feed only; still in topic/type pages, search, graph | Yes | A published post you want off the homepage and `/latest`, but otherwise browseable. Also the only way to publish without emailing subscribers (see below). |
 | (none of the above) | Yes | Yes | Yes | A normal published post. |
 
 `externalUrl:` is a separate case: the post is a pointer to somewhere else, so it gets no local page and its cards/feeds link straight out.
 
 The split is enforced in [`src/utils/posts.ts`](../src/utils/posts.ts): `getBuildablePosts()` is the build/asset set and includes unlisted posts (so the page and its OG image render), while `getPosts()` is the listing default and excludes them, so every feed, topic, type page, count, graph, and backlink inherits the exclusion for free.
+
+### Visibility and the newsletter
+
+The newsletter cron queues off `feed.json`, which is `getFeedPosts()`, so all three flags gate email as well as the feed. A post notifies subscribers only when `draft`, `unlisted`, and `hideFromFeed` are all false. `hideFromFeed: true` is therefore the switch for "publish this properly, just don't spend an email on it": fully public, indexed, searchable, no inbox.
+
+`unlisted` and `hideFromFeed` are not two flavours of the same thing. `unlisted` controls *discovery* (nobody can find the post at all), `hideFromFeed` controls *announcement* (anyone browsing finds it, it just isn't pushed at the homepage, feeds, or subscribers).
+
+### Publishing an unlisted post later
+
+Set `date` to the day the post goes public, not the day it was written. The two are the same for a normal post, so this only matters when unlisting something later: bump `date` to that day at the same time you set `unlisted: false`.
+
+Email and RSS diverge otherwise. The cron keys on the post URL, so it mails correctly whenever the post enters the feed, but RSS readers sort by `date_published`, so a post kept unlisted for months arrives back-dated and buried under everything the subscriber has already read. Bumping `date` keeps both channels agreeing on when the post was published.
 
 ---
 
