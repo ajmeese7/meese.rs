@@ -21,6 +21,12 @@
   // Newsletter subscriber + sent-post store (created via `wrangler d1 create
   // meese-rs-newsletter`). The binding MUST stay "DB": the Worker code reads
   // env.DB. database_id is a resource identifier, not a secret.
+  //
+  // The schema lives in migrations/ (wrangler's default migrations_dir) and is
+  // applied with `wrangler d1 migrations apply meese-rs-newsletter --remote`.
+  // Local and remote are separate databases; applying to one leaves the other
+  // untouched, and deploying does not migrate anything. See
+  // docs/newsletter-setup.md.
   "d1_databases": [
     {
       "binding": "DB",

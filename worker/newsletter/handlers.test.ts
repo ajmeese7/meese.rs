@@ -1,11 +1,11 @@
 import { env } from "cloudflare:workers";
 import { beforeAll, beforeEach, expect, test } from "vitest";
 
-import { applySchema, resetTables, stub, testEnv } from "../../test/env";
+import { applyMigrations, resetTables, stub, testEnv } from "../../test/env";
 import * as db from "./db";
 import { handleConfirm, handleSubscribe, handleUnsubscribe } from "./handlers";
 
-beforeAll(applySchema);
+beforeAll(applyMigrations);
 beforeEach(async () => {
   await resetTables();
   await stub.reset();
@@ -177,7 +177,7 @@ test("a store failure fails closed without leaking the error", async () => {
     expect(body).not.toContain("subscribers");
     expect(await stub.sent()).toHaveLength(0);
   } finally {
-    await applySchema();
+    await applyMigrations();
   }
 });
 

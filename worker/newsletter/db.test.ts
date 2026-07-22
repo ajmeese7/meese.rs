@@ -1,11 +1,11 @@
 import { env } from "cloudflare:workers";
 import { beforeAll, beforeEach, expect, test } from "vitest";
 
-import { applySchema, resetTables } from "../../test/env";
+import { applyMigrations, resetTables } from "../../test/env";
 import * as db from "./db";
 import type { Subscriber } from "./types";
 
-beforeAll(applySchema);
+beforeAll(applyMigrations);
 beforeEach(resetTables);
 
 const NOW = "2026-07-21T12:00:00.000Z";

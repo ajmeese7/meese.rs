@@ -239,8 +239,8 @@ meese.rs/
 │       └── frontmatter.ts        shared MDX frontmatter loader (build-time)
 ├── worker/
 │   ├── index.ts                  asset serving + /relay + /newsletter, cron entry
-│   ├── newsletter/               handlers · send · db · email · pages · validation
-│   └── schema.sql                D1 schema (subscribers, sent_posts)
+│   └── newsletter/               handlers · send · db · email · pages · validation
+├── migrations/                   D1 migration chain (wrangler d1 migrations apply)
 ├── test/                         workerd test harness: env, Resend stand-in
 ├── src/
 │   ├── content.config.ts
@@ -1807,7 +1807,7 @@ PostHog (Cloud US), proxied first-party. Originally a §2 non-goal ("analytics p
 Self-owned email list, no third-party subscription platform. Originally out of scope under the §6 "no database for v0" principle, added by owner decision in July 2026 to let readers follow the site without social media.
 
 * Double opt-in: `POST /newsletter/subscribe` stores a `pending` row and mails a confirmation; `/newsletter/confirm` and `/newsletter/unsubscribe` flip status. Both mutate on POST only, because mail security scanners prefetch every link in an inbound message and would otherwise confirm and unsubscribe readers on their behalf.
-* Storage is Cloudflare D1 (`worker/schema.sql`: `subscribers`, `sent_posts`). An hourly Cron Trigger diffs `/feed.json` against `sent_posts` and mails what is new; the first run seeds the back catalog so activation does not blast the archive.
+* Storage is Cloudflare D1 (`migrations/`: `subscribers`, `sent_posts`, `deliveries`). An hourly Cron Trigger diffs `/feed.json` against `sent_posts` and mails what is new; the first run seeds the back catalog so activation does not blast the archive.
 * Delivery is Resend, sending only from the `mail.meese.rs` subdomain so the root domain's reputation stays isolated. Emails carry RFC 8058 one-click unsubscribe headers.
 * The form (`src/components/layout/NewsletterSignup.astro`) is a plain HTML POST that works with JavaScript disabled; the fetch path is progressive enhancement over that baseline.
 * Abuse protection is a per-IP rate limiter plus a per-address cooldown on confirmation resends, since the endpoint is unauthenticated and makes us send mail. A honeypot field returns a no-op success.
