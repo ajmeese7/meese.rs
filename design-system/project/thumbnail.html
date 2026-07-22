@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="neon-violet">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="./styles.css">
+<style>
+  html,body{margin:0}
+  .tile{width:1280px;height:854px;display:flex;background:var(--bg-void);overflow:hidden}
+  .main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:38px;background:var(--bg-void)}
+  .mark{width:280px;height:280px}
+  .name{font-family:var(--font-display,ui-sans-serif);font-weight:700;font-size:150px;letter-spacing:-0.03em;line-height:1;color:var(--accent-bright)}
+  .strip{width:300px;display:flex;flex-direction:column}
+  .strip>span{flex:1}
+</style>
+</head>
+<body>
+<div class="tile">
+  <div class="main">
+    <svg class="mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="meese.rs">
+      <line x1="8" y1="22" x2="16" y2="9" stroke="#B7A2FF" stroke-width="1.4"></line>
+      <line x1="16" y1="9" x2="24" y2="19" stroke="#B7A2FF" stroke-width="1.4"></line>
+      <line x1="8" y1="22" x2="24" y2="19" stroke="#6A4ED6" stroke-width="1.4"></line>
+      <circle cx="16" cy="9" r="3.4" fill="#9A7CFF"></circle>
+      <circle cx="8" cy="22" r="2.6" fill="#B7A2FF"></circle>
+      <circle cx="24" cy="19" r="2.8" fill="#6A4ED6"></circle>
+    </svg>
+    <div class="name">meese.rs</div>
+  </div>
+  <div class="strip">
+    <span style="background:#B7A2FF"></span>
+    <span style="background:#C9A95E"></span>
+    <span style="background:#57B58C"></span>
+    <span style="background:#E0655E"></span>
+  </div>
+</div>
+</body>
+</html>

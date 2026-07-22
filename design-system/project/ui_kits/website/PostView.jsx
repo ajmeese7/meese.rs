@@ -65,6 +65,25 @@
     return null;
   }
 
+  const REPO = 'github.com/ajmeese7/meese.rs';
+  const sourceUrl = (p) => p.source || ('https://' + REPO + '/blob/master/src/content/posts/' + p.slug + '.mdx');
+
+  function ViewSource({ post }) {
+    const [hover, setHover] = React.useState(false);
+    return (
+      <a href={sourceUrl(post)} target="_blank" rel="noopener"
+        onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 12,
+          textDecoration: 'none', color: hover ? 'var(--accent-bright)' : 'var(--ink-3)',
+          border: '1px solid ' + (hover ? 'var(--accent-line)' : 'var(--line-2)'), borderRadius: 'var(--radius-sm)',
+          padding: '5px 9px', transition: 'color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out)',
+        }}>
+        <Icon name="github" size={13} /> view source <Icon name="arrow-up-right" size={12} style={{ opacity: .7 }} />
+      </a>
+    );
+  }
+
   function PostView({ slug, onOpenPost, onBack, backLabel, onTopic }) {
     const post = POSTS.find((p) => p.slug === slug) || POSTS[0];
     const body = BODIES[post.slug] || [];
@@ -74,12 +93,16 @@
 
     return (
       <div style={{ maxWidth: 'var(--max-shell)', margin: '0 auto', padding: '28px 24px 24px' }}>
-        <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }} style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 12,
-          color: 'var(--ink-3)', textDecoration: 'none', marginBottom: 28,
-        }}>
-          <Icon name="arrow-left" size={13} /> back to {backLabel || 'index'}
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+          <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--ink-3)', textDecoration: 'none',
+          }}>
+            <Icon name="arrow-left" size={13} /> back to {backLabel || 'index'}
+          </a>
+          <span style={{ flex: 1 }} />
+          <ViewSource post={post} />
+        </div>
 
         <header style={{ maxWidth: '74ch', marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
