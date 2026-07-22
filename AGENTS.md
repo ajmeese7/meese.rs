@@ -26,7 +26,7 @@ src/
   utils/                 posts, dates, topics, backlinks, graph, seo
   scripts/ (client)      search.ts (Pagefind)
 scripts/                 validate-content.ts, generate-graph.ts (build-time)
-worker/                  index.ts, the /relay PostHog ingest proxy
+worker/                  index.ts (/relay PostHog proxy), newsletter/ (D1 + Resend)
 public/                  robots.txt, llms.txt, AGENTS.md, _headers, assets
 ```
 
@@ -39,6 +39,8 @@ pnpm preview           # serve the built site
 pnpm check             # astro check (types)
 pnpm validate:content  # frontmatter / relation integrity
 pnpm generate:graph    # write public/graph.json snapshot (also served dynamically)
+
+npx wrangler dev       # the Worker (/relay, /newsletter); serves dist/, so build first
 ```
 
 ## Conventions

@@ -42,6 +42,8 @@ pnpm preview           # serve the production build (search works here)
 pnpm check             # astro check (types)
 pnpm test              # worker tests, in workerd against real bindings
 pnpm validate:content  # frontmatter + cross-reference integrity
+
+npx wrangler dev       # the Worker (/relay, /newsletter); run pnpm build first
 ```
 
 > Search only returns results against a production build (`pnpm build` then

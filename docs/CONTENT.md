@@ -104,15 +104,11 @@ The split is enforced in [`src/utils/posts.ts`](../src/utils/posts.ts): `getBuil
 
 Adversarial review of a draft is two independent passes, and they cannot be run by the same reader.
 
-The first is mechanical and the author runs it: comma pile-ups, repeated words in adjacent sentences, paragraph openers, em dashes, fragments, and a numeral-by-numeral check that every figure in the draft traces to a source rather than to a plausible-sounding guess.
+The first is mechanical and the author runs it: comma pile-ups, repeated words in adjacent sentences, paragraph openers, em dashes, fragments, and a numeral-by-numeral check that every figure in the draft traces to a source rather than to a plausible-sounding guess. Include a lift check here, since a devlog is usually written next to the commits it describes: build a corpus from `git log --format=%B`, the PR body, and the docs you read, then list every 4-to-6-word phrase the draft shares with it. Commit-register prose reads as finished, so it skips the rewriting a fresh sentence would get, and it carries vocabulary that only makes sense with the repo open.
 
-The second is comprehension, and the author is the worst possible person to run it. Having written the piece with the transcript, commits, and docs in context, they refill every missing antecedent from memory and the draft reads fine to them and to nobody else. Delegate it to the `cold-reader` agent, which is restricted to reading the draft file and nothing else:
+The second is comprehension, and the author cannot run it. Having written the draft with the transcript, commits, and docs in context, they refill every missing antecedent from memory, so it reads fine to them and to nobody else. Delegate it to a reader that can see the draft and nothing else, and ask for every phrase unresolvable from the page: definite articles on nouns never introduced, bare identifiers, pronouns with distant antecedents, jargon used before definition, references to events the reader never witnessed, and internal contradictions or counts that do not add up. Contradictions are the highest-value findings, because they are the ones that survive self-review.
 
-```
-Agent(subagent_type: "cold-reader", prompt: "Read only src/content/posts/<slug>.mdx")
-```
-
-It reports every phrase it cannot resolve from the page. Triage the list: fix anything wrong, contradictory, or genuinely unresolvable, and dismiss the items where the term is ordinary vocabulary for a developer audience. Its highest-value findings are internal contradictions, since those survive every self-review. On the newsletter devlog it caught an intro that listed four things and then called them "those two constraints", and a paragraph arguing that the same rate limit was disqualifying in one case and generous in another.
+With an agent, enforce that structurally rather than by instruction, or it will read the repo and stop being a stranger. Aaron runs a `cold-reader` subagent whose tool list is locked to `Read`, kept machine-local since nothing in it is project-specific. Then triage: fix what is wrong or unresolvable, dismiss what is ordinary vocabulary for a developer audience.
 
 ## 7. Headings and figures
 
