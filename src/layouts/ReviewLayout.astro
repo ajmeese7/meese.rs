@@ -6,6 +6,7 @@ import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
 import AuthorByline from "../components/layout/AuthorByline.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
+import PostSource from "../components/layout/PostSource.astro";
 import ReadTracker from "../components/posts/ReadTracker.astro";
 import { isoDate } from "../utils/dates";
 import { postUrl, type Post } from "../utils/posts";
@@ -36,7 +37,10 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
 >
   <div class="shell" data-pagefind-body={d.unlisted ? undefined : ""}>
     <PagefindMeta post={post} />
-    <BackLink href="/reviews/" label="reviews" />
+    <div class="post-topbar">
+      <BackLink href="/reviews/" label="reviews" />
+      <PostSource post={post} />
+    </div>
 
     <div class="review-grid">
       <div>

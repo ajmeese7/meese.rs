@@ -904,6 +904,38 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 .same-topic .d { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--ink-4); }
 
 /* ============================================================
+   Post top bar, back link + "view source" chip
+   ============================================================ */
+.post-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+/* The row owns the spacing now; the bare link keeps its own elsewhere. */
+.post-topbar .back-link { margin-bottom: 0; }
+.post-topbar .post-source { margin-left: auto; }
+
+.post-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
+}
+.post-source:hover { color: var(--accent-bright); border-color: var(--accent-line); }
+.post-source__out { opacity: 0.7; }
+
+/* ============================================================
    Review reading page
    ============================================================ */
 .review-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; align-items: start; padding-top: 28px; }

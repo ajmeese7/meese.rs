@@ -68,3 +68,16 @@ export function postUrl(post: Post): string {
   if (post.data.externalUrl) return post.data.externalUrl;
   return `/posts/${post.id}/`;
 }
+
+/** The public repo this site (and every post in it) is built from. */
+export const REPO_URL = "https://github.com/ajmeese7/meese.rs";
+
+/**
+ * The MDX behind a post, on GitHub. `filePath` is repo-relative and set by the
+ * glob loader; an entry that came from somewhere other than a file has none,
+ * and gets no link rather than a guessed path that 404s.
+ */
+export function postSourceUrl(post: Post): string | null {
+  if (!post.filePath) return null;
+  return `${REPO_URL}/blob/master/${post.filePath}`;
+}

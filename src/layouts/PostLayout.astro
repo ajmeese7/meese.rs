@@ -6,6 +6,7 @@ import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
 import AuthorByline from "../components/layout/AuthorByline.astro";
 import NewsletterSignup from "../components/layout/NewsletterSignup.astro";
+import PostSource from "../components/layout/PostSource.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
 import ReadTracker from "../components/posts/ReadTracker.astro";
 import { isoDate } from "../utils/dates";
@@ -63,7 +64,10 @@ if (supersededTarget) {
     data-pagefind-body={d.unlisted ? undefined : ""}
   >
     <PagefindMeta post={post} />
-    <BackLink href="/latest/" label="index" />
+    <div class="post-topbar">
+      <BackLink href="/latest/" label="index" />
+      <PostSource post={post} />
+    </div>
 
     <header class="post__header">
       <div class="post__meta">

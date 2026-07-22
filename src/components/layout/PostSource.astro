@@ -1,0 +1,32 @@
+---
+import Icon from "./Icon.astro";
+import { postSourceUrl, type Post } from "../../utils/posts";
+
+/**
+ * Boxed "view source" chip, per the design system's ViewSource
+ * (ui_kits/website/PostView.jsx): it rides the back-link row, right-aligned,
+ * so it costs no vertical space at any width. `data-pagefind-ignore` keeps the
+ * label out of the search index, since the whole article is a Pagefind body
+ * and "view source" would otherwise match on every post.
+ */
+interface Props {
+  post: Post;
+}
+const href = postSourceUrl(Astro.props.post);
+---
+
+{
+  href && (
+    <a
+      class="post-source"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-pagefind-ignore
+    >
+      <Icon name="github" size={13} />
+      <span>view source</span>
+      <Icon name="arrow-up-right" size={12} class="post-source__out" />
+    </a>
+  )
+}
