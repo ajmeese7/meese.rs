@@ -12,7 +12,6 @@ const MAX_ATTEMPTS = 3;
 export async function runNewPostDigest(env: NewsletterEnv): Promise<void> {
   const site = siteUrl(env);
   const items = await fetchFeedItems(site);
-  if (!items) return;
 
   const now = new Date().toISOString();
   const known = await db.getSentPosts(env.DB);
@@ -29,21 +28,32 @@ export async function runNewPostDigest(env: NewsletterEnv): Promise<void> {
     return;
   }
 
+  // Every path below logs exactly once before returning. A tick that finds
+  // nothing to do is the common case, and without a line for it a cron that
+  // stopped firing is indistinguishable from one that ran and owed nothing.
+  // Counts only: subscriber addresses never go to the log store.
   const queue = selectQueue(items, known, MAX_ATTEMPTS);
-  if (queue.length === 0) return;
+  if (queue.length === 0) {
+    console.log(`newsletter: ${items.length} post(s) in feed, nothing owed`);
+    return;
+  }
 
   const subscribers = await db.listConfirmed(env.DB);
+  console.log(
+    `newsletter: ${queue.length} post(s) owed to ${subscribers.length} confirmed subscriber(s)`,
+  );
   for (const item of queue) {
     await deliverPost(env, site, item, subscribers, now);
   }
 }
 
-async function fetchFeedItems(site: string): Promise<FeedItem[] | null> {
+// Throws rather than returning empty on failure. An unreadable feed is not "no
+// posts are owed", it is "we have no idea what is owed", and the two must not
+// look alike: swallowing it here returns normally, which marks the cron run
+// successful and hides the outage behind a green tick.
+async function fetchFeedItems(site: string): Promise<FeedItem[]> {
   const res = await fetch(`${site}/feed.json`, { headers: { accept: "application/feed+json" } });
-  if (!res.ok) {
-    console.error(`newsletter: feed fetch failed ${res.status}`);
-    return null;
-  }
+  if (!res.ok) throw new Error(`feed fetch failed ${res.status}`);
   const feed = (await res.json()) as { items?: FeedItem[] };
   return feed.items ?? [];
 }
