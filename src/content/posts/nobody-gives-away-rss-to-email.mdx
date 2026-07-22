@@ -1,0 +1,277 @@
+---
+title: "Nobody gives away RSS-to-email"
+description:
+  "RSS-to-email is a paid add-on at every reputable provider, so mine runs on the Cloudflare Worker
+  that already fronts the site. D1 holds the list, Resend sends, and an hourly cron diffs the feed."
+date: 2026-07-22
+type: devlog
+topics:
+  - publishing
+  - static-sites
+  - developer-experience
+tags:
+  - cloudflare-workers
+  - d1
+  - resend
+  - rss
+draft: true
+related:
+  - slug: analytics-for-readers-who-block-analytics
+    reason:
+      "The same Worker, the same privacy stance, and the numbers that made me want repeat readers."
+---
+
+This site has shipped an RSS feed since the first deploy, `feed.xml` and `feed.json`, regenerated on
+every build. That serves the people who already run a feed reader, a smaller crowd every year.
+Everyone else has to remember I exist. I wanted the unglamorous fix: a form at the end of a post, an
+email when a new one goes up, no work from me per post, and a bill as close to $0 as the market
+allows.
+
+Those two constraints look unremarkable sitting next to each other. Together they rule out every
+reputable provider on the market.
+
+## The provider that looked free
+
+Buttondown was the pick, and the reasoning held up until it didn't. The free tier covered 100
+subscribers, and its RSS-to-email pointed at a feed I already ship. The signup was a plain HTML form
+with no third-party script on the page, and a CSV export meant the list would never be held hostage.
+I built the form to match the site, wired it into the post layout, and verified it in a browser.
+
+The account was live and the integration was finished before Buttondown mentioned the catch:
+_RSS-to-email isn't included in your current plan (Free)_.
+
+[Buttondown's own pricing page](https://buttondown.com/pricing) is unambiguous about it. Free gets
+you 100 subscribers, a custom sending domain, and hosted archives. RSS-to-email is a +$9/month
+add-on, and general automations are +$29. The single feature that made the whole thing
+publish-and-forget sits behind that add-on, and it was the only reason to pick them over anyone
+else.
+
+A search says otherwise. Review and comparison sites have it as included on free, and they rank
+above the pricing page itself.
+
+## The rest of the market says the same thing
+
+[Kit](https://kit.com/pricing) is the best pure-cost answer and fails the other constraint. Free
+carries 10,000 subscribers with unlimited broadcasts, which is a genuinely long runway, but RSS
+campaigns start on the $33/month Creator plan. Until then you hand-compose a broadcast for every
+post, which is precisely the per-post effort I was trying to delete.
+
+[Cloudflare Email Service](https://developers.cloudflare.com/email-service/platform/pricing/) looked
+natural, since the site already deploys as a Worker. Sending to arbitrary recipients requires the
+$5/month Workers Paid plan. That is cheap, and it is not zero.
+
+[Resend](https://resend.com/pricing) caps its free tier at 100 emails a day and 3,000 a month. As a
+newsletter platform, that pins the list at roughly 100 people per send, which is why I dismissed it
+early. Behind a list I own, where its whole job is one batch per published post, the same numbers
+are plenty.
+
+Free RSS-to-email under your own branding does not exist. It is a paid feature at every provider
+worth using, so $0 and zero per-post effort cannot both come off a shelf. They can both come out of
+a Worker.
+
+## The UX fix that turned into the migration
+
+The first prototype posted straight to Buttondown's embed endpoint with `no-cors`, which hands back
+an opaque response by design. The form could not distinguish a successful signup from a rejected
+address, so it showed "check your inbox" either way. Double opt-in makes that technically honest,
+since the confirmation email is the real gate, and it still bothered me enough to redo it.
+
+The replacement routed submissions through a first-party `/newsletter/subscribe` route on the Worker
+that already fronts the site. It is same-origin, so the CORS problem disappears, and the API key
+stays server-side where the browser never sees it. The form gets the true state back and renders it
+inline: green for a new signup, violet for an address already on the list, red for a bad one.
+
+That was a user-experience change. It also turned out to be the migration. When Buttondown fell out,
+the frontend did not change by a single line. The route's backend went from calling their API to
+writing a row in D1, and the form never noticed.
+
+## What it does now
+
+- **Subscribe.** `POST /newsletter/subscribe` writes a `pending` row in D1 and sends a double-opt-in
+  confirmation through Resend. Zero JS required: a native form post gets a 303 back to the
+  originating post carrying `?subscribe=<state>`, which the form's own script renders and then
+  scrubs from the URL.
+- **Confirm and unsubscribe.** Both are unguessable token links. Unsubscribe also answers the
+  [RFC 8058](https://www.rfc-editor.org/rfc/rfc8058.html) one-click POST that mail clients fire from
+  their native button.
+- **Notify.** An hourly Cron Trigger diffs `feed.json` against a `sent_posts` table and batch-emails
+  confirmed subscribers on anything new.
+- **Seed on the first run.** That first tick records the entire current catalog as delivered and
+  sends nothing, because the alternative is mailing the whole archive to everybody the moment it
+  deploys.
+
+Total cost is $0 inside the free tiers for D1, Workers, Cron Triggers, and Resend.
+
+## The documentation was the deliverable, and it was wrong
+
+Code was the easy part. `docs/newsletter-setup.md` is what somebody has to follow to stand this up,
+and it shipped with five errors, each one surfacing the moment the commands got run for real:
+
+- `wrangler d1 execute` with no location flag runs against the **local** database. I documented the
+  unflagged form as the remote apply, so the command cheerfully reported
+  `5 commands executed successfully` while production stayed empty.
+- `wrangler d1 create` is interactive now. My instructions skipped its prompts entirely, and
+  answering yes to "would you like Wrangler to add it on your behalf?" writes a second
+  `d1_databases` block with a binding name the code does not read.
+- The Resend key needs **Sending access** restricted to the sending domain, not Full access. The
+  domain restriction is only offered once you pick Sending access, so getting this wrong hands a
+  leaked key the run of your account.
+- `npx tsx --test` fails in this repo. `pnpm exec tsx --test` is the form that works, and the broken
+  one was in the doc and in the test file's own header comment.
+- `wrangler dev` is a long-running server, not a command that returns. The doc stacked it in one
+  block with the commands that need a second terminal, so it read as a hang.
+
+Every one of those came from writing tool instructions from memory instead of running them first. A
+wrong command in a setup doc costs the reader more than a wrong line of code does, because the code
+fails loudly and the command succeeds at the wrong thing.
+
+## The wrangler bug that ate an hour
+
+Applying the schema to the remote database failed against a token holding `d1 (write)` and Super
+Administrator on the account:
+
+```text
+✘ [ERROR] A request to the Cloudflare API (/accounts/.../d1/database/.../import) failed.
+
+  Authentication error [code: 10000]
+```
+
+`--file` routes through D1's import endpoint, which rejects wrangler's OAuth login token no matter
+how much that token is otherwise allowed to do. `--command` goes through the normal query endpoint,
+the same one `wrangler deploy` already authenticates against, so inlining the schema sidesteps the
+bug:
+
+```bash
+npx wrangler d1 execute meese-rs-newsletter --remote \
+  --command "$(grep -v '^[[:space:]]*--' worker/schema.sql)"
+```
+
+The `grep` is load-bearing. A schema file opens with `--` SQL comments, and wrangler parses a
+leading `--` as a CLI flag, so the naive `$(cat …)` version dies on its own header. If you would
+rather keep `--file`, generate a Cloudflare API token from the dashboard and set
+`CLOUDFLARE_API_TOKEN`, because token auth does not hit the import bug at all.
+
+## A review found twelve things
+
+Before merging [PR #11](https://github.com/ajmeese7/meese.rs/pull/11) I ran an adversarial review
+over the branch, and it came back with twelve issues. Four of them were the kind that lands on
+somebody else instead of on me.
+
+**Subscribe was an unauthenticated button that makes me send mail.** It had no throttle whatsoever,
+so anyone could burn the Resend daily cap in seconds and take the sending domain's reputation down
+with it. Worse, a repeat submit for an address already pending performed no database write and
+simply re-sent, so one stranger's inbox could be hammered indefinitely. It now sits behind a
+Cloudflare rate limiting binding at 5 per minute per IP, checked before D1 or Resend are touched,
+plus a five-minute per-address cooldown on confirmation resends. That cooldown is the layer a per-IP
+limiter cannot give you against a rotating source.
+
+**Confirm and unsubscribe mutated state on GET.** Mail security scanners (Outlook Safe Links,
+Proofpoint, Barracuda) prefetch every link in an inbound message, so readers were being silently
+unsubscribed and confirmations were being recorded against consent nobody had given. Both routes
+render a one-button form on GET now, and the row changes on POST. The RFC 8058 one-click header
+already POSTs, so mail clients are unaffected.
+
+**Unsubscribing was reversible by an old email.** `confirmByToken` flipped any matching row to
+`confirmed` regardless of its current status, and confirm tokens never expire. Clicking a months-old
+confirmation link therefore re-subscribed someone who had since opted out. It refuses an
+unsubscribed row now, and an already-confirmed one is idempotent, keeping the original
+`confirmed_at` instead of recording a re-click as fresh consent.
+
+**The cron dropped recipients and reported success.** It sent one Resend request per subscriber,
+sequentially, then recorded the post as sent whether or not those requests worked. Resend's default
+limit is 2 requests per second, so past a handful of subscribers the loop reliably produces 429s.
+Because the post was recorded regardless, every subscriber whose send failed never got it, with a
+log line as the only trace. Recipients go out through the batch endpoint now, up to 100 per request,
+and per-recipient headers mean each one still carries their own unsubscribe token. A `deliveries`
+table records one row per post-and-subscriber pair, so a retry only targets the people who are
+missing. A post that still owes mail is retried on the next hourly tick, up to three attempts, then
+abandoned with a logged error rather than retried forever.
+
+## No mocks, which decided the test harness
+
+Only the pure helpers had coverage. Everything holding state was untested: the consent transitions,
+the retry and dedup logic, the honeypot, and the first-run seeding guard, which is the single path
+where a bug mails the entire back catalog to every subscriber.
+
+The cheap route was a `node:sqlite` adapter behind the D1 interface, letting the existing
+`tsx --test` suite keep running in plain Node. `seedSentPosts` and `recordDeliveries` both use D1's
+`batch()`, and hand-rolling batch semantics means inventing them. That is a mock wearing a costume,
+and a test that agrees with a wrong assumption about a binding is worse than no test at all.
+
+The suite moved to
+[`@cloudflare/vitest-pool-workers`](https://developers.cloudflare.com/workers/testing/vitest-integration/)
+instead, so tests run inside workerd against the real D1 binding and the real rate limiter.
+`test/resend-stub.ts` is a real HTTP server standing in for Resend and for `feed.json`, started once
+per run and reached over the network exactly as the live API is. The send path under test is
+therefore the production one. The suite is 73 tests and finishes in seconds.
+
+<Callout type="warning" title="The pool loads .dev.vars">
+  Left alone, a `vitest-pool-workers` suite inherits whatever real API keys are sitting in
+  `.dev.vars` and will happily send live email to any address a test invents. `testEnv()` builds an
+  explicit environment pointed at the stub, so no test can reach the real Resend.
+</Callout>
+
+Splitting the review fixes into four commits read cleaner in the log. Checking out each one in a
+worktree and running the suite found the problem with that: one of the four was red. The tests
+substantiating the retry-safety claim had landed a commit later than the change they proved, and the
+old suite covered a function that change deleted. Two commits became one.
+
+## The emails looked like a receipt
+
+Resend's default template is light-mode generic, which on a site built around a graphite palette
+reads as another company's mail. Both templates use the site shell now: the graphite card on
+near-black, the mono `// NEW POST` label that anchors every surface here, a Space Grotesk heading,
+IBM Plex body copy, and the violet button lifted from the signup form.
+
+<Figure
+  src="/images/posts/nobody-gives-away-rss-to-email/new-post-email.png"
+  alt="New-post notification email: a dark graphite card with a violet '// NEW POST' label, the post title as a heading, a summary paragraph, a violet 'Read the post' button, and an unsubscribe line."
+  kind="screenshot"
+  caption="The new-post email as it renders for a recipient who has the brand fonts installed."
+/>
+
+One decision came out of the form's own promise. Pulling Space Grotesk from a font CDN would ping
+that host the moment an email opens, which is functionally the tracking pixel the signup copy says
+there isn't. The brand fonts sit first in the stack and render for anyone who has them installed
+locally; everyone else gets system fallbacks and no network request.
+
+Mailing myself the same test post over and over produced one scare worth writing down, and it turned
+out to be Gmail's doing rather than the template's.
+
+<Callout type="tip" title="Gmail trims repeated test sends">
+  Gmail threads messages by subject and hides content identical to something already in that
+  conversation, so mailing yourself the same post email five times gets four of them trimmed behind
+  "Show trimmed content". Real subscribers get one unique subject per post, and the `sent_posts`
+  table blocks a repeat, so nobody outside your own testing will ever see it. Tweak the subject line
+  and it renders in full.
+</Callout>
+
+## The $650 gray circle
+
+The sender avatar in Gmail is a gray letter tile, and the standard for putting a logo there is BIMI
+(Brand Indicators for Message Identification, a DNS record pointing at a hosted logo). Gmail will
+not honor it without a certificate. A Verified Mark Certificate runs roughly $1,350 to $1,750 a year
+and demands a registered trademark; a Common Mark Certificate runs roughly $650 to $1,100 without
+one. Paying that so a personal newsletter shows a logomark instead of a circle is not a close call.
+
+The free path is real and it shipped, in [its own PR](https://github.com/ajmeese7/meese.rs/pull/12)
+because it is DNS and a static asset rather than application code. It needs DMARC at enforcement, an
+SVG Tiny PS version of the logomark, and one TXT record at `default._bimi`. That buys Yahoo, AOL,
+and Fastmail. Gmail and Apple Mail both keep showing the gray circle.
+
+Apple deserves a flag here, because their documentation contradicts itself. The
+[consumer support page](https://support.apple.com/en-us/108340) says a VMC is "not strictly
+required", which reads like self-asserted BIMI works. The
+[sender-facing developer page](https://developer.apple.com/support/bimi) lists a verified BIMI
+Evidence Document as a required step. Take the developer page.
+
+Proton does not implement BIMI at all. It fetches the sender's favicon server-side and displays
+that, so `public/favicon.svg` is what governs there and the record is irrelevant.
+
+I also undersold the scope when I first pitched the free path as an afternoon. The SVG and the DNS
+record genuinely are one. Moving DMARC from `p=none` to enforcement safely means running aggregate
+reporting for a couple of weeks first, to confirm everything sending as the domain passes alignment
+before anything starts getting quarantined. Calendar-wise that is two weeks, not an afternoon.
+
+The bill is $0, against the $9/month add-on that started all of this. The form at the bottom of this
+post is the thing itself.
