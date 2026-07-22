@@ -1,5 +1,7 @@
 // Server-rendered pages for the flows a reader lands on directly: a no-JS
 // subscribe result, and the confirm / unsubscribe link targets from emails.
+// A \u00A0 inside a note ties the closing phrase together so the wrap lands
+// between thoughts instead of stranding a single word on its own line.
 import type { SubscribeState } from "./types";
 import { escapeHtml } from "./validation";
 
@@ -100,7 +102,7 @@ export function subscribeStatusPage(state: SubscribeState, back: string): Respon
 export function confirmPromptPage(token: string): Response {
   return promptPage({
     heading: "Confirm your subscription",
-    note: "One click and you're on the list for new meese.rs posts.",
+    note: "One click and you're on the list for new meese.rs\u00A0posts.",
     action: "/newsletter/confirm",
     token,
     submitLabel: "Confirm subscription",
@@ -109,7 +111,7 @@ export function confirmPromptPage(token: string): Response {
 
 export function confirmPage(state: "ok" | "invalid" | "unsubscribed" | "error"): Response {
   const copy = {
-    ok: { heading: "You're subscribed", note: "You'll get an email when a new post goes up. Nothing else.", status: 200 },
+    ok: { heading: "You're subscribed", note: "You'll get an email when a new post goes up. Nothing\u00A0else.", status: 200 },
     invalid: { heading: "Link not found", note: "That confirmation link is invalid. Try subscribing again.", status: 400 },
     unsubscribed: { heading: "You unsubscribed", note: "This link is from before you left the list, so it won't re-subscribe you. Sign up again on any post if you'd like back in.", status: 409 },
     error: { heading: "Something broke", note: "That one is on us. Please try again in a moment.", status: 500 },
@@ -129,7 +131,7 @@ export function unsubscribePromptPage(token: string): Response {
 
 export function unsubscribePage(state: "ok" | "invalid" | "error"): Response {
   const copy = {
-    ok: { heading: "Unsubscribed", note: "You're off the list. No more emails, no hard feelings.", status: 200 },
+    ok: { heading: "Unsubscribed", note: "You're off the list. No more emails, no hard\u00A0feelings.", status: 200 },
     invalid: { heading: "Link not found", note: "That unsubscribe link is invalid. You may already be off the list.", status: 400 },
     error: { heading: "Something broke", note: "That one is on us. Please try again in a moment.", status: 500 },
   }[state];
