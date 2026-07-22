@@ -81,6 +81,8 @@ Both are arrays of lowercase strings, and topics render as `#pill`s, so they are
 
 Practical guidance: if you would want a reader to browse everything under it, make it a **topic**. If it is just a searchable keyword, make it a **tag**. Tags never appear as visible pills, so they cannot clutter the feed.
 
+A `related[].reason` is a card label, not prose. Every one on the site is a noun phrase naming what the two posts share ("The search decision behind this build, argued in full."), so write them that way and do not flag them as sentence fragments during review. Tell a review agent this, since it reads one draft and cannot see the convention.
+
 ---
 
 ## 5. Visibility
@@ -114,13 +116,15 @@ Email and RSS diverge otherwise. The cron keys on the post URL, so it mails corr
 
 ## 6. Reviewing a draft
 
-Adversarial review of a draft is two independent passes, and they cannot be run by the same reader.
+Adversarial review of a draft is three passes, and the author can only run one of them.
 
-The first is mechanical and the author runs it: comma pile-ups, repeated words in adjacent sentences, paragraph openers, em dashes, fragments, and a numeral-by-numeral check that every figure in the draft traces to a source rather than to a plausible-sounding guess. Include a lift check here, since a devlog is usually written next to the commits it describes: build a corpus from `git log --format=%B`, the PR body, and the docs you read, then list every 4-to-6-word phrase the draft shares with it. Commit-register prose reads as finished, so it skips the rewriting a fresh sentence would get, and it carries vocabulary that only makes sense with the repo open.
+The first is mechanical: comma pile-ups, repeated words in adjacent sentences, paragraph openers, em dashes, fragments, and a numeral-by-numeral check that every figure in the draft traces to a source rather than to a plausible-sounding guess. Include a lift check here, since a devlog is usually written next to the commits it describes: build a corpus from `git log --format=%B`, the PR body, and the docs you read, then list every 4-to-6-word phrase the draft shares with it. Commit-register prose reads as finished, so it skips the rewriting a fresh sentence would get, and it carries vocabulary that only makes sense with the repo open.
 
-The second is comprehension, and the author cannot run it. Having written the draft with the transcript, commits, and docs in context, they refill every missing antecedent from memory, so it reads fine to them and to nobody else. Delegate it to a reader that can see the draft and nothing else, and ask for every phrase unresolvable from the page: definite articles on nouns never introduced, bare identifiers, pronouns with distant antecedents, jargon used before definition, references to events the reader never witnessed, and internal contradictions or counts that do not add up. Contradictions are the highest-value findings, because they are the ones that survive self-review.
+The second re-runs those same mechanical rules with fresh eyes, because the author's pass catches most of them and not all. Writing a sentence leaves you reading the punctuation you intended instead of the punctuation on the page, so a full gate pass here still shipped two commas before a coordinating conjunction with no independent clause after it, both spotted by a beta reader on first read. Aaron delegates this to a `line-editor` subagent that reads the voice profile and the draft, and nothing else.
 
-With an agent, enforce that structurally rather than by instruction, or it will read the repo and stop being a stranger. Aaron runs a `cold-reader` subagent whose tool list is locked to `Read`, kept machine-local since nothing in it is project-specific. Then triage: fix what is wrong or unresolvable, dismiss what is ordinary vocabulary for a developer audience.
+The third is comprehension, and the author cannot run it. Having written the draft with the transcript, commits, and docs in context, they refill every missing antecedent from memory, so it reads fine to them and to nobody else. Delegate it to a reader that can see the draft and nothing else, and ask for every phrase unresolvable from the page: definite articles on nouns never introduced, bare identifiers, pronouns with distant antecedents, jargon used before definition, references to events the reader never witnessed, and internal contradictions or counts that do not add up. Contradictions are the highest-value findings, because they are the ones that survive self-review.
+
+With an agent, enforce that structurally rather than by instruction, or it will read the repo and stop being a stranger. Aaron runs a `cold-reader` subagent whose tool list is locked to `Read`, kept machine-local alongside `line-editor` since nothing in either is project-specific. Then triage: fix what is wrong or unresolvable, dismiss what is ordinary vocabulary for a developer audience.
 
 ## 7. Headings and figures
 
