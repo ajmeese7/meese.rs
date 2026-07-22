@@ -70,7 +70,7 @@ This used to be a single `worker/schema.sql` applied with `d1 execute --file`, a
 
 Two things worth knowing about the old path, since they still apply to `d1 execute`:
 
-- `--remote --file` hits a wrangler bug where D1's import endpoint rejects the OAuth login token with `Authentication error [code: 10000]`, even for a super-admin token. `migrations apply --remote` does not use that endpoint and works on OAuth login. If you need `d1 execute --remote --file`, create a Cloudflare API token (dashboard, "Edit Cloudflare Workers" template, which includes D1) and set `CLOUDFLARE_API_TOKEN`; token auth does not hit the bug.
+- `--remote --file` hits a wrangler bug where D1's import endpoint rejects the OAuth login token with `Authentication error [code: 10000]`, even for a super-admin token. `d1 execute --remote --command` and `d1 migrations list --remote` both work on the same OAuth login, so the bug is specific to the import endpoint that `--file` uses rather than to the credential. Whether `migrations apply --remote` clears it on an OAuth login is untested here, since the databases were already current when migrations were introduced. If you need `d1 execute --remote --file`, create a Cloudflare API token (dashboard, "Edit Cloudflare Workers" template, which includes D1) and set `CLOUDFLARE_API_TOKEN`; token auth does not hit the bug.
 - A database created before migrations existed needs baselining rather than applying: create the tracking table and record the already-applied files, so wrangler does not try to re-run them over live tables.
 
 ```
@@ -199,34 +199,41 @@ pnpm test
 
 ## Troubleshooting
 
+- **The cron reports success every hour and the tables stay empty.** Check the logs for `newsletter: feed fetch failed 522`. `meese.rs` is a Worker [Custom Domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/), which makes this Worker the origin for the zone, and [a `fetch()` to the Worker's own hostname returns 522](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-522/) unless the `global_fetch_strictly_public` compatibility flag is set in `wrangler.jsonc`. The digest reads `https://meese.rs/feed.json`, so without the flag it fails on every tick from the day it ships. Loading the feed in a browser proves nothing: the request has to originate outside the zone to reproduce, which is exactly what a Worker subrequest does not do by default. Do not remove that flag.
 - **Gmail hides a test email's body behind a "..." toggle.** Gmail threads messages by subject and collapses content identical to something already in the thread, so sending yourself the same post email more than once shows a "Show trimmed content" (`...`) button instead of the full body. It is Gmail deduping within a conversation, not a template bug. Real subscribers get one unique-subject email per post (and `sent_posts` blocks re-sending the same post), so they never hit it. To confirm during testing, resend with any tweaked subject line and it renders in full.
 
 ## Deploy
 
 The repo deploys through Cloudflare Workers Builds on merge to `master`, and the hourly cron starts ticking as soon as it deploys. So before merging, make sure all of these are in place, or the first cron run errors:
 
-1. The remote database is current: `npx wrangler d1 migrations apply meese-rs-newsletter --remote`, then `npx wrangler d1 migrations list meese-rs-newsletter --remote` to confirm nothing is outstanding. A missing table or column does not degrade gracefully; the cron errors every hour and subscribe 500s on every submission.
+1. The remote database is current. The deploy command applies migrations itself (see "Migrating automatically on deploy" below), so this is normally automatic, but that path has not yet run against a pending migration. Until it has, confirm with `npx wrangler d1 migrations list meese-rs-newsletter --remote` after the deploy rather than assuming. A missing table or column does not degrade gracefully; the cron errors every hour and subscribe 500s on every submission.
 2. The `RESEND_API_KEY` secret is set (`wrangler secret put RESEND_API_KEY`, or the Cloudflare dashboard under the Worker's Settings). Without it, subscribe and the cron run but every send is skipped.
 3. The `mail.meese.rs` DNS records (SPF/DKIM/DMARC) are verified in Resend, so mail actually delivers.
 
 The `database_id` is already committed in `wrangler.jsonc`, so the binding itself needs no dashboard step.
 
+After the deploy lands, wait for the next tick and confirm it did something, rather than trusting that it ran. A cron invocation recorded as `ok` only means the handler returned; it does not mean the digest read anything. Every outcome now writes a line, so the Workers Logs history should carry one of `newsletter: seeded N existing post(s)`, `newsletter: N post(s) in feed, nothing owed`, or a delivery count. Silence for an hour that the cron reports as successful means the run failed before it got that far. Cross-check against the database:
+
+```bash
+npx wrangler d1 execute meese-rs-newsletter --remote --command "SELECT COUNT(*) FROM sent_posts"
+```
+
 ### Migrating automatically on deploy
 
-Workers Builds does not migrate anything today; step 1 above is manual. Wiring it into the deploy is possible but needs care, because the obvious version fails silently.
+Workers Builds runs the migration as part of the deploy. Getting there needed care, because the obvious version fails silently.
 
-The token Workers Builds generates for itself covers Account Settings (read), Workers Scripts (edit), Workers KV (edit), Workers R2 (edit), and Workers Routes (edit). [It has no D1 permission](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/), `wrangler d1 migrations apply` requires D1:Edit, and [the command fails silently on permission errors](https://github.com/cloudflare/workers-sdk/issues/5077). Adding a bare `migrations apply` to the deploy command therefore reproduces exactly the failure this whole setup exists to prevent: a step that reports success, changes nothing, and lets the code deploy against a stale database.
+The token Workers Builds generates for itself covers Account Settings (read), Workers Scripts (edit), Workers KV (edit), Workers R2 (edit), and Workers Routes (edit). [It has no D1 permission](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/), `wrangler d1 migrations apply` requires D1:Edit, and [the command fails silently on permission errors](https://github.com/cloudflare/workers-sdk/issues/5077). A bare `migrations apply` in the deploy command therefore reproduces exactly the failure this whole setup exists to prevent: a step that reports success, changes nothing, and lets the code deploy against a stale database.
 
-To do it safely, in the Cloudflare dashboard under the Worker's **Settings > Build**:
+The configuration is in the dashboard, under **Workers & Pages > `meese-rs` > Settings > Build**. Note that the separate `Settings > Variables & Secrets` tab is for runtime environment variables and is the wrong place for this; the build needs it at build time.
 
-1. Create an API token with **D1:Edit**, **Workers Scripts:Edit**, and **Workers Routes:Edit**. All three are needed: setting `CLOUDFLARE_API_TOKEN` overrides authentication for `wrangler deploy` in the same command, not just for the migration.
-2. Add it under **Build Variables and Secrets** as `CLOUDFLARE_API_TOKEN`.
-3. Set the deploy command to re-check the result instead of trusting the exit code, so a silently skipped migration blocks the deploy rather than shipping past it:
+1. An API token scoped to **D1:Edit** on this account only. Nothing else, because the token is applied to the two D1 commands rather than to the whole deploy command.
+2. Stored under **Build Variables and Secrets** as a secret named `D1_MIGRATION_TOKEN`. Deliberately not named `CLOUDFLARE_API_TOKEN`: that name would override the credentials Workers Builds issues itself, so `wrangler deploy` would then need Workers Scripts and Workers Routes permissions too.
+3. A deploy command that re-checks the result instead of trusting the exit code, so a silently skipped migration blocks the deploy rather than shipping past it:
 
 ```
-npx wrangler d1 migrations apply meese-rs-newsletter --remote && npx wrangler d1 migrations list meese-rs-newsletter --remote 2>&1 | grep -q "No migrations to apply" && npx wrangler deploy
+CLOUDFLARE_API_TOKEN=$D1_MIGRATION_TOKEN npx wrangler d1 migrations apply meese-rs-newsletter --remote && CLOUDFLARE_API_TOKEN=$D1_MIGRATION_TOKEN npx wrangler d1 migrations list meese-rs-newsletter --remote 2>&1 | grep -q "No migrations to apply" && npx wrangler deploy
 ```
 
-Then confirm the first automated run actually applied something, rather than assuming a green build means it did.
+The token's D1 write access is confirmed: exported into the environment with `read -rs` (never inline, where it would land in shell history and `ps`), it creates and drops a scratch table against the remote database. What that leaves untested is only the assembled path, since the deploy command has not yet met a pending migration. After the first deploy that carries one, run `npx wrangler d1 migrations list meese-rs-newsletter --remote` and confirm the migration landed rather than reading the green build as proof. A failed apply is caught by the `grep` and blocks the deploy, which is the designed behavior but presents as an unexplained build failure.
 
 One rule this introduces: migrations run *before* the new code goes live, so the currently deployed Worker briefly runs against the new schema. Additive changes (new tables, new nullable columns) are safe. Dropping or renaming anything the live code still reads breaks production for the length of the deploy, so removals need two deploys: ship the code that stops using the column, then migrate it away.

@@ -163,13 +163,17 @@ test("a subscriber added mid-retry is picked up, already-delivered ones are not 
   expect((await stub.sent()).map((m) => m.to)).toEqual(["a@example.com"]);
 });
 
-test("an unreachable feed is a no-op, not a partial send", async () => {
+test("an unreachable feed fails the run instead of sending a partial digest", async () => {
   await addConfirmed("a@example.com");
   await stub.setFeed([post("one")]);
   await runNewPostDigest(testEnv()); // seed
 
-  // Point at a path the stub has no route for.
-  await runNewPostDigest(testEnv({ SITE_URL: `${testEnv().SITE_URL}/nope` }));
+  // Point at a path the stub has no route for. Throwing is the point: the cron
+  // run has to go red, because a tick that cannot read the feed and a tick that
+  // owed nothing are otherwise the same green tick.
+  await expect(
+    runNewPostDigest(testEnv({ SITE_URL: `${testEnv().SITE_URL}/nope` })),
+  ).rejects.toThrow(/feed fetch failed/);
   expect(await stub.sent()).toHaveLength(0);
   expect((await db.getSentPosts(env.DB)).size).toBe(1);
 });

@@ -2,6 +2,16 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "meese-rs",
   "compatibility_date": "2026-06-09",
+  // meese.rs is a Custom Domain, which makes this Worker the origin for the
+  // zone. Without this flag a `fetch()` to the Worker's own hostname is not
+  // routed back through Cloudflare's front door and times out as a 522, so the
+  // hourly digest's GET of https://meese.rs/feed.json failed on every single
+  // tick from the day the newsletter shipped. The flag makes global `fetch()`
+  // resolve like a request from the public Internet, which is what reading our
+  // own published feed is. Every other outbound call (PostHog ingest, Resend)
+  // already targets a third-party host and is unaffected.
+  // https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-522/
+  "compatibility_flags": ["global_fetch_strictly_public"],
   // The Worker proxies /relay/* to PostHog and runs the self-owned newsletter
   // (/newsletter/* routes + an hourly cron; see worker/index.ts and
   // docs/newsletter-setup.md). Requests matching a static asset are still served
