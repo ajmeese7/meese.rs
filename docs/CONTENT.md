@@ -100,6 +100,40 @@ The split is enforced in [`src/utils/posts.ts`](../src/utils/posts.ts): `getBuil
 
 ---
 
+## 6. Reviewing a draft
+
+Adversarial review of a draft is two independent passes, and they cannot be run by the same reader.
+
+The first is mechanical and the author runs it: comma pile-ups, repeated words in adjacent sentences, paragraph openers, em dashes, fragments, and a numeral-by-numeral check that every figure in the draft traces to a source rather than to a plausible-sounding guess.
+
+The second is comprehension, and the author is the worst possible person to run it. Having written the piece with the transcript, commits, and docs in context, they refill every missing antecedent from memory and the draft reads fine to them and to nobody else. Delegate it to the `cold-reader` agent, which is restricted to reading the draft file and nothing else:
+
+```
+Agent(subagent_type: "cold-reader", prompt: "Read only src/content/posts/<slug>.mdx")
+```
+
+It reports every phrase it cannot resolve from the page. Triage the list: fix anything wrong, contradictory, or genuinely unresolvable, and dismiss the items where the term is ordinary vocabulary for a developer audience. Its highest-value findings are internal contradictions, since those survive every self-review. On the newsletter devlog it caught an intro that listed four things and then called them "those two constraints", and a paragraph arguing that the same rate limit was disqualifying in one case and generous in another.
+
+## 7. Headings and figures
+
+Section headings are read out of context, in the table of contents and by someone skimming, so a heading has to make sense before its section does. `## The dots were Gmail, not the template` fails that test: it announces a minor find as though it were a finding. A gotcha that small belongs in a `<Callout>` inside a section that already earned its heading, where the callout's own title carries the context.
+
+Figures live at `public/images/posts/<slug>/<name>.png` and render through `<Figure src alt caption kind>`. Capture them at a device pixel ratio of 2 or 3 rather than upscaling a 1x grab, which is grainy at the article column's width:
+
+```
+agent-browser set viewport 620 470 3     # third arg is deviceScaleFactor
+agent-browser open <url>
+agent-browser screenshot out.png
+ffmpeg -i out.png -vf "crop=W:H:X:Y" public/images/posts/<slug>/<name>.png
+```
+
+Two traps when the subject is a rendered artifact rather than a live page:
+
+- **The brand fonts are not installed in an agent sandbox**, so a naive capture silently falls back to Arial and the figure ends up contradicting prose about the design system. Astro's font provider emits hashed woff2 files to `dist/_astro/fonts/`; map them by grepping the `@font-face` rules in any built page (`grep -o '@font-face{[^}]*}' dist/index.html`), then declare those files under the real family names in a preview-only `<style>` block. Never add a webfont `<link>` to the email templates themselves, per the tracking-pixel reasoning in [`newsletter-setup.md`](newsletter-setup.md).
+- **Render the real artifact, not a copy.** Import the actual template function (for emails, `postEmail()` / `confirmationEmail()` from `worker/newsletter/email.ts`) into a throwaway script and write its output to disk. A hand-rewritten approximation drifts from the thing it claims to show.
+
+---
+
 ## Quick frontmatter example
 
 ```yaml
