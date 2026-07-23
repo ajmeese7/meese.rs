@@ -3,7 +3,7 @@ title: "Nobody gives away RSS-to-email"
 description:
   "RSS-to-email is a paid add-on at every reputable provider, so mine runs on the Cloudflare Worker
   that already fronts the site. D1 holds the list, Resend sends, and an hourly cron diffs the feed."
-date: 2026-07-22
+date: 2026-07-23
 type: devlog
 topics:
   - publishing
@@ -20,7 +20,6 @@ tags:
   - bimi
   - email-deliverability
 draft: false
-unlisted: true
 related:
   - slug: analytics-for-readers-who-block-analytics
     reason:
@@ -144,9 +143,9 @@ instead of against the versions sitting on disk.
 
 ## A D1 schema apply that fails on a valid token
 
-Applying the schema to the production database is
+Applying the schema to the production database meant
 `wrangler d1 execute --remote --file worker/schema.sql`. Against the OAuth login token, which holds
-`d1 (write)` and Super Administrator on the account, it fails:
+`d1 (write)` and Super Administrator on the account, that fails:
 
 ```text
 ✘ [ERROR] A request to the Cloudflare API (/accounts/.../d1/database/.../import) failed.
@@ -276,7 +275,7 @@ out to be Gmail's doing rather than the template's.
   and it renders in full.
 </Callout>
 
-## The $650 gray circle
+## The expensive gray circle
 
 The sender avatar in Gmail is a gray circle with a letter in it, and the standard for putting a logo
 there is BIMI (Brand Indicators for Message Identification, a DNS record pointing at a hosted logo).
@@ -306,3 +305,90 @@ alignment, and only then raise the policy. That waiting is a couple of weeks.
 
 The bill is $0, against the $9/month add-on that started all of this. The form at the bottom of this
 post is the thing itself.
+
+## A schema apply that reports success and changes nothing
+
+All of that shipped, and the form was returning a 500 to everyone who used it.
+
+Every table in `worker/schema.sql` was declared `CREATE TABLE IF NOT EXISTS`, which is how schema
+files get written. Against a fresh database it builds the tables. Handed one that already has them,
+it does nothing. It prints `5 commands executed successfully` and exits clean. A current database
+and a stale one produce identical output, down to the count.
+
+That stopped being a stylistic detail once the schema changed. The five-minute resend cooldown above
+needed a new `confirm_sent_at` column on `subscribers`, and re-running the schema file against
+production could not create it, because `IF NOT EXISTS` skips a table that is already there and
+never inspects what is inside it. Production kept the original `subscribers` table. Every signup
+came back `no column named confirm_sent_at`, which the subscribe handler turned into the same
+generic `{"state":"error"}` it returns for any exception, so the form told visitors something had
+broken without saying what.
+
+Four things could have caught that and none did. The apply reported success, which is the entire
+problem. The adversarial review above turned up twelve issues and could not have caught this one,
+since the code was right and the database was what disagreed with it. Nothing had been recorded
+anywhere, because the Worker had no persisted logging configured. That left the failure visible only
+to someone already attached with `wrangler tail`, Cloudflare's live log stream, while it was
+happening.
+
+The fourth is the one that matters. All 73 tests passed, inside workerd, against a real D1 binding.
+That held because the test harness built its own database by executing `worker/schema.sql`, the same
+file the deploy was supposed to apply. A suite that constructs its schema from the source of truth
+is checking that file against itself, and running it in the production runtime does not change what
+that verifies. The `node:sqlite` adapter I turned down earlier would have reported success while the
+bug shipped. So did the real runtime, for a different reason and with more credibility attached.
+
+The schema is a migration chain now. `migrations/` holds one file per change, and
+`wrangler d1 migrations apply` records everything it runs in a `d1_migrations` table inside the
+database. Asking `wrangler d1 migrations list --remote` what production is missing replaces
+remembering whether anyone applied it. The migrations use exact DDL instead of `IF NOT EXISTS`,
+since the tracking table already guarantees each one runs a single time. Left in, that guard would
+only go on hiding a database that is not in the state the change assumes. The tests build from the
+same chain, so a migration that produces a broken schema fails the suite. Workers Logs is on now, so
+failures land in a searchable history instead of requiring someone to be watching when they happen.
+
+Finding it took one `wrangler tail` and one `curl` at `/newsletter/subscribe`, which now answers
+`{"state":"ok"}`. Neither is clever. The cost was in the stretch before that, where every signal on
+hand reported a working system.
+
+## The Worker could not read its own feed
+
+Workers Logs earned its keep on the first cron tick after it came on. It logged one line:
+
+```text
+newsletter: feed fetch failed 522
+```
+
+The hourly job had been firing all along. Cloudflare started the cron handler on time and it ran to
+completion. What never happened was reading `feed.json`. Both `sent_posts` and `deliveries` were
+empty, so no tick had ever gotten past that fetch, and the batch send that replaced the
+per-subscriber loop has never delivered a production email.
+
+522 is Cloudflare's connection-timeout code, and it normally points at a dead origin server.
+`meese.rs` is wired to this Worker through a Custom Domain, which makes the Worker itself the
+origin.
+[Cloudflare documents the consequence](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-522/).
+A `fetch()` to the Worker's own hostname times out as a 522. The cron asks
+`https://meese.rs/feed.json` what has been published, so every hourly run was the Worker calling
+itself.
+
+The feed was never down. It answers 200 to anyone who asks from outside, which is why nothing about
+the site looked wrong. Reproducing the failure takes a request that starts inside Cloudflare's
+network rather than out on the internet, and a Worker subrequest is the one client that qualifies.
+
+The invocation log records an outcome for each run, and the two ticks I could see both say `ok`. The
+cron caught the failed fetch, noted it, and returned early. Nothing about that looks like an error
+to the platform.
+
+One line in `wrangler.jsonc` fixes it:
+
+```jsonc
+"compatibility_flags": ["global_fetch_strictly_public"],
+```
+
+The flag routes the Worker's outbound `fetch()` through the public internet, where a published feed
+is an ordinary request. The fetch throws now rather than coming back empty. A feed the Worker cannot
+read and one with nothing new in it are different states, and only one of them deserves an `ok`.
+
+The seed that was supposed to happen on the first tick therefore never has. The next tick that gets
+through will find `sent_posts` empty, record the current catalog as delivered, and send nothing.
+That is what the seed is for.
