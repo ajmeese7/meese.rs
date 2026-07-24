@@ -1,5 +1,6 @@
 import type { APIContext } from "astro";
-import { getFeedPosts, postUrl } from "../utils/posts";
+import { postUrl } from "../utils/post-url";
+import { getFeedPosts } from "../utils/posts";
 
 // JSON Feed 1.1, https://www.jsonfeed.org/version/1.1/
 export async function GET(context: APIContext) {
@@ -18,8 +19,8 @@ export async function GET(context: APIContext) {
       "Field notes from a builder, practical writing on software, AI/devtools, and systems-building.",
     language: "en",
     items: posts.map((post) => ({
-      id: post.data.externalUrl ?? abs(postUrl(post)),
-      url: post.data.externalUrl ?? abs(postUrl(post)),
+      id: abs(postUrl(post)),
+      url: abs(postUrl(post)),
       title: post.data.title,
       summary: post.data.description,
       date_published: post.data.date.toISOString(),

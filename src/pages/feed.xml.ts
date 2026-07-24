@@ -1,6 +1,7 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
-import { getFeedPosts, postUrl } from "../utils/posts";
+import { postUrl } from "../utils/post-url";
+import { getFeedPosts } from "../utils/posts";
 
 export async function GET(context: APIContext) {
   const posts = (await getFeedPosts()).sort(
@@ -17,7 +18,7 @@ export async function GET(context: APIContext) {
       title: post.data.title,
       pubDate: post.data.date,
       description: post.data.description,
-      link: post.data.externalUrl ?? new URL(postUrl(post), site).href,
+      link: new URL(postUrl(post), site).href,
       categories: [post.data.type, ...post.data.topics],
     })),
     customData: "<language>en</language>",

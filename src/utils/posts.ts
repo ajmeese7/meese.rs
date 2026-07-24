@@ -64,11 +64,6 @@ export async function getReviews(): Promise<Post[]> {
   return getByType("review");
 }
 
-export function postUrl(post: Post): string {
-  if (post.data.externalUrl) return post.data.externalUrl;
-  return `/posts/${post.id}/`;
-}
-
 /** The public repo this site (and every post in it) is built from. */
 export const REPO_URL = "https://github.com/ajmeese7/meese.rs";
 

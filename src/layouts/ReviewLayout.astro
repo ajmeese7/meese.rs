@@ -9,7 +9,8 @@ import PagefindMeta from "../components/posts/PagefindMeta.astro";
 import PostSource from "../components/layout/PostSource.astro";
 import ReadTracker from "../components/posts/ReadTracker.astro";
 import { isoDate } from "../utils/dates";
-import { postUrl, type Post } from "../utils/posts";
+import { postUrl } from "../utils/post-url";
+import type { Post } from "../utils/posts";
 import { getBacklinks } from "../utils/backlinks";
 
 interface Props {
