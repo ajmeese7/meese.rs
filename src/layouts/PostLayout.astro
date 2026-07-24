@@ -6,6 +6,7 @@ import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
 import AuthorByline from "../components/layout/AuthorByline.astro";
 import NewsletterSignup from "../components/layout/NewsletterSignup.astro";
+import PostRepo from "../components/layout/PostRepo.astro";
 import PostSource from "../components/layout/PostSource.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
 import ReadTracker from "../components/posts/ReadTracker.astro";
@@ -67,6 +68,7 @@ if (supersededTarget) {
     <PagefindMeta post={post} />
     <div class="post-topbar">
       <BackLink href="/latest/" label="index" />
+      <PostRepo post={post} />
       <PostSource post={post} />
     </div>
 

@@ -1,0 +1,36 @@
+---
+import Icon from "./Icon.astro";
+
+/**
+ * Boxed outbound chip for the post topbar, per the design system's ViewSource
+ * (ui_kits/website/PostView.jsx). Chips ride the back-link row right-aligned,
+ * so they cost no vertical space at any width. `data-pagefind-ignore` keeps
+ * their labels out of the search index, since the whole article is a Pagefind
+ * body and a chip label would otherwise match on every post carrying it.
+ *
+ * Renders nothing without an `href`, so callers can pass an optional value
+ * straight through instead of guarding at every call site.
+ */
+interface Props {
+  href: string | null | undefined;
+  icon: string;
+  label: string;
+}
+const { href, icon, label } = Astro.props;
+---
+
+{
+  href && (
+    <a
+      class="post-chip"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-pagefind-ignore
+    >
+      <Icon name={icon} size={13} />
+      <span>{label}</span>
+      <Icon name="arrow-up-right" size={12} class="post-chip__out" />
+    </a>
+  )
+}

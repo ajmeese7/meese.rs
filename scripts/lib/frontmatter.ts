@@ -28,6 +28,8 @@ export interface ParsedPost {
     supersedes: string[];
     supersededBy?: string;
     externalUrl?: string;
+    repo?: string;
+    reviewLinks: string[];
   };
 }
 
@@ -73,6 +75,14 @@ function parse(file: string, id: string): ParsedPost {
     supersedes: strList(fm.supersedes),
     supersededBy: str(fm.supersededBy),
     externalUrl: str(fm.externalUrl),
+    repo: str(fm.repo),
+    reviewLinks: Array.isArray(fm.review?.links)
+      ? fm.review.links
+          .map((l: unknown) =>
+            l && typeof l === "object" ? str((l as { href?: unknown }).href) : undefined,
+          )
+          .filter((href: string | undefined): href is string => !!href)
+      : [],
   };
 
   return { id, file, body, data };
