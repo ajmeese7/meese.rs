@@ -2,6 +2,8 @@
 
 > Canonical technical writing index for software, AI/devtool work, implementation notes, and systems-building.
 
+The author's portfolio and interactive clone are at https://meese.dev.
+
 ## Sections
 
 - /latest, mixed chronological writing feed
@@ -14,6 +16,7 @@
 
 ## Machine-readable resources
 
+- /index.json, catalog of every entry: slug, title, description, url, date, type, topics, tags, repo. No post bodies. Start here to find out what exists.
 - /sitemap-index.xml
 - /feed.xml
 - /feed.json

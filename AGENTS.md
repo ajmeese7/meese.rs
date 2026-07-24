@@ -11,6 +11,10 @@ Guidance for coding agents working in this public repository.
 - Full product spec: `docs/SPEC.md`. The approved visual system (tokens,
   components, UI kit, brand assets) lives in `design-system/`, read its
   `project/README.md` before touching anything visual.
+- Sibling property: **meese.dev** (repo `agentic-portfolio`), the portfolio and
+  interactive clone. It consumes this site's `/index.json` catalog, so changing
+  that endpoint's shape is a cross-repo change. `src/utils/identity.ts` is the
+  other coupling: both sites emit the same `Person` node and have to agree.
 
 ## Project structure
 

@@ -4,6 +4,8 @@ meese.rs is a static technical writing site: long- and short-form writing in
 one latest-first feed, with topic navigation, static search, and a concept
 graph. Voice: "field notes from a builder."
 
+The author's portfolio and interactive clone are at `https://meese.dev`.
+
 ## Canonical sections
 
 - `/latest`, every public entry, newest first
@@ -17,8 +19,11 @@ graph. Voice: "field notes from a builder."
 
 ## Machine-readable resources
 
+- `/index.json`, catalog of every entry (slug, title, description, url, date,
+  type, topics, tags, repo). Start here to find out what has been written; it
+  carries no post bodies.
 - `/sitemap-index.xml`
-- `/feed.xml` (RSS), `/feed.json` (JSON Feed)
+- `/feed.xml` (RSS), `/feed.json` (JSON Feed), for subscribing rather than querying
 - `/graph.json` (nodes + edges)
 - `/llms.txt`
 
