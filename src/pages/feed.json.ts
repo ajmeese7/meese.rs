@@ -1,4 +1,5 @@
 import type { APIContext } from "astro";
+import { SITE_DESCRIPTION, SITE_NAME } from "../utils/identity";
 import { postUrl } from "../utils/post-url";
 import { getFeedPosts } from "../utils/posts";
 
@@ -12,11 +13,10 @@ export async function GET(context: APIContext) {
 
   const feed = {
     version: "https://jsonfeed.org/version/1.1",
-    title: "meese.rs",
+    title: SITE_NAME,
     home_page_url: site.href,
     feed_url: abs("/feed.json"),
-    description:
-      "Field notes from a builder, practical writing on software, AI/devtools, and systems-building.",
+    description: SITE_DESCRIPTION,
     language: "en",
     items: posts.map((post) => ({
       id: abs(postUrl(post)),

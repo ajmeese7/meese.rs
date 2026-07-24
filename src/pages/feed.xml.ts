@@ -1,5 +1,6 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
+import { SITE_DESCRIPTION, SITE_NAME } from "../utils/identity";
 import { postUrl } from "../utils/post-url";
 import { getFeedPosts } from "../utils/posts";
 
@@ -10,9 +11,8 @@ export async function GET(context: APIContext) {
   const site = context.site ?? new URL("https://meese.rs");
 
   return rss({
-    title: "meese.rs",
-    description:
-      "Field notes from a builder, practical writing on software, AI/devtools, and systems-building.",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     site,
     items: posts.map((post) => ({
       title: post.data.title,

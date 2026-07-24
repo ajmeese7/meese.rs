@@ -1,3 +1,5 @@
+import { SITE_NAME } from "./identity";
+
 export interface SeoInput {
   title: string;
   description: string;
@@ -23,8 +25,6 @@ export interface SeoMeta {
   modifiedTime?: string;
   tags: string[];
 }
-
-const SITE_NAME = "meese.rs";
 
 /** Posts get a per-post card (1200x630, see src/pages/og/[...route].ts).
  *  Every other page uses the static hero card (1200x630). */
