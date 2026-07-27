@@ -15,6 +15,14 @@ const TYPES = [
   "review",
 ];
 
+/**
+ * `repo` points at a GitHub repository root and nothing else: no tree/blob
+ * deep links, no trailing query. Shape only. Resolving it would put a GitHub
+ * API call (and its rate limit) between a blog post and a green deploy, so a
+ * repo that later goes private or gets deleted is not caught here.
+ */
+const REPO_URL = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/?$/;
+
 const posts = loadPosts();
 const ids = new Set(posts.map((p) => p.id));
 const errors: string[] = [];
@@ -38,6 +46,20 @@ for (const p of posts) {
     errors.push(`${where}: invalid date "${d.date}"`);
   if (d.updated && Number.isNaN(Date.parse(d.updated)))
     errors.push(`${where}: invalid updated date "${d.updated}"`);
+
+  if (d.repo && !REPO_URL.test(d.repo)) {
+    errors.push(
+      `${where}: repo "${d.repo}" is not a GitHub repository URL ` +
+        `(expected https://github.com/<owner>/<repo>)`,
+    );
+  }
+  // Reviews carry their own link list, which renders in the review sidebar.
+  // Declaring the same URL both ways would print it twice on one page.
+  if (d.repo && d.reviewLinks.some((href) => href.replace(/\/$/, "") === d.repo!.replace(/\/$/, ""))) {
+    errors.push(
+      `${where}: repo "${d.repo}" is already in review.links; drop one`,
+    );
+  }
 
   for (const r of d.related) {
     if (!ids.has(r.slug))

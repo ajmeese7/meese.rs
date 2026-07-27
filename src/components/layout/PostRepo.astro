@@ -1,0 +1,11 @@
+---
+import TopbarChip from "./TopbarChip.astro";
+import type { Post } from "../../utils/posts";
+
+/** The GitHub repository this entry is about, when it declares one. */
+interface Props {
+  post: Post;
+}
+---
+
+<TopbarChip href={Astro.props.post.data.repo} icon="git-fork" label="repo" />

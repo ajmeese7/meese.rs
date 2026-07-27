@@ -16,7 +16,12 @@ const since = posts.length
 
 // Owner-confirmed identity links (§13.5). External links open in a new tab so
 // the reader keeps the blog tab; `rel="me"` on the profile links supports
-// profile verification. Email is a mailto, so it stays in-tab.
+// profile verification, and meese.dev links back the same way. Email is a
+// mailto, so it stays in-tab.
+//
+// This is the rendered link row only. The Person that ties these together is
+// emitted site-wide from src/utils/identity.ts, so both properties describe
+// the same entity rather than each declaring its own.
 const LINKS = [
   { icon: "github", label: "GitHub", href: "https://github.com/ajmeese7", me: true },
   { icon: "arrow-up-right", label: "Portfolio", href: "https://meese.dev", me: true },
@@ -25,13 +30,6 @@ const LINKS = [
   { icon: "mail", label: "Email", href: "mailto:aaron@meese.dev", me: false },
 ] as const;
 
-const person = {
-  "@context": "https://schema.org",
-  "@type": "Person",
-  name: "Aaron Meese",
-  url: "https://meese.rs/about/",
-  sameAs: LINKS.filter((l) => l.me).map((l) => l.href),
-};
 ---
 
 <BaseLayout
@@ -128,6 +126,4 @@ const person = {
       </p>
     </div>
   </div>
-
-  <script type="application/ld+json" is:inline set:html={JSON.stringify(person)} />
 </BaseLayout>

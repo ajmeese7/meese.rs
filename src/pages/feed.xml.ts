@@ -1,6 +1,8 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
-import { getFeedPosts, postUrl } from "../utils/posts";
+import { SITE_DESCRIPTION, SITE_NAME } from "../utils/identity";
+import { postUrl } from "../utils/post-url";
+import { getFeedPosts } from "../utils/posts";
 
 export async function GET(context: APIContext) {
   const posts = (await getFeedPosts()).sort(
@@ -9,15 +11,14 @@ export async function GET(context: APIContext) {
   const site = context.site ?? new URL("https://meese.rs");
 
   return rss({
-    title: "meese.rs",
-    description:
-      "Field notes from a builder, practical writing on software, AI/devtools, and systems-building.",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     site,
     items: posts.map((post) => ({
       title: post.data.title,
       pubDate: post.data.date,
       description: post.data.description,
-      link: post.data.externalUrl ?? new URL(postUrl(post), site).href,
+      link: new URL(postUrl(post), site).href,
       categories: [post.data.type, ...post.data.topics],
     })),
     customData: "<language>en</language>",

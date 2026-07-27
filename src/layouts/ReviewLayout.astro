@@ -6,10 +6,12 @@ import Icon from "../components/layout/Icon.astro";
 import BackLink from "../components/layout/BackLink.astro";
 import AuthorByline from "../components/layout/AuthorByline.astro";
 import PagefindMeta from "../components/posts/PagefindMeta.astro";
+import PostRepo from "../components/layout/PostRepo.astro";
 import PostSource from "../components/layout/PostSource.astro";
 import ReadTracker from "../components/posts/ReadTracker.astro";
 import { isoDate } from "../utils/dates";
-import { postUrl, type Post } from "../utils/posts";
+import { postUrl } from "../utils/post-url";
+import type { Post } from "../utils/posts";
 import { getBacklinks } from "../utils/backlinks";
 
 interface Props {
@@ -39,6 +41,7 @@ const related = [...backlinks.related.map((x) => x.post), ...backlinks.sameTopic
     <PagefindMeta post={post} />
     <div class="post-topbar">
       <BackLink href="/reviews/" label="reviews" />
+      <PostRepo post={post} />
       <PostSource post={post} />
     </div>
 

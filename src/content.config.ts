@@ -68,6 +68,11 @@ const posts = defineCollection({
       supersededBy: z.string().optional(),
       canonicalUrl: z.string().url().optional(),
       externalUrl: z.string().url().optional(),
+      // The GitHub repository the entry is about, when there is one. Renders
+      // as a chip on the page and rides along in /index.json, where meese.dev
+      // uses it to tie a post to the project it came out of. Shape is checked
+      // by `pnpm validate:content`; nothing here hits the network.
+      repo: z.string().url().optional(),
       hideFromFeed: z.boolean().default(false),
       // Unlisted: builds a live, shareable page but appears in no listing,
       // feed, topic, search index, graph, or sitemap, and is marked noindex.
