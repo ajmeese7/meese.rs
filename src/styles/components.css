@@ -910,6 +910,9 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   display: flex;
   align-items: center;
   gap: 12px;
+  /* Clear the sticky header's bottom border so the boxed chip doesn't butt
+     against it; matches the 28px top padding the index-page shells carry. */
+  margin-top: 28px;
   margin-bottom: 24px;
 }
 /* The row owns the spacing now; the bare link keeps its own elsewhere. */
