@@ -1,0 +1,51 @@
+---
+title: "Fable at low effort is my daily driver now, not Opus at high"
+description:
+  "The 2x per-token premium sounds scary until you look at what low effort does to token volume. My
+  own usage logs put the real gap at about 1.6x per message."
+date: 2026-08-04
+type: note
+topics:
+  - ai-devtools
+  - developer-experience
+tags:
+  - claude
+  - fable
+  - opus
+draft: false
+featured: false
+---
+
+The horror stories about Fable 5, the ones where it drains a week of Claude usage in an afternoon at
+5-10x the burn rate of Opus, came from running it at `max` or `xhigh` effort inside long agentic
+Claude Code sessions. I run it at `low` effort, and that setting is not a compromise: I have
+one-shot an entire app with it. The math looks nothing like those stories either.
+
+Anthropic prices Fable 5 at $10 per million input tokens and $50 per million output, against $5 and
+$25 for Opus 5. That is a flat 2x per token, and the effort setting does not change it. What effort
+changes is volume: `low` emits fewer tokens across text, tool calls, and thinking, while the rate
+stays fixed. Fable at `low` versus Opus at `high` is twice the rate applied to a smaller pile of
+tokens, and the two roughly cancel out. Each response costs about the same either way. There is a
+flip side worth knowing: on Opus 5, dropping the effort does not reliably shorten the visible
+responses, so Opus at `low` saves less than you would expect.
+
+My own usage logs agree. [tokscale](https://github.com/junhoyeo/tokscale#quick-start), the CLI I use
+to track per-model token usage locally, has recorded 589 Fable 5 messages and 1,592 Opus 5 messages
+on this machine. Fable averaged about 876 output tokens per message and Opus about 941, so `low`
+really does trim the volume. Counting everything a message costs (input, cache reads, and output),
+Fable came out around $0.38 per message against $0.24 for Opus, roughly 1.6x. That is not free, but
+it is nowhere near the 5-10x drain from the horror stories.
+
+Your plan decides whether any of this matters. On Max plans, Fable is a standard part of the deal:
+it can consume up to half of the weekly usage limit, drawing from the same pool as every other
+model. On Pro plans it is excluded from plan limits entirely and bills as pay-as-you-go usage
+credits at API rates from the first token. Fable as a daily driver is a Max-plan position; on Pro
+the same habit gets genuinely expensive.
+
+The cost math is only half of why I switched. Fable's answers read closer to how I would explain the
+thing myself, and I find I have less to edit or re-ask afterward. Opus is not bad at this, but the
+difference is noticeable enough that I reach for Fable first even when Opus would be cheaper.
+
+One caveat for security people like me: Fable 5 ships with classifiers for cybersecurity and
+bio/chem content, and when one trips, Opus handles the response and the conversation stays on Opus
+from then on.
