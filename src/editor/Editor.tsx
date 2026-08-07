@@ -25,7 +25,6 @@ import {
   InsertCodeBlock,
   Separator,
 } from "@mdxeditor/editor";
-import { CalloutEditor, FigureEditor } from "./JsxEditors.tsx";
 
 // Every code-fence language present in the posts (plus a generous superset) has
 // to be registered or MDXEditor throws when it loads a document that uses one.
@@ -67,7 +66,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
       { name: "type", type: "string" },
       { name: "title", type: "string" },
     ],
-    Editor: CalloutEditor,
+    Editor: GenericJsxEditor,
   },
   {
     name: "Figure",
@@ -79,7 +78,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
       { name: "caption", type: "string" },
       { name: "kind", type: "string" },
     ],
-    Editor: FigureEditor,
+    Editor: GenericJsxEditor,
   },
   {
     name: "CodeCaption",
