@@ -110,7 +110,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
   ),
 ];
 
-type PostPayload = { file: string; frontmatter: string; body: string };
+type PostPayload = { file: string; frontmatter: string; notes: string; body: string };
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 
 // How long to wait after the last keystroke before autosaving. Long enough to
@@ -133,6 +133,7 @@ export default function Editor() {
   const [files, setFiles] = useState<string[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
   const [frontmatter, setFrontmatter] = useState("");
+  const [notes, setNotes] = useState("");
   const [body, setBody] = useState("");
   const [message, setMessage] = useState("Loading posts...");
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -142,8 +143,10 @@ export default function Editor() {
   const currentRef = useRef<string | null>(null);
   const bodyRef = useRef("");
   const frontmatterRef = useRef("");
+  const notesRef = useRef("");
   const savedBodyRef = useRef("");
   const savedFrontmatterRef = useRef("");
+  const savedNotesRef = useRef("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializingRef = useRef(false);
   const initTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -151,7 +154,8 @@ export default function Editor() {
   const isDirty = useCallback(
     () =>
       bodyRef.current !== savedBodyRef.current ||
-      frontmatterRef.current !== savedFrontmatterRef.current,
+      frontmatterRef.current !== savedFrontmatterRef.current ||
+      notesRef.current !== savedNotesRef.current,
     [],
   );
 
@@ -166,15 +170,17 @@ export default function Editor() {
     }
     const body = bodyRef.current;
     const frontmatter = frontmatterRef.current;
+    const notes = notesRef.current;
     setSaveState("saving");
     try {
       await getJson<PostPayload>("/api/editor/save", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ file, frontmatter, body }),
+        body: JSON.stringify({ file, frontmatter, notes, body }),
       });
       savedBodyRef.current = body;
       savedFrontmatterRef.current = frontmatter;
+      savedNotesRef.current = notes;
       setSaveState(isDirty() ? "dirty" : "saved");
     } catch (err) {
       setSaveState("error");
@@ -212,6 +218,7 @@ export default function Editor() {
             JSON.stringify({
               file,
               frontmatter: frontmatterRef.current,
+              notes: notesRef.current,
               body: bodyRef.current,
             }),
           ],
@@ -245,11 +252,14 @@ export default function Editor() {
         currentRef.current = post.file;
         bodyRef.current = post.body;
         frontmatterRef.current = post.frontmatter;
+        notesRef.current = post.notes;
         savedBodyRef.current = post.body;
         savedFrontmatterRef.current = post.frontmatter;
+        savedNotesRef.current = post.notes;
         setCurrent(post.file);
         setBody(post.body);
         setFrontmatter(post.frontmatter);
+        setNotes(post.notes);
         setSaveState("saved");
         setMessage(`Editing ${file}`);
         // Absorb MDXEditor's initial re-serialization as the baseline.
@@ -284,6 +294,15 @@ export default function Editor() {
       frontmatterRef.current = value;
       setFrontmatter(value);
       if (value !== savedFrontmatterRef.current) scheduleSave();
+    },
+    [scheduleSave],
+  );
+
+  const onNotesChange = useCallback(
+    (value: string) => {
+      notesRef.current = value;
+      setNotes(value);
+      if (value !== savedNotesRef.current) scheduleSave();
     },
     [scheduleSave],
   );
@@ -370,6 +389,28 @@ export default function Editor() {
                 }}
               />
             </details>
+
+            {notes && (
+              <details style={{ borderBottom: "1px solid #eee" }}>
+                <summary style={{ padding: "0.5rem 1rem", cursor: "pointer" }}>
+                  MDX comments (raw)
+                </summary>
+                <textarea
+                  value={notes}
+                  onChange={(e) => onNotesChange(e.target.value)}
+                  spellCheck={false}
+                  style={{
+                    width: "100%",
+                    minHeight: 96,
+                    border: "none",
+                    padding: "0.5rem 1rem",
+                    fontFamily: "ui-monospace, monospace",
+                    fontSize: "0.8rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </details>
+            )}
 
             <div style={{ flex: 1, overflowY: "auto" }}>
               <MDXEditor
