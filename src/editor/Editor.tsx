@@ -310,9 +310,6 @@ export default function Editor() {
             borderBottom: "1px solid #ddd",
           }}
         >
-          <button onClick={() => void persist()} disabled={!current || saveState !== "dirty"}>
-            Save now
-          </button>
           <span
             style={{
               fontSize: "0.85rem",
@@ -323,9 +320,6 @@ export default function Editor() {
             {saveLabel[saveState]}
           </span>
           <span style={{ fontSize: "0.85rem", color: "#777" }}>{message}</span>
-          <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "#999" }}>
-            Autosaves. Switching posts saves first.
-          </span>
         </header>
 
         {current && (
