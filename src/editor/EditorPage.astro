@@ -1,0 +1,61 @@
+---
+// Dev-only host page for the visual MDX editor. This route is injected only
+// under `astro dev` (see src/integrations/editor.ts), so it never builds into
+// the static Cloudflare output and its React/MDXEditor deps never ship.
+import Editor from "./Editor.tsx";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MDX editor (dev)</title>
+    <!--
+      Autosave writes to the content dir, which makes Astro broadcast a Vite
+      `full-reload` to every open tab. That is what live-refreshes a preview tab,
+      but on this editor tab it would wipe the cursor mid-edit. This inline
+      classic script runs before Vite's deferred client module, patches the HMR
+      WebSocket, and swallows only `full-reload` frames (module `update` frames
+      still apply), so the editor stays put while previews still refresh live.
+    -->
+    <script is:inline>
+      (function () {
+        const OrigWS = window.WebSocket;
+        function PatchedWS(url, protocols) {
+          const ws = protocols ? new OrigWS(url, protocols) : new OrigWS(url);
+          ws.addEventListener(
+            "message",
+            function (event) {
+              try {
+                const msg = JSON.parse(event.data);
+                if (msg && msg.type === "full-reload") {
+                  event.stopImmediatePropagation();
+                }
+              } catch (_) {
+                /* non-JSON frame, ignore */
+              }
+            },
+            true,
+          );
+          return ws;
+        }
+        PatchedWS.prototype = OrigWS.prototype;
+        Object.setPrototypeOf(PatchedWS, OrigWS);
+        window.WebSocket = PatchedWS;
+      })();
+    </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family:
+          ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <Editor client:only="react" />
+  </body>
+</html>
