@@ -25,6 +25,7 @@ import {
   InsertCodeBlock,
   Separator,
 } from "@mdxeditor/editor";
+import { CalloutEditor, FigureEditor } from "./JsxEditors.tsx";
 
 // Every code-fence language present in the posts (plus a generous superset) has
 // to be registered or MDXEditor throws when it loads a document that uses one.
@@ -66,7 +67,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
       { name: "type", type: "string" },
       { name: "title", type: "string" },
     ],
-    Editor: GenericJsxEditor,
+    Editor: CalloutEditor,
   },
   {
     name: "Figure",
@@ -78,7 +79,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
       { name: "caption", type: "string" },
       { name: "kind", type: "string" },
     ],
-    Editor: GenericJsxEditor,
+    Editor: FigureEditor,
   },
   {
     name: "CodeCaption",
@@ -117,6 +118,11 @@ type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 // coalesce a burst of typing, short enough that a preview tab feels live.
 const AUTOSAVE_DELAY_MS = 1000;
 
+// On load MDXEditor emits its own re-serialized markdown (different wrapping
+// than the raw file), which must NOT count as an edit. Adopt whatever it emits
+// during this window after opening a post as the clean baseline.
+const INIT_SETTLE_MS = 600;
+
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const data = (await res.json()) as T & { error?: string };
@@ -140,6 +146,8 @@ export default function Editor() {
   const savedBodyRef = useRef("");
   const savedFrontmatterRef = useRef("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initializingRef = useRef(false);
+  const initTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isDirty = useCallback(
     () =>
@@ -216,6 +224,14 @@ export default function Editor() {
     return () => window.removeEventListener("beforeunload", flush);
   }, [isDirty]);
 
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (initTimerRef.current) clearTimeout(initTimerRef.current);
+    },
+    [],
+  );
+
   const openFile = useCallback(
     async (file: string) => {
       if (file === currentRef.current) return;
@@ -237,6 +253,12 @@ export default function Editor() {
         setFrontmatter(post.frontmatter);
         setSaveState("saved");
         setMessage(`Editing ${file}`);
+        // Absorb MDXEditor's initial re-serialization as the baseline.
+        initializingRef.current = true;
+        if (initTimerRef.current) clearTimeout(initTimerRef.current);
+        initTimerRef.current = setTimeout(() => {
+          initializingRef.current = false;
+        }, INIT_SETTLE_MS);
       } catch (err) {
         setMessage(`Failed to open ${file}: ${(err as Error).message}`);
       }
@@ -247,6 +269,12 @@ export default function Editor() {
   const onBodyChange = useCallback(
     (md: string) => {
       bodyRef.current = md;
+      // During the settle window, adopt the editor's serialization as baseline
+      // rather than treating it as a change.
+      if (initializingRef.current) {
+        savedBodyRef.current = md;
+        return;
+      }
       if (md !== savedBodyRef.current) scheduleSave();
     },
     [scheduleSave],
