@@ -72,8 +72,18 @@ export default function editor(): AstroIntegration {
             }
             if (req.method === "GET" && url.pathname === "/api/editor/post") {
               const file = validFile(url.searchParams.get("file"));
-              const raw = await readFile(join(POSTS_DIR, file), "utf8");
-              return sendJson(res, 200, { file, ...splitPost(raw) });
+              const path = join(POSTS_DIR, file);
+              const raw = await readFile(path, "utf8");
+              // Serve prose unwrapped so the editor shows paragraphs flowing at
+              // the reading width instead of echoing prettier's hard wrap as
+              // line breaks. Save re-wraps with the repo config below.
+              const config = await resolveConfig(path);
+              const unwrapped = await format(raw, {
+                ...config,
+                filepath: path,
+                proseWrap: "never",
+              });
+              return sendJson(res, 200, { file, ...splitPost(unwrapped) });
             }
             if (req.method === "POST" && url.pathname === "/api/editor/save") {
               const payload = (await readJsonBody(req)) as {

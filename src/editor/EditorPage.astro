@@ -54,6 +54,19 @@ import Editor from "./Editor.tsx";
           ui-sans-serif, system-ui, -apple-system, sans-serif;
       }
     </style>
+    <!--
+      Constrain the editing column to the site's reading measure (72ch, the
+      value of --content-width for .prose) so line lengths in the editor
+      approximate what a reader sees, instead of spanning the full window.
+      is:global because the MDXEditor DOM is rendered by React, outside this
+      component's scoped styles.
+    -->
+    <style is:global>
+      .mdxeditor [contenteditable="true"] {
+        max-width: 72ch;
+        margin-inline: auto;
+      }
+    </style>
   </head>
   <body>
     <Editor client:only="react" />
