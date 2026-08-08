@@ -13,27 +13,13 @@ import { format, resolveConfig } from "prettier";
 const POSTS_DIR = resolve("src/content/posts");
 const FILE_RE = /^[a-z0-9-]+\.mdx?$/i;
 
-const MDX_COMMENT = /^\{\/\*[\s\S]*?\*\/\}$/;
-
-// Split a post into raw frontmatter, a leading MDX-comment block (dev notes),
-// and the prose body. Frontmatter and notes stay verbatim text: the frontmatter
-// because the editor only touches prose, and the notes because MDXEditor's
-// inline-expression widget mangles multi-line MDX comments. Both round-trip
-// untouched and get reattached on save.
-function splitPost(raw: string): { frontmatter: string; notes: string; body: string } {
+// Frontmatter stays verbatim text (the editor only touches the body), so split
+// on the first fenced block and keep the raw YAML untouched for round-tripping.
+// MDX comments stay in the body and render inline in the editor.
+function splitPost(raw: string): { frontmatter: string; body: string } {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-  const frontmatter = m ? m[1] : "";
-  const afterFm = (m ? raw.slice(m[0].length) : raw).replace(/^\s*\n/, "");
-  const lines = afterFm.split("\n");
-  let i = 0;
-  const noteLines: string[] = [];
-  while (i < lines.length && MDX_COMMENT.test(lines[i].trim())) {
-    noteLines.push(lines[i]);
-    i++;
-  }
-  const notes = noteLines.join("\n");
-  const body = lines.slice(i).join("\n").replace(/^\s*\n/, "");
-  return { frontmatter, notes, body };
+  if (!m) return { frontmatter: "", body: raw };
+  return { frontmatter: m[1], body: raw.slice(m[0].length).replace(/^\s*\n/, "") };
 }
 
 function validFile(name: unknown): string {
@@ -58,14 +44,8 @@ async function readJsonBody(req: IncomingMessage): Promise<unknown> {
 // Recombine, then hand the whole file to prettier so the committed output is
 // prettier's canonical form (exactly what `format:check` enforces in CI). The
 // editor's own serialization is a throwaway intermediate.
-async function formatPost(
-  frontmatter: string,
-  notes: string,
-  body: string,
-  path: string,
-): Promise<string> {
-  const prose = notes.trim() ? `${notes.trim()}\n\n${body.trim()}` : body.trim();
-  const recombined = `---\n${frontmatter.trim()}\n---\n\n${prose}\n`;
+async function formatPost(frontmatter: string, body: string, path: string): Promise<string> {
+  const recombined = `---\n${frontmatter.trim()}\n---\n\n${body.trim()}\n`;
   const config = await resolveConfig(path);
   return format(recombined, { ...config, filepath: path });
 }
@@ -100,15 +80,13 @@ export default function editor(): AstroIntegration {
               const payload = (await readJsonBody(req)) as {
                 file?: unknown;
                 frontmatter?: unknown;
-                notes?: unknown;
                 body?: unknown;
               };
               const file = validFile(payload.file);
               const path = join(POSTS_DIR, file);
               const frontmatter = String(payload.frontmatter ?? "");
-              const notes = String(payload.notes ?? "");
               const body = String(payload.body ?? "");
-              const formatted = await formatPost(frontmatter, notes, body, path);
+              const formatted = await formatPost(frontmatter, body, path);
               await writeFile(path, formatted, "utf8");
               return sendJson(res, 200, { file, ...splitPost(formatted) });
             }
