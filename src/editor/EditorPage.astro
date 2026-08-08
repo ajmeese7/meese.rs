@@ -74,6 +74,15 @@ import Editor from "./Editor.tsx";
         max-width: 72ch;
         margin-inline: auto;
       }
+      /* MDX comment/expression nodes dropped in mid-draft render as an
+         auto-sizing widget: a single-line input stacked over a pre-wrap ghost,
+         both visible. On a long, wrapping comment the input's one line overlaps
+         the ghost's wrapped lines. Hide the input's text (keep its caret) so
+         only the wrapping ghost shows. */
+      .mdxeditor [class*="inputSizer"] input {
+        color: transparent !important;
+        caret-color: #0d74ce;
+      }
     </style>
   </head>
   <body>
