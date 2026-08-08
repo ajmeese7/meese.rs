@@ -74,14 +74,20 @@ import Editor from "./Editor.tsx";
         max-width: 72ch;
         margin-inline: auto;
       }
-      /* MDX comment/expression nodes dropped in mid-draft render as an
-         auto-sizing widget: a single-line input stacked over a pre-wrap ghost,
-         both visible. On a long, wrapping comment the input's one line overlaps
-         the ghost's wrapped lines. Hide the input's text (keep its caret) so
-         only the wrapping ghost shows. */
+      /* MDX comment/expression nodes render as an auto-sizing widget: a
+         single-line input stacked over a pre-wrap ghost, both visible. On a
+         long, wrapping comment the input's one line overlaps the ghost's
+         wrapped lines. Hide the input's text (keep its caret) so only the
+         wrapping ghost shows. */
       .mdxeditor [class*="inputSizer"] input {
         color: transparent !important;
         caret-color: #0d74ce;
+      }
+      /* Stack each comment on its own line instead of letting several flow
+         inline, where adjacent {...} braces collide and wrap awkwardly. These
+         posts use expressions only for comments, so blocking them is safe. */
+      .mdxeditor [contenteditable="true"] [class*="mdxExpression"] {
+        display: block;
       }
     </style>
   </head>
