@@ -15,11 +15,53 @@ const FILE_RE = /^[a-z0-9-]+\.mdx?$/i;
 
 // Frontmatter stays verbatim text (the editor only touches the body), so split
 // on the first fenced block and keep the raw YAML untouched for round-tripping.
-// MDX comments stay in the body and render inline in the editor.
 function splitPost(raw: string): { frontmatter: string; body: string } {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!m) return { frontmatter: "", body: raw };
   return { frontmatter: m[1], body: raw.slice(m[0].length).replace(/^\s*\n/, "") };
+}
+
+// MDXEditor renders `{/* ... */}` with an inline widget that looks nothing like
+// a comment (visible braces, per-line boxes) and flattens multi-line comments.
+// So for the editor we present a run of consecutive single-line MDX comments as
+// one `mdxcomment` code block (CodeMirror renders multi-line cleanly and round-
+// trips exactly), then convert it back to the original comment lines on save.
+const SINGLE_COMMENT = /^\s*\{\/\*\s?(.*?)\s?\*\/\}\s*$/;
+const COMMENT_BLOCK = /```mdxcomment\r?\n([\s\S]*?)\r?\n```/g;
+
+function commentsToCodeBlock(body: string): string {
+  const lines = body.split("\n");
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (!SINGLE_COMMENT.test(lines[i])) {
+      out.push(lines[i]);
+      i++;
+      continue;
+    }
+    const inners: string[] = [];
+    while (i < lines.length) {
+      const m = lines[i].match(SINGLE_COMMENT);
+      if (!m) break;
+      inners.push(m[1]);
+      i++;
+    }
+    out.push("```mdxcomment", "/*", ...inners, "*/", "```");
+  }
+  return out.join("\n");
+}
+
+function codeBlockToComments(body: string): string {
+  return body.replace(COMMENT_BLOCK, (_full, content: string) => {
+    let lines = content.split("\n");
+    if (lines[0]?.trim() === "/*") lines = lines.slice(1);
+    if (lines[lines.length - 1]?.trim() === "*/") lines = lines.slice(0, -1);
+    return lines
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => `{/* ${l} */}`)
+      .join("\n");
+  });
 }
 
 function validFile(name: unknown): string {
@@ -74,7 +116,12 @@ export default function editor(): AstroIntegration {
             if (req.method === "GET" && url.pathname === "/api/editor/post") {
               const file = validFile(url.searchParams.get("file"));
               const raw = await readFile(join(POSTS_DIR, file), "utf8");
-              return sendJson(res, 200, { file, ...splitPost(raw) });
+              const { frontmatter, body } = splitPost(raw);
+              return sendJson(res, 200, {
+                file,
+                frontmatter,
+                body: commentsToCodeBlock(body),
+              });
             }
             if (req.method === "POST" && url.pathname === "/api/editor/save") {
               const payload = (await readJsonBody(req)) as {
@@ -85,7 +132,7 @@ export default function editor(): AstroIntegration {
               const file = validFile(payload.file);
               const path = join(POSTS_DIR, file);
               const frontmatter = String(payload.frontmatter ?? "");
-              const body = String(payload.body ?? "");
+              const body = codeBlockToComments(String(payload.body ?? ""));
               const formatted = await formatPost(frontmatter, body, path);
               await writeFile(path, formatted, "utf8");
               return sendJson(res, 200, { file, ...splitPost(formatted) });

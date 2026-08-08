@@ -83,12 +83,6 @@ import Editor from "./Editor.tsx";
         color: transparent !important;
         caret-color: #0d74ce;
       }
-      /* Stack each comment on its own line instead of letting several flow
-         inline, where adjacent {...} braces collide and wrap awkwardly. These
-         posts use expressions only for comments, so blocking them is safe. */
-      .mdxeditor [contenteditable="true"] [class*="mdxExpression"] {
-        display: block;
-      }
     </style>
   </head>
   <body>

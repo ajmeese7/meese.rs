@@ -51,6 +51,8 @@ const CODE_LANGUAGES: Record<string, string> = {
   md: "Markdown",
   mdx: "MDX",
   diff: "Diff",
+  // Synthetic language for MDX comment blocks (see src/integrations/editor.ts).
+  mdxcomment: "Comment",
 };
 
 // Every custom MDX component needs a descriptor or MDXEditor errors on unknown
