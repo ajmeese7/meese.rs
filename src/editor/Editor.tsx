@@ -29,6 +29,7 @@ import {
   insertCodeBlock$,
 } from "@mdxeditor/editor";
 import { CommentBlock } from "./CommentBlock.tsx";
+import { CODE_LANGUAGES } from "./codeLanguages.ts";
 
 // Toolbar button that drops in a new MDX comment (a note to self). It inserts
 // an empty `mdxcomment` block, which CommentBlock renders as a flowing comment
@@ -44,33 +45,6 @@ function InsertComment() {
     </Button>
   );
 }
-
-// Every code-fence language present in the posts (plus a generous superset) has
-// to be registered or MDXEditor throws when it loads a document that uses one.
-const CODE_LANGUAGES: Record<string, string> = {
-  "": "Plain",
-  text: "Plain",
-  plaintext: "Plain",
-  bash: "Bash",
-  sh: "Shell",
-  shell: "Shell",
-  js: "JavaScript",
-  jsx: "JSX",
-  ts: "TypeScript",
-  tsx: "TSX",
-  json: "JSON",
-  jsonc: "JSON with comments",
-  yaml: "YAML",
-  yml: "YAML",
-  toml: "TOML",
-  graphql: "GraphQL",
-  html: "HTML",
-  css: "CSS",
-  astro: "Astro",
-  md: "Markdown",
-  mdx: "MDX",
-  diff: "Diff",
-};
 
 // Every custom MDX component needs a descriptor or MDXEditor errors on unknown
 // JSX. Only `Callout` wraps children in the posts; everything else is a
@@ -413,7 +387,14 @@ export default function Editor() {
                       },
                     ],
                   }),
-                  codeMirrorPlugin({ codeBlockLanguages: CODE_LANGUAGES }),
+                  codeMirrorPlugin({
+                    codeBlockLanguages: CODE_LANGUAGES,
+                    // All supported grammars are declared explicitly, so skip the
+                    // dynamic auto-load (it was flaky under Vite and left unlisted
+                    // languages like graphql attempting a failing import). Unlisted
+                    // languages simply render plain.
+                    autoLoadLanguageSupport: false,
+                  }),
                   jsxPlugin({ jsxComponentDescriptors }),
                   markdownShortcutPlugin(),
                   toolbarPlugin({
