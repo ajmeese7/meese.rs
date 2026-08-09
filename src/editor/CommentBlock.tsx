@@ -7,6 +7,7 @@ import { useCodeBlockEditorContext, type CodeBlockEditorProps } from "@mdxeditor
 // no language chrome; it is a note to self, not article code.
 
 const wrap: CSSProperties = {
+  position: "relative",
   margin: "0.7rem 0",
   padding: "0.55rem 0.8rem",
   borderRadius: 6,
@@ -15,6 +16,18 @@ const wrap: CSSProperties = {
   fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
   fontSize: "0.8rem",
   lineHeight: 1.55,
+};
+const deleteBtn: CSSProperties = {
+  position: "absolute",
+  top: 4,
+  right: 6,
+  border: "none",
+  background: "transparent",
+  color: "#9ca3af",
+  cursor: "pointer",
+  fontSize: "1rem",
+  lineHeight: 1,
+  padding: 2,
 };
 const delim: CSSProperties = { display: "block", userSelect: "none", opacity: 0.7 };
 const area: CSSProperties = {
@@ -34,9 +47,13 @@ const area: CSSProperties = {
 };
 
 export function CommentBlock({ code }: CodeBlockEditorProps) {
-  const { setCode } = useCodeBlockEditorContext();
+  const { setCode, lexicalNode, parentEditor } = useCodeBlockEditorContext();
+  const remove = () => parentEditor.update(() => lexicalNode.remove());
   return (
     <div style={wrap} contentEditable={false}>
+      <button type="button" onClick={remove} title="Delete comment" style={deleteBtn}>
+        {"×"}
+      </button>
       <span style={delim}>{"/*"}</span>
       <textarea
         defaultValue={code}
