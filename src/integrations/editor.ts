@@ -23,9 +23,11 @@ function splitPost(raw: string): { frontmatter: string; body: string } {
 
 // MDXEditor renders `{/* ... */}` with an inline widget that looks nothing like
 // a comment (visible braces, per-line boxes) and flattens multi-line comments.
-// So for the editor we present a run of consecutive single-line MDX comments as
-// one `mdxcomment` code block (CodeMirror renders multi-line cleanly and round-
-// trips exactly), then convert it back to the original comment lines on save.
+// So for the editor we fold a run of consecutive single-line MDX comments into
+// one `mdxcomment` fenced block whose content is the fragments JOINED into one
+// flowing line; CommentBlock.tsx renders it as a plain flowing comment. On save
+// we convert it back to `{/* ... */}` (one comment per line, so a note stays a
+// single `{/* ... */}` which prettier keeps on one line).
 const SINGLE_COMMENT = /^\s*\{\/\*\s?(.*?)\s?\*\/\}\s*$/;
 const COMMENT_BLOCK = /```mdxcomment\r?\n([\s\S]*?)\r?\n```/g;
 
@@ -43,25 +45,23 @@ function commentsToCodeBlock(body: string): string {
     while (i < lines.length) {
       const m = lines[i].match(SINGLE_COMMENT);
       if (!m) break;
-      inners.push(m[1]);
+      inners.push(m[1].trim());
       i++;
     }
-    out.push("```mdxcomment", "/*", ...inners, "*/", "```");
+    out.push("```mdxcomment", inners.filter(Boolean).join(" "), "```");
   }
   return out.join("\n");
 }
 
 function codeBlockToComments(body: string): string {
-  return body.replace(COMMENT_BLOCK, (_full, content: string) => {
-    let lines = content.split("\n");
-    if (lines[0]?.trim() === "/*") lines = lines.slice(1);
-    if (lines[lines.length - 1]?.trim() === "*/") lines = lines.slice(0, -1);
-    return lines
+  return body.replace(COMMENT_BLOCK, (_full, content: string) =>
+    content
+      .split("\n")
       .map((l) => l.trim())
       .filter(Boolean)
       .map((l) => `{/* ${l} */}`)
-      .join("\n");
-  });
+      .join("\n"),
+  );
 }
 
 function validFile(name: unknown): string {

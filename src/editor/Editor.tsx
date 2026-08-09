@@ -25,6 +25,7 @@ import {
   InsertCodeBlock,
   Separator,
 } from "@mdxeditor/editor";
+import { CommentBlock } from "./CommentBlock.tsx";
 
 // Every code-fence language present in the posts (plus a generous superset) has
 // to be registered or MDXEditor throws when it loads a document that uses one.
@@ -51,8 +52,6 @@ const CODE_LANGUAGES: Record<string, string> = {
   md: "Markdown",
   mdx: "MDX",
   diff: "Diff",
-  // Synthetic language for MDX comment blocks (see src/integrations/editor.ts).
-  mdxcomment: "Comment",
 };
 
 // Every custom MDX component needs a descriptor or MDXEditor errors on unknown
@@ -386,7 +385,16 @@ export default function Editor() {
                   linkPlugin(),
                   linkDialogPlugin(),
                   tablePlugin(),
-                  codeBlockPlugin({ defaultCodeBlockLanguage: "" }),
+                  codeBlockPlugin({
+                    defaultCodeBlockLanguage: "",
+                    codeBlockEditorDescriptors: [
+                      {
+                        priority: 100,
+                        match: (lang) => lang === "mdxcomment",
+                        Editor: CommentBlock,
+                      },
+                    ],
+                  }),
                   codeMirrorPlugin({ codeBlockLanguages: CODE_LANGUAGES }),
                   jsxPlugin({ jsxComponentDescriptors }),
                   markdownShortcutPlugin(),
