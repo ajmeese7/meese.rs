@@ -24,8 +24,26 @@ import {
   CodeToggle,
   InsertCodeBlock,
   Separator,
+  Button,
+  usePublisher,
+  insertCodeBlock$,
 } from "@mdxeditor/editor";
 import { CommentBlock } from "./CommentBlock.tsx";
+
+// Toolbar button that drops in a new MDX comment (a note to self). It inserts
+// an empty `mdxcomment` block, which CommentBlock renders as a flowing comment
+// and the integration saves back as `{/* ... */}`.
+function InsertComment() {
+  const insertCodeBlock = usePublisher(insertCodeBlock$);
+  return (
+    <Button
+      title="Insert comment"
+      onClick={() => insertCodeBlock({ language: "mdxcomment", code: "" })}
+    >
+      {"/* */"}
+    </Button>
+  );
+}
 
 // Every code-fence language present in the posts (plus a generous superset) has
 // to be registered or MDXEditor throws when it loads a document that uses one.
@@ -411,6 +429,7 @@ export default function Editor() {
                         <Separator />
                         <CreateLink />
                         <InsertCodeBlock />
+                        <InsertComment />
                       </>
                     ),
                   }),

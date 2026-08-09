@@ -53,15 +53,40 @@ function commentsToCodeBlock(body: string): string {
   return out.join("\n");
 }
 
+// Prettier does not wrap `{/* */}` comments itself (a single long one stays on
+// one line), so wrap the note here at the repo print width into one comment per
+// line. The editor folds these back into one flowing note on load; this keeps
+// the source git-readable and consistent with the 100-column prose. Idempotent.
+const PRINT_WIDTH = 100;
+const COMMENT_WRAPPER = "{/*  */}".length; // 8
+
+function wrapComment(text: string): string {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (current && candidate.length + COMMENT_WRAPPER > PRINT_WIDTH) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.map((l) => `{/* ${l} */}`).join("\n");
+}
+
 function codeBlockToComments(body: string): string {
-  return body.replace(COMMENT_BLOCK, (_full, content: string) =>
-    content
+  return body.replace(COMMENT_BLOCK, (_full, content: string) => {
+    const joined = content
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean)
-      .map((l) => `{/* ${l} */}`)
-      .join("\n"),
-  );
+      .join(" ");
+    return wrapComment(joined);
+  });
 }
 
 function validFile(name: unknown): string {
