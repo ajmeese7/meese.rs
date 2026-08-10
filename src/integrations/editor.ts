@@ -1,5 +1,6 @@
 import type { AstroIntegration } from "astro";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { format, resolveConfig } from "prettier";
@@ -102,10 +103,57 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.end(payload);
 }
 
+// A save body is one post, a few KB at most. The cap is a backstop so a stray
+// or hostile request can't buffer the dev server out of memory.
+const MAX_BODY_BYTES = 1_000_000;
+
 async function readJsonBody(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(chunk as Buffer);
+  let size = 0;
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length;
+    if (size > MAX_BODY_BYTES) throw new Error("request body too large");
+    chunks.push(chunk as Buffer);
+  }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
+// `/api/editor/save` takes a JSON body, which makes it a CORS *simple request*:
+// no preflight, so without this check any page in any open tab could POST to it
+// and silently rewrite a post file. CORS would hide the response from that page
+// but not stop the write, and the edit would land in a file that later gets
+// committed and deployed. Browsers state a request's provenance, so require
+// same-origin and reject anything else.
+function isSameOrigin(req: IncomingMessage): boolean {
+  const site = req.headers["sec-fetch-site"];
+  if (typeof site === "string") return site === "same-origin";
+  // No Fetch Metadata means a non-browser client (curl, a script). Fall back to
+  // Origin, which browsers do send on cross-origin writes; absent both, there is
+  // no browser to be tricked.
+  const origin = req.headers.origin;
+  if (typeof origin !== "string") return true;
+  return origin === `http://${req.headers.host}` || origin === `https://${req.headers.host}`;
+}
+
+function safeEqual(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+// `astro dev --host` binds every interface (deliberately, for LAN access to the
+// dev site), and Vite's allowedHosts check permits any IP-literal Host header,
+// so without a key this file API would be an unauthenticated read/write of the
+// posts directory for every device that can reach the dev server. The key is
+// never embedded in the page (anything served to the browser is served to the
+// network too); it is printed to the dev-server console and passed once as
+// `?key=`.
+function hasKey(req: IncomingMessage, url: URL, key: string): boolean {
+  const header = req.headers["x-editor-key"];
+  if (typeof header === "string") return safeEqual(header, key);
+  // `navigator.sendBeacon` (the unload flush) cannot set headers, so the key may
+  // also ride in the query string.
+  return safeEqual(url.searchParams.get("key") ?? "", key);
 }
 
 // Recombine, then hand the whole file to prettier so the committed output is
@@ -118,9 +166,15 @@ async function formatPost(frontmatter: string, body: string, path: string): Prom
 }
 
 export default function editor(): AstroIntegration {
+  // Fresh per dev-server start, so a key never outlives the session it was
+  // printed for.
+  const key = randomBytes(24).toString("hex");
   return {
     name: "meese-editor",
     hooks: {
+      "astro:server:start": () => {
+        console.info(`\n  meese-editor  open /editor?key=${key}\n`);
+      },
       "astro:config:setup": ({ command, injectRoute }) => {
         if (command !== "dev") return;
         injectRoute({
@@ -133,6 +187,12 @@ export default function editor(): AstroIntegration {
         server.middlewares.use(async (req, res, next) => {
           const url = new URL(req.url ?? "/", "http://localhost");
           if (!url.pathname.startsWith("/api/editor/")) return next();
+          if (!isSameOrigin(req)) {
+            return sendJson(res, 403, { error: "cross-origin request rejected" });
+          }
+          if (!hasKey(req, url, key)) {
+            return sendJson(res, 403, { error: "missing or invalid editor key" });
+          }
           try {
             if (req.method === "GET" && url.pathname === "/api/editor/posts") {
               const files = (await readdir(POSTS_DIR)).filter((f) => FILE_RE.test(f));

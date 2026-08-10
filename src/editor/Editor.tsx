@@ -115,8 +115,28 @@ const AUTOSAVE_DELAY_MS = 1000;
 // during this window after opening a post as the clean baseline.
 const INIT_SETTLE_MS = 600;
 
-async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
+// The dev server is bound to every interface for LAN access, so the file API is
+// key-gated (see src/integrations/editor.ts). The key is printed by the dev
+// server and handed over once as `?key=`; keep it in sessionStorage (per tab,
+// gone when the tab closes) and strip it from the URL so it does not linger in
+// the address bar or get copied into a shared link.
+const KEY_STORAGE = "meese-editor-key";
+
+function readKey(): string {
+  const url = new URL(window.location.href);
+  const fromUrl = url.searchParams.get("key");
+  if (!fromUrl) return sessionStorage.getItem(KEY_STORAGE) ?? "";
+  sessionStorage.setItem(KEY_STORAGE, fromUrl);
+  url.searchParams.delete("key");
+  window.history.replaceState(null, "", url.toString());
+  return fromUrl;
+}
+
+async function getJson<T>(url: string, key: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: { ...init?.headers, "x-editor-key": key },
+  });
   const data = (await res.json()) as T & { error?: string };
   if (!res.ok) throw new Error(data.error ?? `${res.status} ${res.statusText}`);
   return data;
@@ -129,6 +149,7 @@ export default function Editor() {
   const [body, setBody] = useState("");
   const [message, setMessage] = useState("Loading posts...");
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [key] = useState(readKey);
 
   // Working copy and last-persisted snapshot, kept in refs so the debounced
   // saver reads live values without stale closures or extra re-renders.
@@ -161,7 +182,7 @@ export default function Editor() {
     const frontmatter = frontmatterRef.current;
     setSaveState("saving");
     try {
-      await getJson<PostPayload>("/api/editor/save", {
+      await getJson<PostPayload>("/api/editor/save", key, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ file, frontmatter, body }),
@@ -173,7 +194,7 @@ export default function Editor() {
       setSaveState("error");
       setMessage(`Save failed: ${(err as Error).message}`);
     }
-  }, [isDirty]);
+  }, [isDirty, key]);
 
   const scheduleSave = useCallback(() => {
     setSaveState("dirty");
@@ -185,21 +206,26 @@ export default function Editor() {
   }, [persist]);
 
   useEffect(() => {
-    getJson<string[]>("/api/editor/posts")
+    if (!key) {
+      setMessage("No editor key. Open the /editor?key=... URL printed by the dev server.");
+      return;
+    }
+    getJson<string[]>("/api/editor/posts", key)
       .then((list) => {
         setFiles(list);
         setMessage(`${list.length} posts.`);
       })
       .catch((err) => setMessage(`Failed to list posts: ${err.message}`));
-  }, []);
+  }, [key]);
 
   // Last-ditch flush if the tab closes with unsaved changes.
   useEffect(() => {
     const flush = () => {
       const file = currentRef.current;
       if (!file || !isDirty()) return;
+      // sendBeacon cannot set headers, so the key rides in the query string.
       navigator.sendBeacon(
-        "/api/editor/save",
+        `/api/editor/save?key=${encodeURIComponent(key)}`,
         new Blob(
           [
             JSON.stringify({
@@ -214,7 +240,7 @@ export default function Editor() {
     };
     window.addEventListener("beforeunload", flush);
     return () => window.removeEventListener("beforeunload", flush);
-  }, [isDirty]);
+  }, [isDirty, key]);
 
   useEffect(
     () => () => {
@@ -234,6 +260,7 @@ export default function Editor() {
       try {
         const post = await getJson<PostPayload>(
           `/api/editor/post?file=${encodeURIComponent(file)}`,
+          key,
         );
         currentRef.current = post.file;
         bodyRef.current = post.body;
@@ -255,7 +282,7 @@ export default function Editor() {
         setMessage(`Failed to open ${file}: ${(err as Error).message}`);
       }
     },
-    [persist],
+    [persist, key],
   );
 
   const onBodyChange = useCallback(
