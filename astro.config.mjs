@@ -3,7 +3,15 @@ import { readdirSync, readFileSync } from "node:fs";
 import { defineConfig, fontProviders } from "astro/config";
 import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
+import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
+import editor from "./src/integrations/editor.ts";
+
+// The visual MDX editor is a dev-only tool: its React island and file API must
+// never enter the static Cloudflare build, so its integrations are added only
+// outside production. `astro dev` sets NODE_ENV=development (the config already
+// relies on this below for draft handling), `astro build` sets production.
+const isDev = process.env.NODE_ENV !== "production";
 
 // Production domain. Cloudflare Workers serves the static `dist/` output as the
 // worker's assets, see wrangler.jsonc.
@@ -123,6 +131,7 @@ export default defineConfig({
   // any unlisted posts.
   integrations: [
     mdx(),
+    ...(isDev ? [react(), editor()] : []),
     sitemap({
       filter: (page) =>
         !page.includes("/search") &&

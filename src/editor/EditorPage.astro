@@ -1,0 +1,91 @@
+---
+// Dev-only host page for the visual MDX editor. This route is injected only
+// under `astro dev` (see src/integrations/editor.ts), so it never builds into
+// the static Cloudflare output and its React/MDXEditor deps never ship.
+import Editor from "./Editor.tsx";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MDX editor (dev)</title>
+    <!--
+      Autosave writes to the content dir, which makes Astro broadcast a Vite
+      `full-reload` to every open tab. That is what live-refreshes a preview tab,
+      but on this editor tab it would wipe the cursor mid-edit. This inline
+      classic script runs before Vite's deferred client module, patches the HMR
+      WebSocket, and swallows only `full-reload` frames (module `update` frames
+      still apply), so the editor stays put while previews still refresh live.
+    -->
+    <script is:inline>
+      (function () {
+        const OrigWS = window.WebSocket;
+        function PatchedWS(url, protocols) {
+          const ws = protocols ? new OrigWS(url, protocols) : new OrigWS(url);
+          ws.addEventListener(
+            "message",
+            function (event) {
+              try {
+                const msg = JSON.parse(event.data);
+                if (msg && msg.type === "full-reload") {
+                  event.stopImmediatePropagation();
+                }
+              } catch (_) {
+                /* non-JSON frame, ignore */
+              }
+            },
+            true,
+          );
+          return ws;
+        }
+        PatchedWS.prototype = OrigWS.prototype;
+        Object.setPrototypeOf(PatchedWS, OrigWS);
+        window.WebSocket = PatchedWS;
+      })();
+    </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family:
+          ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+    </style>
+    <!--
+      Two display fixes on the MDXEditor content, is:global because that DOM is
+      rendered by React, outside this component's scoped styles:
+      1. white-space: normal so markdown soft-wrap newlines (the posts are
+         hard-wrapped by prettier) collapse to spaces and prose flows, instead
+         of MDXEditor's default pre-wrap rendering every source newline as a
+         line break. CodeMirror sets its own white-space, so code blocks are
+         unaffected.
+      2. max-width at the site's 72ch reading measure (--content-width) so line
+         lengths approximate what a reader sees.
+    -->
+    <style is:global>
+      .mdxeditor [contenteditable="true"] {
+        /* !important: MDXEditor sets pre-wrap with equal specificity but loads
+           its stylesheet after this one. CodeMirror sets its own white-space on
+           .cm-content, so code blocks keep their formatting. */
+        white-space: normal !important;
+        max-width: 72ch;
+        margin-inline: auto;
+      }
+      /* MDX comment/expression nodes render as an auto-sizing widget: a
+         single-line input stacked over a pre-wrap ghost, both visible. On a
+         long, wrapping comment the input's one line overlaps the ghost's
+         wrapped lines. Hide the input's text (keep its caret) so only the
+         wrapping ghost shows. */
+      .mdxeditor [class*="inputSizer"] input {
+        color: transparent !important;
+        caret-color: #0d74ce;
+      }
+    </style>
+  </head>
+  <body>
+    <Editor client:only="react" />
+  </body>
+</html>
