@@ -55,22 +55,19 @@ import Editor from "./Editor.tsx";
       }
     </style>
     <!--
-      Two display fixes on the MDXEditor content, is:global because that DOM is
-      rendered by React, outside this component's scoped styles:
-      1. white-space: normal so markdown soft-wrap newlines (the posts are
-         hard-wrapped by prettier) collapse to spaces and prose flows, instead
-         of MDXEditor's default pre-wrap rendering every source newline as a
-         line break. CodeMirror sets its own white-space, so code blocks are
-         unaffected.
-      2. max-width at the site's 72ch reading measure (--content-width) so line
-         lengths approximate what a reader sees.
+      Display fixes on the MDXEditor content, is:global because that DOM is
+      rendered by React, outside this component's scoped styles.
+      Note: never override white-space on the contenteditable. Lexical sets
+      pre-wrap inline and depends on it; under `normal` the browser collapses a
+      just-typed space at a text-node boundary and Lexical drops it from the
+      model, so a space could not be typed after an inline format (`_word_ `).
+      The hard-wrapped source line breaks are collapsed on import instead, see
+      softBreakPlugin.ts.
     -->
     <style is:global>
+      /* The site's 72ch reading measure (--content-width), so line lengths
+         approximate what a reader sees. */
       .mdxeditor [contenteditable="true"] {
-        /* !important: MDXEditor sets pre-wrap with equal specificity but loads
-           its stylesheet after this one. CodeMirror sets its own white-space on
-           .cm-content, so code blocks keep their formatting. */
-        white-space: normal !important;
         max-width: 72ch;
         margin-inline: auto;
       }

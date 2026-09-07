@@ -30,6 +30,7 @@ import {
 } from "@mdxeditor/editor";
 import { CommentBlock } from "./CommentBlock.tsx";
 import { CODE_LANGUAGES } from "./codeLanguages.ts";
+import { softBreakPlugin } from "./softBreakPlugin.ts";
 
 // Toolbar button that drops in a new MDX comment (a note to self). It inserts
 // an empty `mdxcomment` block, which CommentBlock renders as a flowing comment
@@ -424,6 +425,7 @@ export default function Editor() {
                   }),
                   jsxPlugin({ jsxComponentDescriptors }),
                   markdownShortcutPlugin(),
+                  softBreakPlugin(),
                   toolbarPlugin({
                     toolbarContents: () => (
                       <>
