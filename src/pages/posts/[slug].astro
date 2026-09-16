@@ -13,7 +13,6 @@ import Figure from "../../components/mdx/Figure.astro";
 import OrientationWidget from "../../components/mdx/OrientationWidget.astro";
 import PostLayout from "../../layouts/PostLayout.astro";
 import RelayFlow from "../../components/mdx/RelayFlow.astro";
-import ReviewLayout from "../../layouts/ReviewLayout.astro";
 import ReynoldsRegime from "../../components/mdx/ReynoldsRegime.astro";
 import SpeciesChart from "../../components/mdx/SpeciesChart.astro";
 import WindCalculator from "../../components/mdx/WindCalculator.astro";
@@ -49,17 +48,8 @@ const components = {
   WindCalculator,
   WindSandbox,
 };
-const isReview = post.data.type === "review";
 ---
 
-{
-  isReview ? (
-    <ReviewLayout post={post} allPosts={allPosts}>
-      <Content components={components} />
-    </ReviewLayout>
-  ) : (
-    <PostLayout post={post} headings={headings} allPosts={allPosts}>
-      <Content components={components} />
-    </PostLayout>
-  )
-}
+<PostLayout post={post} headings={headings} allPosts={allPosts}>
+  <Content components={components} />
+</PostLayout>

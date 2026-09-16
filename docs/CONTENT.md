@@ -1,21 +1,20 @@
 # Content & Taxonomy Reference
 
-The writer/maintainer reference for what every label on the site means and which frontmatter field drives it. The machine source of truth is [`src/content.config.ts`](../src/content.config.ts); the original product spec is [`SPEC.md`](./SPEC.md) §14 to §17 (note: the spec predates the `review` type and the verdict system documented below).
+The writer/maintainer reference for what every label on the site means and which frontmatter field drives it. The machine source of truth is [`src/content.config.ts`](../src/content.config.ts); the original product spec is [`SPEC.md`](./SPEC.md) §14 to §17.
 
-There are **four independent label systems**. They look similar (most are mono, uppercase, or `#hashtag` pills) but they answer four different questions. Confusing them is the most common point of friction, so start here:
+There are **three independent label systems**. They look similar (most are mono, uppercase, or `#hashtag` pills) but they answer three different questions. Confusing them is the most common point of friction, so start here:
 
 | System | Question it answers | Driven by | Cardinality |
 |---|---|---|---|
 | **Type** | What kind of writing is this? | `type:` | exactly one per post |
 | **Status** | Where is it in its lifecycle? | `updated:`, `pinned:`, `supersededBy:`, etc. | zero or more, derived |
-| **Verdict** | (Reviews only) How did the reviewed thing score? | `review.verdict` + `review.verdictLabel` | one, reviews only |
 | **Topics / Tags** | What subjects/keywords does it cover? | `topics:` / `tags:` | many |
 
 ---
 
 ## 1. Type
 
-One per post, set by `type:`. It is the post's primary identity and renders as a badge with a leading icon and an uppercase label (e.g. a terminal glyph + `DEVLOG`). Each type has a fixed icon and accent hue. Type badges deliberately have no brackets; that is what separates them at a glance from status badges (bracketed) and verdicts (plain pill).
+One per post, set by `type:`. It is the post's primary identity and renders as a badge with a leading icon and an uppercase label (e.g. a terminal glyph + `DEVLOG`). Each type has a fixed icon and accent hue. Type badges deliberately have no brackets; that is what separates them at a glance from status badges (bracketed).
 
 | `type:` | Icon | Label | Hue | What it is | Update policy |
 |---|---|---|---|---|---|
@@ -25,11 +24,8 @@ One per post, set by `type:`. It is the post's primary identity and renders as a
 | `essay` | feather | ESSAY | violet | Longer argument, opinion, or synthesis. | Preserve the original argument; add an update note if needed. |
 | `lab` | flask-conical | LAB | gold | Experiment, benchmark, reproduction, or investigation. | Preserve the original result; publish a new run if materially different. |
 | `reference` | bookmark | REF | rose | Durable explainer or glossary-style page. | Update in place. |
-| `review` | star | REVIEW | accent | Software/library review. Gets the score band, criteria, and verdict treatment. | Update the score/verdict if the subject changes materially, and record the revision. |
 
-Icons are Lucide glyphs from `src/components/layout/Icon.astro`; the type-to-icon map lives in `src/components/posts/Badge.astro`.
-
-`review` is a first-class type beyond the SPEC's base six, because reviews are a major use case and need their own layout and structured frontmatter (see §3).
+Icons are Lucide glyphs from `src/components/layout/Icon.astro`; the type-to-icon map lives in `src/utils/post-types.ts`.
 
 ---
 
@@ -49,25 +45,7 @@ On a post page the banner precedence is: superseded, then updated. `featured: tr
 
 ---
 
-## 3. Verdict (reviews only)
-
-A review carries a structured `review` block. The verdict is two fields working together:
-
-- `review.verdict`: one of four **machine values** that drive the color and the verdict panel.
-- `review.verdictLabel`: the **free-text string** actually displayed. You write this.
-
-| `verdict:` | Hue | Typical `verdictLabel` | Live example |
-|---|---|---|---|
-| `recommended` | green | "Recommended" | Claude Code, 4.6 |
-| `caveats` | gold | "Recommended with caveats" | Bun, 4.2 |
-| `watch` | accent | "One to watch" | Paseo, 3.9 |
-| `skip` | red | "Skip" | (none yet) |
-
-So `ONE TO WATCH` is a **review verdict**, not a content type. They live on different axes, and the UI keeps them apart: the type badge carries a leading icon, the verdict is a plain pill with no icon. The rest of the review block (`score`, `criteria`, `pros`, `cons`, `bottomLine`, `links`, `meta`) is documented inline in `src/content.config.ts` and rendered by `ReviewLayout`/`ReviewCard`.
-
----
-
-## 4. Topics vs Tags
+## 3. Topics vs Tags
 
 Both are arrays of lowercase strings, and topics render as `#pill`s, so they are easy to conflate. They are not the same:
 
@@ -85,7 +63,7 @@ A `related[].reason` is a card label, not prose. Every one on the site is a noun
 
 ---
 
-## 5. Visibility
+## 4. Visibility
 
 Separate axis from type and status: these fields decide whether a post is built at all, and where it surfaces once it is. Read them as a ladder from private to public.
 
@@ -114,7 +92,7 @@ Email and RSS diverge otherwise. The cron keys on the post URL, so it mails corr
 
 ---
 
-## 6. Reviewing a draft
+## 5. Reviewing a draft
 
 Adversarial review of a draft is three passes, and the author can only run one of them.
 
@@ -126,7 +104,7 @@ The third is comprehension, and the author cannot run it. Having written the dra
 
 With an agent, enforce that structurally rather than by instruction, or it will read the repo and stop being a stranger. Aaron runs a `cold-reader` subagent whose tool list is locked to `Read`, kept machine-local alongside `line-editor` since nothing in either is project-specific. Then triage: fix what is wrong or unresolvable, dismiss what is ordinary vocabulary for a developer audience.
 
-## 7. Headings and figures
+## 6. Headings and figures
 
 Section headings are read out of context, in the table of contents and by someone skimming, so a heading has to make sense before its section does. `## The dots were Gmail, not the template` fails that test: it announces a minor find as though it were a finding. A gotcha that small belongs in a `<Callout>` inside a section that already earned its heading, where the callout's own title carries the context.
 
@@ -160,5 +138,3 @@ tags: [eas, sdk-56, ios]       # -> search filters only
 featured: true            # -> reticle ticks in the feed
 ---
 ```
-
-For reviews, add a `review:` block; see `src/content/posts/review-*.mdx` for complete, working examples.

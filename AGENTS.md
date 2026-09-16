@@ -8,9 +8,9 @@ Guidance for coding agents working in this public repository.
 - A static-first technical writing site. **Astro + MDX + Pagefind**, deployed to
   **Cloudflare Workers** (static assets, plus a stateless `/relay` PostHog proxy
   in `worker/index.ts`, see `docs/ANALYTICS.md`). No database, no CMS.
-- Full product spec: `docs/SPEC.md`. The approved visual system (tokens,
-  components, UI kit, brand assets) lives in `design-system/`, read its
-  `project/README.md` before touching anything visual.
+- Full product spec: `docs/SPEC.md`. The approved visual system lives in
+  `src/styles/` (tokens, base layer, component styles); extend it from there
+  rather than introducing new visual primitives.
 - Sibling property: **meese.dev** (repo `agentic-portfolio`), the portfolio and
   interactive clone. It consumes this site's `/index.json` catalog, so changing
   that endpoint's shape is a cross-repo change. `src/utils/identity.ts` is the
@@ -20,13 +20,13 @@ Guidance for coding agents working in this public repository.
 
 ```
 src/
-  content.config.ts     content collection schema (posts, incl. reviews)
+  content.config.ts     content collection schema
   content/posts/*.mdx    the writing, one MDX file per entry
   components/            layout/, posts/, mdx/, graph/, search/
-  layouts/               BaseLayout, PostLayout, ReviewLayout
+  layouts/               BaseLayout, PostLayout
   pages/                 routes (see docs/SPEC.md §11)
-  styles/                tokens + base lifted from design-system, plus the
-                         static-CSS port of the UI-kit components
+  styles/                the design system: tokens, base layer, and the
+                         static-CSS component styles
   utils/                 posts, dates, topics, backlinks, graph, seo
   scripts/ (client)      search.ts (Pagefind)
 scripts/                 validate-content.ts, generate-graph.ts (build-time)
@@ -61,12 +61,12 @@ npx wrangler dev       # the Worker (/relay, /newsletter); serves dist/, so buil
 - Drafts (`draft: true`) are excluded from the production build entirely.
   Unlisted posts (`unlisted: true`) build to a live, shareable URL but stay out
   of every feed, listing, topic, search index, graph, and the sitemap, and ship
-  with `noindex`. See `docs/CONTENT.md` §5 for the full visibility ladder.
+  with `noindex`. See `docs/CONTENT.md` §4 for the full visibility ladder.
 
 ## Do not
 
 - Add comments, discussion links, or per-post "View MDX" links by default.
 - Add a CMS, admin panel, database, or server runtime without explicit approval.
 - Add terminal-first UX as a primary feature.
-- Reinvent the visual system, it is approved and lives in `design-system/`.
+- Reinvent the visual system, it is approved and lives in `src/styles/`.
 - Commit secrets. This repository is public.

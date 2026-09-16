@@ -16,10 +16,6 @@ tags:
   - rush
 draft: true
 featured: true
-#related:
-#  - slug: review-ponytail
-#    reason:
-#      "The agent skill that kept this change at the config layer instead of a full toolchain swap."
 ---
 
 I filed [issue #161](https://github.com/meese-os/meeseOS/issues/161) against my own project,
@@ -29,10 +25,10 @@ might speed it up. I never had the cycles to chase it. Turborepo is a monorepo t
 Turbopack is a bundler. Taking my own ticket at face value meant ripping out two load-bearing tools
 at once across a 36-package monorepo and hoping the pair came out faster on the far side.
 
-I handed the ticket to [Claude Code](/posts/review-claude-code), running with the
-[Ponytail](/posts/review-ponytail) skill on full, which biases it toward the smallest change that
-works. It went looking for where the time actually went, and the answer was not the build graph; it
-was the transpile step inside every package. Replacing that one layer with
+I handed the ticket to [Claude Code](https://github.com/anthropics/claude-code), running with the
+[Ponytail](https://github.com/DietrichGebert/ponytail) skill on full, which biases it toward the
+smallest change that works. It went looking for where the time actually went, and the answer was not
+the build graph; it was the transpile step inside every package. Replacing that one layer with
 [esbuild](https://esbuild.github.io/) dropped the cold build from 21.1 to 7.8 seconds, a 63% cut,
 without touching the orchestrator or the bundler. The full change is
 [PR #202](https://github.com/meese-os/meeseOS/pull/202). Below is the config, the way I measured it,

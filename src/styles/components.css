@@ -2,8 +2,8 @@
    meese.rs, component layer
    ------------------------------------------------------------
    Static-CSS port of the UI-kit React primitives (Button, Badge,
-   Tag, PostCard, NoteCard, ReviewCard, Callout) and the screen
-   chrome (header, footer, feed, post, review, topics, search).
+   Tag, PostCard, NoteCard, Callout) and the screen
+   chrome (header, footer, feed, post, topics, search).
    Interactive state lives in :hover/:focus-visible, not JS, so
    reading pages ship zero client JavaScript.
    ============================================================ */
@@ -101,35 +101,12 @@
 .badge[data-type="essay"] { --hue: var(--hue-violet); }
 .badge[data-type="lab"] { --hue: var(--hue-gold); }
 .badge[data-type="reference"] { --hue: var(--hue-rose); }
-.badge[data-type="review"] { --hue: var(--accent); }
+.badge[data-type="topic"] { --hue: var(--accent); }
 .badge[data-status="updated"] { --hue: var(--green); }
 .badge[data-status="corrected"] { --hue: var(--gold); }
 .badge[data-status="deprecated"] { --hue: var(--red); }
 .badge[data-status="superseded"] { --hue: var(--hue-slate); }
 .badge[data-status="pinned"] { --hue: var(--accent); }
-
-/* ---- Verdict pill (reviews) ---- */
-.verdict {
-  --hue: var(--green);
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  padding: 0 7px;
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  line-height: 1;
-  border-radius: var(--radius-xs);
-  white-space: nowrap;
-  color: var(--hue);
-  background: color-mix(in srgb, var(--hue) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hue) 40%, transparent);
-}
-.verdict[data-verdict="recommended"] { --hue: var(--green); }
-.verdict[data-verdict="caveats"] { --hue: var(--gold); }
-.verdict[data-verdict="watch"] { --hue: var(--accent); }
-.verdict[data-verdict="skip"] { --hue: var(--red); }
 
 /* ============================================================
    Tag, lower-level #label
@@ -209,7 +186,7 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 .btn[data-full="true"] { width: 100%; }
 
 /* ============================================================
-   PostCard / ReviewCard, standard feed entry
+   PostCard, standard feed entry
    ============================================================ */
 .post-card {
   position: relative;
@@ -252,7 +229,6 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   transition: color var(--dur-1) var(--ease-out);
 }
 .post-card:hover .post-card__title { color: var(--accent-bright); }
-.review-card:hover .post-card__title { color: var(--accent-bright); }
 /* The title is the card's primary link; its overlay makes the whole card
    clickable without nesting anchors (the tags in the foot stay separate links). */
 .post-card__link {
@@ -291,35 +267,6 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   color: var(--green);
   letter-spacing: 0.04em;
 }
-
-/* review-specific bits */
-.review-card__score {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 12px 0 0;
-}
-.review-card__version { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--ink-4); }
-
-/* ---- Stars ---- */
-.stars {
-  position: relative;
-  display: inline-block;
-  line-height: 1;
-  letter-spacing: 2px;
-  font-family: var(--font-mono);
-}
-.stars .empty { color: var(--line-3); }
-.stars .full {
-  position: absolute;
-  left: 0;
-  top: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  color: var(--accent);
-}
-.score-num { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--ink-2); }
-.score-num strong { color: var(--ink-1); font-weight: 600; }
 
 /* ============================================================
    NoteCard, compact log-line entry
@@ -941,131 +888,6 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 .post-chip__out { opacity: 0.7; }
 
 /* ============================================================
-   Review reading page
-   ============================================================ */
-.review-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; align-items: start; padding-top: 28px; }
-.review__head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-.review__reviewed { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-3); }
-.review__title-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.review__title-row h1 { font-size: var(--text-3xl); line-height: 1.05; letter-spacing: -0.02em; margin: 0; }
-.review__version { font-family: var(--font-mono); font-size: var(--text-md); color: var(--ink-4); }
-.review__tagline { font-family: var(--font-body); font-size: var(--text-md); color: var(--ink-2); line-height: 1.6; margin: 14px 0 0; max-width: 60ch; }
-.score-band {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 22px;
-  padding: 16px 18px;
-  background: var(--surface-1);
-  border: 1px solid var(--line-1);
-  border-left: 2px solid var(--accent);
-  border-radius: var(--radius-md);
-  flex-wrap: wrap;
-}
-.score-band__num { display: flex; align-items: baseline; gap: 6px; }
-.score-band__num .n { font-family: var(--font-display); font-size: 38px; font-weight: 700; color: var(--ink-1); line-height: 1; }
-.score-band__num .d { font-family: var(--font-mono); font-size: 14px; color: var(--ink-4); }
-.score-band .divider { width: 1px; align-self: stretch; background: var(--line-2); }
-.score-band__links { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
-.score-band__links a {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--ink-3);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-sm);
-  padding: 5px 9px;
-  text-decoration: none;
-}
-.score-band__links a:hover { color: var(--ink-1); border-color: var(--line-3); }
-.review__meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px 28px;
-  margin: 22px 0 0;
-  padding-top: 18px;
-  border-top: 1px solid var(--line-1);
-}
-.review__meta-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.review__meta dt {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--ink-4);
-}
-.review__meta dd {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--ink-1);
-}
-.criteria { display: flex; flex-direction: column; gap: 14px; }
-.criteria__row { display: grid; grid-template-columns: 170px 120px 1fr; gap: 16px; align-items: start; }
-.criteria__name { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; color: var(--ink-1); }
-.criteria__score { display: inline-flex; align-items: center; gap: 7px; }
-.criteria__score .n { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3); }
-.criteria__note { font-family: var(--font-body); font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
-.proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 30px; }
-.proscons__col { background: var(--surface-1); border: 1px solid var(--line-1); border-radius: var(--radius-md); padding: 16px 18px; }
-.proscons__title { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
-.proscons__title[data-kind="pros"] { color: var(--green); }
-.proscons__title[data-kind="cons"] { color: var(--red); }
-.proscons ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-.proscons li { display: flex; gap: 9px; align-items: flex-start; font-family: var(--font-body); font-size: 13.5px; color: var(--ink-2); line-height: 1.45; }
-.proscons li .mark { display: inline-flex; margin-top: 2px; flex: none; }
-.proscons__col[data-kind="pros"] li .mark { color: var(--green); }
-.proscons__col[data-kind="cons"] li .mark { color: var(--red); }
-.bottom-line {
-  margin-top: 28px;
-  padding: 18px 20px;
-  background: color-mix(in srgb, var(--accent) 9%, var(--surface-1));
-  border: 1px solid var(--accent-line);
-  border-radius: var(--radius-md);
-}
-.bottom-line .sys-label { color: var(--accent); margin-bottom: 8px; display: block; }
-.bottom-line p { font-family: var(--font-body); font-size: var(--text-base); line-height: 1.6; color: var(--ink-1); margin: 0; }
-.review-aside { position: sticky; top: calc(var(--header-height) + 24px); display: flex; flex-direction: column; gap: 22px; }
-.verdict-panel { position: relative; padding: 20px; background: var(--surface-1); border: 1px solid var(--line-1); border-radius: var(--radius-md); }
-.verdict-panel .sys-label { display: block; margin-bottom: 14px; }
-.verdict-panel__num { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
-.verdict-panel__num .n { font-family: var(--font-display); font-size: 44px; font-weight: 700; color: var(--ink-1); line-height: 1; }
-.verdict-panel__num .d { font-family: var(--font-mono); font-size: 15px; color: var(--ink-4); }
-.verdict-panel__label { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; }
-.review-aside .related-list { display: flex; flex-direction: column; gap: 1px; }
-.review-aside .related-list a { display: flex; align-items: center; gap: 9px; padding: 9px 8px; border-radius: var(--radius-sm); text-decoration: none; }
-.review-aside .related-list a:hover { background: var(--surface-2); }
-.review-aside .related-list .t { font-family: var(--font-body); font-size: 13px; color: var(--ink-2); line-height: 1.3; }
-.aggregate {
-  display: flex;
-  gap: 22px;
-  padding: 16px 20px;
-  background: var(--surface-1);
-  border: 1px solid var(--line-1);
-  border-radius: var(--radius-md);
-}
-.aggregate .divider { width: 1px; background: var(--line-2); }
-.aggregate .k { font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4); margin-bottom: 6px; }
-.aggregate .v { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--ink-1); line-height: 1; }
-.aggregate .v-row { display: flex; align-items: center; gap: 8px; }
-.reviews-header { display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
-.reviews-header__lead { flex: 1 1 360px; }
-.sort-btn {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  padding: 5px 11px;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  border: 1px solid var(--line-2);
-  background: transparent;
-  color: var(--ink-3);
-}
-.sort-btn[aria-pressed="true"] { border-color: var(--accent-deep); background: var(--accent-wash); color: var(--accent-bright); }
-
-/* ============================================================
    Search (page + ⌘K overlay)
    ============================================================ */
 .search-overlay {
@@ -1323,20 +1145,16 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   .theme-switcher__chevron { display: none; }
 }
 
-/* Content grids: fold the two-column home / post / review layouts to one
-   column and drop the sticky sidebars and table of contents. */
+/* Content grids: fold the two-column home / post layouts to one column and
+   drop the sticky sidebars and table of contents. */
 @media (max-width: 880px) {
   .home-grid,
-  .review-grid,
   .about-head,
   .post__body-grid { grid-template-columns: minmax(0, 1fr); }
   .home-sidebar,
-  .review-aside,
   .toc { position: static; }
   .toc { display: none; }
-  .related-grid,
-  .proscons { grid-template-columns: 1fr; }
-  .criteria__row { grid-template-columns: 1fr; gap: 4px; }
+  .related-grid { grid-template-columns: 1fr; }
 
   /* The index-status counters (entries / topics / last write) are a desktop
      flourish; stacked under the hero on a narrow screen they earn no keep. */

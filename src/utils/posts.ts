@@ -47,21 +47,12 @@ export async function getFeedPosts(): Promise<Post[]> {
   return (await getPosts()).filter((p) => !p.data.hideFromFeed);
 }
 
-/** "Writing" = the feed minus reviews (reviews have their own index). */
-export async function getWriting(): Promise<Post[]> {
-  return (await getFeedPosts()).filter((p) => p.data.type !== "review");
-}
-
 export async function getByType(type: Post["data"]["type"]): Promise<Post[]> {
   return (await getPosts()).filter((p) => p.data.type === type);
 }
 
 export async function getByTopic(topic: string): Promise<Post[]> {
   return (await getPosts()).filter((p) => p.data.topics.includes(topic));
-}
-
-export async function getReviews(): Promise<Post[]> {
-  return getByType("review");
 }
 
 /** The public repo this site (and every post in it) is built from. */

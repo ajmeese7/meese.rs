@@ -102,7 +102,7 @@ readable
 distinctive
 ```
 
-The visual identity is a **custom cybersecurity UX design kit**: precise, technical, polished, and distinctive without sacrificing the reading experience. It is the source of truth for anything visual. It lives in `design-system/` (tokens, components, the website UI kit, and brand assets; see `design-system/project/README.md`) and is ported into `src/styles/` as the semantic token layer (`src/styles/tokens/*.css`) plus a static-CSS port of the UI-kit components (`src/styles/base.css`, `components.css`, `graph.css`).
+The visual identity is a **custom cybersecurity UX design kit**: precise, technical, polished, and distinctive without sacrificing the reading experience. It is the source of truth for anything visual and lives in `src/styles/`: the semantic token layer (`src/styles/tokens/*.css`) plus the component styles (`src/styles/base.css`, `components.css`, `graph.css`).
 
 The system is dark, technical, and restrained over a graphite blueprint-grid foundation. Components reference semantic CSS variables (`--text-body`, `--surface-card`, `--accent`, `--border-default`, the categorical `--hue-*` set), never raw palette values.
 
@@ -210,10 +210,9 @@ meese.rs/
 ├── tsconfig.json
 ├── .node-version
 ├── vitest.config.ts
-├── design-system/               approved visual system (handoff bundle)
 ├── docs/
 │   ├── SPEC.md                   this document
-│   ├── CONTENT.md                writer reference: type/status/verdict/topic-tag
+│   ├── CONTENT.md                writer reference: type/status/topic-tag
 │   ├── ANALYTICS.md              first-party analytics via /relay (§47)
 │   ├── newsletter-setup.md       D1 + Resend + cron setup and deploy checklist (§48)
 │   ├── bimi.md                   sender logo: SVG Tiny PS asset + DNS record (§48)
@@ -259,11 +258,9 @@ meese.rs/
 │   │   ├── posts/
 │   │   │   ├── PostCard.astro
 │   │   │   ├── NoteCard.astro     compact variant
-│   │   │   ├── ReviewCard.astro
 │   │   │   ├── FeedList.astro     renders the right card per type
 │   │   │   ├── Badge.astro        type + status badges
 │   │   │   ├── Tag.astro
-│   │   │   ├── Stars.astro        review score
 │   │   │   ├── Reticle.astro      featured-card framing
 │   │   │   └── PagefindMeta.astro per-page search metadata
 │   │   ├── graph/
@@ -279,15 +276,12 @@ meese.rs/
 │   │       └── CodeCaption.astro
 │   ├── layouts/
 │   │   ├── BaseLayout.astro
-│   │   ├── PostLayout.astro
-│   │   └── ReviewLayout.astro
+│   │   └── PostLayout.astro
 │   ├── pages/
 │   │   ├── index.astro
 │   │   ├── latest.astro
 │   │   ├── guides.astro
 │   │   ├── notes.astro
-│   │   ├── reviews/
-│   │   │   └── index.astro
 │   │   ├── topics/
 │   │   │   ├── index.astro
 │   │   │   └── [topic].astro
@@ -338,9 +332,6 @@ Required routes:
 /notes
   Short notes only.
 
-/reviews
-  Software/library review index, with aggregate score and a score/recency sort.
-
 /topics
   Topic index.
 
@@ -390,7 +381,6 @@ The header nav is split into two intent groups rather than a flat list of conten
 Latest
 Guides
 Notes
-Reviews
 Topics
 Graph
 ```
@@ -411,13 +401,13 @@ Do not add nav links for features that do not exist yet.
 
 ### Deferred: feed consolidation
 
-A larger reframe was considered and deferred: folding Latest/Guides/Notes into a single `Writing` destination with on-page type filters, shrinking the read group to Writing / Reviews / Topics / Graph. It conflicts with the per-type index routes (§11) and the deliberate Reviews separation (§18), so it is out of scope for the About change and is captured as a v1 option in §46.
+A larger reframe was considered and deferred: folding Latest/Guides/Notes into a single `Writing` destination with on-page type filters, shrinking the read group to Writing / Topics / Graph. It conflicts with the per-type index routes (§11), so it is out of scope for the About change and is captured as a v1 option in §46.
 
 ## 13. Homepage Requirements
 
 The homepage should feel like a system index, but lead with latest writing.
 
-A two-column system index that leads with identity and latest writing. There are no separate "featured guides" or "recent notes" strips: those types flow through the unified writing feed. Reviews get their own slot because they sit off the main writing feed (§18).
+A two-column system index that leads with identity and latest writing. There are no separate "featured guides" or "recent notes" strips: those types flow through the unified writing feed.
 
 ```txt
 identity band
@@ -425,13 +415,12 @@ identity band
   2. index-status panel (entries / topics / last-write counters, reticle framing)
 
 main column
-  3. latest review (one card, only if a review exists)
-  4. latest writing (the unified feed, reviews excluded)
+  3. latest writing (the unified feed)
 
 sidebar
-  5. active topics (top 6, colored dots + counts)
-  6. graph entry (teaser canvas linking to /graph)
-  7. search entry (tile that opens the ⌘K overlay)
+  4. active topics (top 6, colored dots + counts)
+  5. graph entry (teaser canvas linking to /graph)
+  6. search entry (tile that opens the ⌘K overlay)
 ```
 
 The homepage must not be a generic marketing landing page.
@@ -474,7 +463,7 @@ identity card (reticle-framed)
 bio prose
   - readable body type (not monospace, §21), ~72ch column
   - who Aaron is (brief), what meese.rs is, why it exists, what to expect
-  - points back into the index: /latest, /reviews, /topics as proof-of-work
+  - points back into the index: /latest, /topics as proof-of-work
 
 index stats (optional, reticle panel)
   - mirrors the homepage index-status (entries / topics / writing since)
@@ -524,10 +513,9 @@ devlog
 essay
 lab
 reference
-review
 ```
 
-`review` is a first-class type: software/library reviews are a major use case and carry their own structured frontmatter, layout, and index. The full writer-facing reference for all seven types (icon, hue, update policy) and the other label systems is `docs/CONTENT.md`.
+The full writer-facing reference for the six types (icon, hue, update policy) and the other label systems is `docs/CONTENT.md`.
 
 Definitions:
 
@@ -552,11 +540,6 @@ lab
 
 reference
   Durable explainer or glossary-style page.
-
-review
-  Software/library review. Carries a structured `review:` block (score,
-  verdict, criteria, pros/cons, links); prose verdict in the MDX body.
-  Has its own layout (ReviewLayout), card (ReviewCard), and /reviews index.
 ```
 
 ## 15. Content Update Policy
@@ -581,9 +564,6 @@ Labs:
 
 References:
   update in place.
-
-Reviews:
-  update the score/verdict if the subject changes materially; record the revision.
 ```
 
 Visible status labels are not required by default.
@@ -609,7 +589,7 @@ Required frontmatter fields:
 title: string          # non-empty
 description: string     # non-empty
 date: date              # publication date, not the writing date; bump it when unlisting a post later
-type: guide | note | devlog | essay | lab | reference | review
+type: guide | note | devlog | essay | lab | reference
 topics: string[]
 tags: string[]
 draft: boolean
@@ -633,25 +613,9 @@ canonicalUrl: string
 externalUrl: string
 hideFromFeed: boolean   # off the homepage, /latest, and the feeds, so no newsletter email either
 unlisted: boolean       # live, shareable URL but hidden from listings + sitemap, noindex
-review:                 # required when type: review (see below)
-  subject: string
-  version: string
-  score: number         # 0..5
-  verdict: recommended | caveats | watch | skip
-  verdictLabel: string  # free text actually shown, e.g. "One to watch"
-  tagline: string
-  links:
-    - { label: string, href: url }
-  meta:
-    - { key: string, value: string }
-  criteria:
-    - { name: string, score: number, note: string }
-  pros: string[]
-  cons: string[]
-  bottomLine: string
 ```
 
-The shipped schema (`src/content.config.ts`, abbreviated). Title/description are non-empty, and a `.refine()` makes the `review` block mandatory on review entries:
+The shipped schema (`src/content.config.ts`, abbreviated). Title/description are non-empty:
 
 ```ts
 import { defineCollection } from 'astro:content';
@@ -659,55 +623,32 @@ import { z } from 'astro:schema';
 import { glob } from 'astro/loaders';
 
 export const POST_TYPES = [
-  'guide', 'note', 'devlog', 'essay', 'lab', 'reference', 'review',
+  'guide', 'note', 'devlog', 'essay', 'lab', 'reference',
 ] as const;
-
-const reviewSchema = z.object({
-  subject: z.string(),
-  version: z.string().optional(),
-  score: z.number().min(0).max(5),
-  verdict: z.enum(['recommended', 'caveats', 'watch', 'skip']),
-  verdictLabel: z.string(),
-  tagline: z.string().optional(),
-  links: z.array(z.object({ label: z.string(), href: z.string().url() })).default([]),
-  meta: z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-  criteria: z
-    .array(z.object({ name: z.string(), score: z.number().min(0).max(5), note: z.string() }))
-    .default([]),
-  pros: z.array(z.string()).default([]),
-  cons: z.array(z.string()).default([]),
-  bottomLine: z.string().optional(),
-});
 
 const posts = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
-  schema: z
-    .object({
-      title: z.string().min(1),
-      description: z.string().min(1),
-      date: z.coerce.date(),
-      updated: z.coerce.date().optional(),
-      type: z.enum(POST_TYPES),
-      topics: z.array(z.string()).default([]),
-      tags: z.array(z.string()).default([]),
-      draft: z.boolean().default(false),
-      summary: z.string().optional(),
-      featured: z.boolean().default(false),
-      pinned: z.boolean().default(false),
-      series: z.string().optional(),
-      related: z.array(z.object({ slug: z.string(), reason: z.string() })).default([]),
-      supersedes: z.array(z.string()).default([]),
-      supersededBy: z.string().optional(),
-      canonicalUrl: z.string().url().optional(),
-      externalUrl: z.string().url().optional(),
-      hideFromFeed: z.boolean().default(false),
-      unlisted: z.boolean().default(false),
-      review: reviewSchema.optional(),
-    })
-    .refine((d) => d.type !== 'review' || d.review !== undefined, {
-      message: "Posts with type 'review' must include a `review:` block.",
-      path: ['review'],
-    }),
+  schema: z.object({
+    title: z.string().min(1),
+    description: z.string().min(1),
+    date: z.coerce.date(),
+    updated: z.coerce.date().optional(),
+    type: z.enum(POST_TYPES),
+    topics: z.array(z.string()).default([]),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    summary: z.string().optional(),
+    featured: z.boolean().default(false),
+    pinned: z.boolean().default(false),
+    series: z.string().optional(),
+    related: z.array(z.object({ slug: z.string(), reason: z.string() })).default([]),
+    supersedes: z.array(z.string()).default([]),
+    supersededBy: z.string().optional(),
+    canonicalUrl: z.string().url().optional(),
+    externalUrl: z.string().url().optional(),
+    hideFromFeed: z.boolean().default(false),
+    unlisted: z.boolean().default(false),
+  }),
 });
 
 export const collections = { posts };
@@ -778,45 +719,9 @@ draft: false
 ---
 ```
 
-### Review
-
-```yaml
----
-title: "Claude Code, four months in"
-description: "The agentic CLI that actually stuck. Where it earns its keep and where it doesn't."
-date: 2026-06-10
-type: review
-topics:
-  - ai-devtools
-  - agents
-tags:
-  - claude-code
-  - cli
-draft: false
-review:
-  subject: "Claude Code"
-  version: "4.6"
-  score: 4.6
-  verdict: recommended
-  verdictLabel: "Recommended"
-  tagline: "The agentic CLI that actually stuck."
-  criteria:
-    - { name: "Autonomy", score: 4.5, note: "Handles multi-step work with little babysitting." }
-    - { name: "Ergonomics", score: 4.7, note: "Terminal-native, fits existing workflows." }
-  pros:
-    - "Strong multi-file edits"
-    - "Good at staying on task"
-  cons:
-    - "Occasionally over-eager"
-  bottomLine: "The first agent CLI I reach for by default."
----
-```
-
-See `src/content/posts/review-*.mdx` for the complete, working review examples (Claude Code, Bun, Paseo).
-
 ## 18. Feed Behavior
 
-The main feed includes all public content types unless `hideFromFeed: true`, **with one deliberate exception**: reviews. Reviews are excluded from the homepage "latest writing" column and have their own `/reviews` index (so the writing feed stays writing, and reviews get the score/verdict treatment they need). Reviews *do* still appear in `/latest`, the RSS/JSON feeds, the sitemap, and the graph. The split is enforced in `src/utils/posts.ts`: `getWriting()` (feed minus reviews) drives the homepage; `getFeedPosts()` (everything but `hideFromFeed`) drives `/latest` and the feeds.
+The main feed includes all public content types unless `hideFromFeed: true`. `getFeedPosts()` in `src/utils/posts.ts` drives the homepage, `/latest`, and the feeds.
 
 Sort order:
 
@@ -827,7 +732,7 @@ then newest date first
 
 If `updated` exists, display it on the card and post page, but do not use `updated` for default feed sorting unless the owner later requests it.
 
-Notes appear inline in the main feed, with a more compact card style. The `/reviews` index additionally offers a client-side newest / highest-rated sort toggle.
+Notes appear inline in the main feed, with a more compact card style.
 
 ## 19. Post Card Requirements
 
@@ -845,7 +750,7 @@ reading time if practical
 
 Guide/devlog/essay/lab/reference cards can be larger.
 
-Note cards should be compact. `FeedList` picks the card per type: `NoteCard` for notes, `ReviewCard` for reviews, `PostCard` for the rest. Featured entries get reticle-tick framing.
+Note cards should be compact. `FeedList` picks the card per type: `NoteCard` for notes, `PostCard` for the rest. Featured entries get reticle-tick framing.
 
 ## 20. Post Page Requirements
 
@@ -868,12 +773,12 @@ correction/update/deprecation banner when relevant
 
 Implementation notes:
 
-* Two layouts. `PostLayout` for the six writing types; `ReviewLayout` for reviews (it renders the score band, criteria table, pros/cons, verdict panel, and links above/around the prose). `/posts/[slug]` picks the layout by `type`.
+* One layout, `PostLayout`, for every type.
 * The table of contents is built from `h2` headings only, shown only when there is more than one, with scroll-spy highlighting via an `IntersectionObserver`. No separate `TableOfContents` component; it is inlined in `PostLayout`.
 * Status banner precedence is superseded, then updated (deprecated/corrected are manual/editorial). See `docs/CONTENT.md` §2.
 * Backlinks render in three buckets: related, mentioned by, same topic (§25).
 * Posts with `externalUrl` set get no local page at all; they link straight out from cards and feeds.
-* An author byline (name + small avatar/logomark) links to `/about`, putting credibility at the point of reading (§13.5). It renders on both `PostLayout` and `ReviewLayout`. Keep it understated; it is a byline, not a bio.
+* An author byline (name + small avatar/logomark) links to `/about`, putting credibility at the point of reading (§13.5). Keep it understated; it is a byline, not a bio.
 
 Do not include comments.
 
@@ -992,7 +897,7 @@ Requirements:
 * expose `/search` (plus a ⌘K overlay; both share `SearchPanel`)
 * search by full text
 * show result title, excerpt, type, date, and topics
-* filters: **type only**. The panel shows one row of type chips (all seven types). Topic and tag filters are **not** built. The per-page metadata to support them is already emitted (below), so adding them later is UI work, not a re-index.
+* filters: **type only**. The panel shows one row of type chips (all six types). Topic and tag filters are **not** built. The per-page metadata to support them is already emitted (below), so adding them later is UI work, not a re-index.
 
 Pages emit Pagefind metadata via the `PagefindMeta` component, and the post body is marked `data-pagefind-body`. Example metadata attributes:
 
@@ -1120,11 +1025,11 @@ Layout is deterministic (seeded by a hash of each id): topics sit on an inner ri
 
 ### Graph node types
 
-Two node families: **topic** nodes and **post** nodes (a post's node `type` is its content type, e.g. `guide`/`note`/`review`). No tag nodes.
+Two node families: **topic** nodes and **post** nodes (a post's node `type` is its content type, e.g. `guide`/`note`). No tag nodes.
 
 ```txt
 topic
-guide | note | devlog | essay | lab | reference | review   (one per post)
+guide | note | devlog | essay | lab | reference   (one per post)
 ```
 
 Topic node ids are namespaced `topic:<slug>` to avoid colliding with a post slug.
@@ -1269,7 +1174,6 @@ Suggested content:
 - /latest, mixed chronological writing feed
 - /guides, tactical guides
 - /notes, short notes
-- /reviews, software & library reviews
 - /topics, topic index
 - /graph, visual content graph
 - /search, site search
@@ -1348,7 +1252,7 @@ Generate both:
 Feed requirements:
 
 * include all non-draft posts unless `hideFromFeed: true`
-* include notes, guides, dev logs, essays/labs/references, **and reviews**
+* include notes, guides, dev logs, essays, labs, and references
 * sort by `date`, newest first
 * include title, description, canonical URL (or `externalUrl`), date, and type
 * type and topics are emitted as feed categories
@@ -1361,7 +1265,7 @@ Include:
 
 * homepage
 * latest page
-* guide / notes / reviews indexes
+* guide / notes indexes
 * about page
 * topic index
 * topic pages
@@ -1545,17 +1449,16 @@ Before launch (status as of 2026-06):
 ```txt
 [x] Astro project created
 [x] MDX enabled
-[x] content collection schema implemented (incl. review block)
-[x] sample guide / note / devlog created (11 sample posts, all types + 3 reviews)
+[x] content collection schema implemented
+[x] sample guide / note / devlog created (all types)
 [x] homepage implemented
 [x] latest feed implemented
 [x] guides page implemented
 [x] notes page implemented
-[x] reviews page implemented
 [x] topics index implemented
 [x] topic detail pages implemented
 [~] about page implemented                   (built; placeholder bio + owner photo pending)
-[x] post layout implemented (PostLayout + ReviewLayout)
+[x] post layout implemented (PostLayout)
 [x] post cards implemented
 [x] note card compact style implemented
 [x] update/superseded banners implemented (corrected/deprecated are manual)
@@ -1586,7 +1489,7 @@ Before launch (status as of 2026-06):
 The coding agent must ask for or wait on human input for:
 
 ```txt
-[x] cybersecurity UX design kit / custom visual system   (delivered + approved, design-system/)
+[x] cybersecurity UX design kit / custom visual system   (delivered + approved, src/styles/)
 [ ] final homepage hero copy                             (placeholder shipped, owner to confirm)
 [ ] about page bio copy + author photo                   (placeholder/voice pass + owner photo; §13.5)
 [~] initial canonical topic list                         (inferred from posts; owner to finalize)
@@ -1742,7 +1645,7 @@ Feeds and sitemap work.
 ```txt
 - The site is publicly deployed at meese.rs.          (owner: connect CF Pages + domain)
 - The homepage is a latest-writing-first system index.   done
-- Guides, notes, dev logs, essays, labs, references, and reviews author in MDX.  done
+- Guides, notes, dev logs, essays, labs, and references author in MDX.  done
 - Short notes appear in the main feed.                   done
 - Posts are statically rendered.                         done
 - Search works without a backend (type filter; topic/tag deferred).  done w/ caveat
@@ -1767,7 +1670,7 @@ Follow these rules:
 4. Do not build an admin panel.
 5. Do not add terminal UX as a primary feature.
 6. Do not expose per-post raw MDX links by default.
-7. Do not reinvent or fork the custom visual system; extend it from `design-system/` and `src/styles/tokens/`.
+7. Do not reinvent or fork the custom visual system; extend it from `src/styles/`.
 8. Reference the design system's semantic tokens, never raw palette values.
 9. Keep the homepage focused on latest writing first.
 10. Keep notes in the main feed.

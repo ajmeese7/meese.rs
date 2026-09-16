@@ -71,7 +71,7 @@
     },
     {
       "name": "Articles read (daily)",
-      "description": "Custom article_read event: 60% scroll depth + 30s dwell on a post or review.",
+      "description": "Custom article_read event: 60% scroll depth + 30s dwell on a post.",
       "query": {
         "kind": "InsightVizNode",
         "source": {
@@ -86,8 +86,8 @@
       }
     },
     {
-      "name": "Read-through rate % (posts & reviews)",
-      "description": "article_read events divided by pageviews on /posts/ and /reviews/ paths. How many arrivals become actual reads.",
+      "name": "Read-through rate %",
+      "description": "article_read events divided by pageviews on /posts/ paths. How many arrivals become actual reads.",
       "query": {
         "kind": "InsightVizNode",
         "source": {
@@ -98,7 +98,7 @@
           "properties": [{ "type": "event", "key": "$host", "operator": "exact", "value": ["meese.rs"] }],
           "series": [
             { "kind": "EventsNode", "event": "article_read", "name": "article_read", "custom_name": "Reads", "math": "total" },
-            { "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Article pageviews", "math": "total", "properties": [{ "type": "event", "key": "$pathname", "operator": "regex", "value": "^/(posts|reviews)/" }] }
+            { "kind": "EventsNode", "event": "$pageview", "name": "$pageview", "custom_name": "Article pageviews", "math": "total", "properties": [{ "type": "event", "key": "$pathname", "operator": "regex", "value": "^/posts/" }] }
           ],
           "trendsFilter": { "display": "ActionsLineGraph", "formula": "A/B*100" }
         }

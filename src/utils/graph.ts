@@ -94,7 +94,6 @@ export function buildGraph(posts: GraphPost[]): Graph {
   const POST_R: Record<string, number> = {
     guide: 9,
     devlog: 9,
-    review: 9,
     lab: 9,
     essay: 8,
     reference: 8,
@@ -164,7 +163,6 @@ export function graphNodeHue(node: GraphNode): string {
     essay: "var(--hue-violet)",
     lab: "var(--hue-gold)",
     reference: "var(--hue-rose)",
-    review: "var(--accent)",
     tag: "var(--hue-slate)",
   };
   return map[node.type] ?? "var(--hue-slate)";
@@ -180,7 +178,6 @@ export function graphNodeColor(type: GraphNodeType): string {
     essay: "#9A8BD8",
     lab: "#C9A95E",
     reference: "#CF8497",
-    review: "#9A7CFF",
     tag: "#8B95A2",
   };
   return map[type] ?? "#8B95A2";

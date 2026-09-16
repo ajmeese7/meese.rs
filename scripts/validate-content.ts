@@ -12,7 +12,6 @@ const TYPES = [
   "essay",
   "lab",
   "reference",
-  "review",
 ];
 
 /**
@@ -53,14 +52,6 @@ for (const p of posts) {
         `(expected https://github.com/<owner>/<repo>)`,
     );
   }
-  // Reviews carry their own link list, which renders in the review sidebar.
-  // Declaring the same URL both ways would print it twice on one page.
-  if (d.repo && d.reviewLinks.some((href) => href.replace(/\/$/, "") === d.repo!.replace(/\/$/, ""))) {
-    errors.push(
-      `${where}: repo "${d.repo}" is already in review.links; drop one`,
-    );
-  }
-
   for (const r of d.related) {
     if (!ids.has(r.slug))
       errors.push(`${where}: related slug "${r.slug}" does not exist`);

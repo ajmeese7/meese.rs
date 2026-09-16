@@ -2,7 +2,7 @@
  * Post-type badge metadata, shared by the `Badge.astro` component and the
  * client-side search script so a type renders the same label and icon
  * everywhere. Type badges lead with an icon and an unbracketed label; the icon
- * is what tells them apart from bracketed status badges and plain verdict pills.
+ * is what tells them apart from bracketed status badges.
  */
 export const TYPE_LABELS: Record<string, string> = {
   guide: "GUIDE",
@@ -11,7 +11,6 @@ export const TYPE_LABELS: Record<string, string> = {
   essay: "ESSAY",
   lab: "LAB",
   reference: "REF",
-  review: "REVIEW",
 };
 
 /** One Lucide icon per type; the glyph carries the "what kind of post" signal. */
@@ -22,5 +21,4 @@ export const TYPE_ICONS: Record<string, string> = {
   essay: "feather",
   lab: "flask-conical",
   reference: "bookmark",
-  review: "star",
 };

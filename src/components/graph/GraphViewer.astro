@@ -20,7 +20,6 @@ const LEGEND: [string, string][] = [
   ["essay", "var(--hue-violet)"],
   ["lab", "var(--hue-gold)"],
   ["reference", "var(--hue-rose)"],
-  ["review", "var(--accent)"],
 ];
 
 // serialize a lean version for the client island
@@ -191,7 +190,7 @@ const graphData = {
         .filter((x): x is GNode => !!x);
       const isTopic = n.type === "topic";
       const badge = isTopic
-        ? `<span class="badge" data-type="review">[ TOPIC ]</span>`
+        ? `<span class="badge" data-type="topic">[ TOPIC ]</span>`
         : `<span class="badge" data-type="${n.type}">[ ${n.type.toUpperCase()} ]</span>`;
       const rows = neighbors
         .map(
