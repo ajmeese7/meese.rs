@@ -1,11 +1,10 @@
 ---
 import PostCard from "./PostCard.astro";
 import NoteCard from "./NoteCard.astro";
-import ReviewCard from "./ReviewCard.astro";
 import type { Post } from "../../utils/posts";
 
-/** Mixed-length feed: notes render compact, reviews render with score, the
- *  rest as standard post cards, all inline in one stream (SPEC §18). */
+/** Mixed-length feed: notes render compact, the rest as standard post cards,
+ *  all inline in one stream (SPEC §18). */
 interface Props {
   posts: Post[];
   emptyText?: string;
@@ -18,8 +17,6 @@ const { posts, emptyText = "no entries here yet" } = Astro.props;
     posts.map((post) =>
       post.data.type === "note" ? (
         <NoteCard post={post} />
-      ) : post.data.type === "review" ? (
-        <ReviewCard post={post} />
       ) : (
         <PostCard post={post} />
       ),

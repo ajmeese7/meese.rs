@@ -1,0 +1,5 @@
+# The reviews section was retired; send its old URLs to the writing feed.
+/reviews            /latest/  301
+/reviews/           /latest/  301
+/posts/review-ponytail   /latest/  301
+/posts/review-ponytail/  /latest/  301

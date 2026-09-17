@@ -13,14 +13,13 @@ const { current } = Astro.props;
 // set off by a divider (§12). About is the first site-group member.
 //
 // Content-driven items only render when their destination page would have
-// something to show, so an empty section (no reviews, no guides, ...) never
+// something to show, so an empty section (no guides, no notes, ...) never
 // appears in the bar. Each predicate mirrors the query its page actually runs.
 // Drafts count in `astro dev` and not in production, so the bar adapts per build.
-const [feed, guides, notes, reviews, topics, all] = await Promise.all([
+const [feed, guides, notes, topics, all] = await Promise.all([
   getFeedPosts(),
   getByType("guide"),
   getByType("note"),
-  getByType("review"),
   getTopics(),
   getPosts(),
 ]);
@@ -29,7 +28,6 @@ const hasContent: Record<string, boolean> = {
   latest: feed.length > 0,
   guides: guides.length > 0,
   notes: notes.length > 0,
-  reviews: reviews.length > 0,
   topics: topics.length > 0,
   graph: all.length > 0,
 };
@@ -39,7 +37,6 @@ const NAV = (
     ["Latest", "/latest/", "latest"],
     ["Guides", "/guides/", "guides"],
     ["Notes", "/notes/", "notes"],
-    ["Reviews", "/reviews/", "reviews"],
     ["Topics", "/topics/", "topics"],
     ["Graph", "/graph/", "graph"],
   ] as const

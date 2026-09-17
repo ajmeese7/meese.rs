@@ -9,7 +9,6 @@ The author's portfolio and interactive clone are at https://meese.dev.
 - /latest, mixed chronological writing feed
 - /guides, tactical guides
 - /notes, short notes
-- /reviews, software & library reviews
 - /topics, topic index
 - /graph, visual content graph
 - /search, site search

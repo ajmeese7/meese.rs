@@ -11,7 +11,6 @@ The author's portfolio and interactive clone are at `https://meese.dev`.
 - `/latest`, every public entry, newest first
 - `/guides`, tactical how-to writing
 - `/notes`, short observations
-- `/reviews`, software & library reviews (score-backed)
 - `/topics`, topic index; `/topics/<slug>` per topic
 - `/posts/<slug>`, canonical page for any post
 - `/graph`, visual concept graph

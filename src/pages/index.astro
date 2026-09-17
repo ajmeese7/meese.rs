@@ -2,17 +2,14 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import SectionLabel from "../components/layout/SectionLabel.astro";
 import FeedList from "../components/posts/FeedList.astro";
-import ReviewCard from "../components/posts/ReviewCard.astro";
 import Icon from "../components/layout/Icon.astro";
-import { getWriting, getReviews, getPosts } from "../utils/posts";
+import { getFeedPosts, getPosts } from "../utils/posts";
 import { getTopics } from "../utils/topics";
 import { isoDate } from "../utils/dates";
 
-const writing = await getWriting();
-const reviews = await getReviews();
+const writing = await getFeedPosts();
 const topics = await getTopics();
 const allPosts = await getPosts();
-const latestReview = reviews[0];
 const lastWrite = allPosts[0] ? isoDate(allPosts[0].data.date) : ", ";
 
 // HUMAN INPUT: hero copy is the approved design placeholder, owner should
@@ -53,19 +50,6 @@ const lastWrite = allPosts[0] ? isoDate(allPosts[0].data.date) : ", ";
 
     <div class="home-grid">
       <div>
-        {
-          latestReview && (
-            <div style="margin-bottom:30px">
-              <SectionLabel
-                label="latest review"
-                action={`all reviews · ${String(reviews.length).padStart(2, "0")}`}
-                href="/reviews/"
-              />
-              <ReviewCard post={latestReview} />
-            </div>
-          )
-        }
-
         <SectionLabel
           label="latest writing"
           action={`all writing · ${String(writing.length).padStart(2, "0")}`}

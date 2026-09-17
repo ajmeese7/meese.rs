@@ -4,9 +4,9 @@
    Order: tokens -> base layer -> components. Webfonts are self-hosted
    via the Astro Fonts API (see astro.config.mjs + BaseHead.astro), which
    injects the @font-face rules and --font-* vars into the document head.
-   Tokens + base.css are lifted verbatim from the approved design
-   system (design-system/project/). Component styles below port the
-   UI-kit React primitives to static CSS (hover/focus in CSS, no JS).
+   Tokens + base.css are the approved design system; component styles
+   below are its UI-kit primitives as static CSS (hover/focus in CSS,
+   no JS). src/styles/ is the source of truth for anything visual.
    ============================================================ */
 
 @import "./tokens/colors.css";

@@ -1,8 +1,8 @@
 # meese.rs
 
 The canonical home for one builder's long- and short-form technical writing:
-tactical guides, dev logs, short notes, labs, references, essays, and
-software/library reviews, all in one latest-first feed. It reads like a
+tactical guides, dev logs, short notes, labs, references, and essays, all in
+one latest-first feed. It reads like a
 **system index of a builder's work**, not a conventional blog.
 
 Static-first by design: no CMS, and every page is prerendered. Content is MDX in
@@ -24,9 +24,9 @@ backed by D1 and an hourly cron). Everything else is served as a file.
   new-post digest, **Resend** for delivery
 - **TypeScript**, with worker tests running in workerd via Vitest
 
-The design system in [`design-system/`](./design-system) is the approved
-"custom cybersecurity UX kit": the visual system, tokens, components, the
-website UI kit, and brand assets. It is dark, technical, restrained, with a
+The design system in [`src/styles/`](./src/styles) is the approved "custom
+cybersecurity UX kit": tokens, base layer, and component styles. It is dark,
+technical, restrained, with a
 single themeable neon accent (default neon-violet) over a graphite
 blueprint-grid foundation. Client JavaScript is kept small and optional:
 search, the concept graph, and the newsletter form all work as progressive
@@ -57,19 +57,19 @@ Add an MDX file under `src/content/posts/`. Frontmatter schema lives in
 search, and graph.
 
 [`docs/CONTENT.md`](./docs/CONTENT.md) is the writer reference for what every
-label means: the four label systems (type, status, verdict, topics/tags), which
+label means: the three label systems (type, status, topics/tags), which
 frontmatter field drives each, and how they differ.
 
 ## Structure
 
 ```
 src/
-  content.config.ts       content schema (posts, incl. structured reviews)
+  content.config.ts       content schema
   content/posts/*.mdx     the writing
   components/             layout/ posts/ mdx/ graph/ search/
-  layouts/                BaseLayout · PostLayout · ReviewLayout
+  layouts/                BaseLayout · PostLayout
   pages/                  routes, see docs/SPEC.md §11
-  styles/                 design-system tokens + base + component port
+  styles/                 design system: tokens + base + components
   utils/                  posts · dates · topics · backlinks · graph · seo
   scripts/search.ts       client search (Pagefind)
 worker/
@@ -79,10 +79,9 @@ migrations/               D1 migration chain (wrangler d1 migrations apply)
 test/                     workerd test harness: env, Resend stand-in
 scripts/                  build-time generation + validation (graph, icons, content, BIMI)
 public/                   robots.txt · llms.txt · AGENTS.md · _headers · icons · assets
-design-system/            the approved Claude Design handoff bundle
 docs/
   SPEC.md                 the product specification (source of truth)
-  CONTENT.md              writer reference: types, statuses, verdicts, topics/tags
+  CONTENT.md              writer reference: types, statuses, topics/tags
   ANALYTICS.md            first-party analytics via the /relay proxy
   newsletter-setup.md     D1 + Resend + cron setup, local testing, deploy checklist
   bimi.md                 sender logo: the SVG Tiny PS asset and the DNS record
