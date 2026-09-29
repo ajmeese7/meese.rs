@@ -1,5 +1,7 @@
 import "@mdxeditor/editor/style.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import "./editor.css";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { parseDocument } from "yaml";
 import {
   MDXEditor,
   type JsxComponentDescriptor,
@@ -27,14 +29,56 @@ import {
   Button,
   usePublisher,
   insertCodeBlock$,
+  insertJsx$,
 } from "@mdxeditor/editor";
 import { CommentBlock } from "./CommentBlock.tsx";
 import { CODE_LANGUAGES } from "./codeLanguages.ts";
 import { softBreakPlugin } from "./softBreakPlugin.ts";
 
-// Toolbar button that drops in a new MDX comment (a note to self). It inserts
-// an empty `mdxcomment` block, which CommentBlock renders as a flowing comment
-// and the integration saves back as `{/* ... */}`.
+type PostPayload = { file: string; frontmatter: string; body: string; revision: string };
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
+type NewPostForm = {
+  title: string;
+  slug: string;
+  description: string;
+  type: string;
+  topics: string;
+};
+type SyncStatus = { state: string; message?: string };
+type PublicationReview = {
+  file: string;
+  title: string;
+  fingerprint: string;
+  visibility: string;
+  files: { path: string; kind: "post" | "image"; before?: string; after?: string; bytes: number }[];
+  warnings: string[];
+};
+
+const KEY_STORAGE = "meese-editor-key";
+const AUTOSAVE_DELAY_MS = 1000;
+const INIT_SETTLE_MS = 600;
+const TYPES = ["guide", "note", "devlog", "essay", "lab", "reference"];
+
+function readKey(): string {
+  const url = new URL(window.location.href);
+  const fromUrl = url.searchParams.get("key");
+  if (!fromUrl) return sessionStorage.getItem(KEY_STORAGE) ?? "";
+  sessionStorage.setItem(KEY_STORAGE, fromUrl);
+  url.searchParams.delete("key");
+  window.history.replaceState(null, "", url.toString());
+  return fromUrl;
+}
+
+async function getJson<T>(url: string, key: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: { ...init?.headers, "x-editor-key": key },
+  });
+  const data = (await response.json()) as T & { error?: string };
+  if (!response.ok) throw new Error(data.error ?? `${response.status} ${response.statusText}`);
+  return data;
+}
+
 function InsertComment() {
   const insertCodeBlock = usePublisher(insertCodeBlock$);
   return (
@@ -47,10 +91,53 @@ function InsertComment() {
   );
 }
 
-// Every custom MDX component needs a descriptor or MDXEditor errors on unknown
-// JSX. Only `Callout` wraps children in the posts; everything else is a
-// self-closing widget. GenericJsxEditor renders them as opaque, labeled blocks
-// and preserves the underlying JSX node on save (the spike verifies that claim).
+function UploadFigure({ upload }: { upload: (file: File) => Promise<string> }) {
+  const insertJsx = usePublisher(insertJsx$);
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const onSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const alt = window.prompt("Describe the image for readers who cannot see it:");
+    if (!alt?.trim()) {
+      event.target.value = "";
+      return;
+    }
+    setBusy(true);
+    try {
+      const src = await upload(file);
+      insertJsx({
+        kind: "flow",
+        name: "Figure",
+        props: { src, alt: alt.trim(), kind: "screenshot" },
+      });
+    } catch (error) {
+      window.alert(`Upload failed: ${(error as Error).message}`);
+    } finally {
+      setBusy(false);
+      event.target.value = "";
+    }
+  };
+  return (
+    <>
+      <input
+        ref={input}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/avif"
+        onChange={onSelect}
+        hidden
+      />
+      <Button
+        title="Upload image and insert a figure"
+        disabled={busy}
+        onClick={() => input.current?.click()}
+      >
+        {busy ? "Uploading…" : "Figure"}
+      </Button>
+    </>
+  );
+}
+
 const jsxComponentDescriptors: JsxComponentDescriptor[] = [
   {
     name: "Callout",
@@ -104,65 +191,82 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
   ),
 ];
 
-type PostPayload = { file: string; frontmatter: string; body: string };
-type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
-
-// How long to wait after the last keystroke before autosaving. Long enough to
-// coalesce a burst of typing, short enough that a preview tab feels live.
-const AUTOSAVE_DELAY_MS = 1000;
-
-// On load MDXEditor emits its own re-serialized markdown (different wrapping
-// than the raw file), which must NOT count as an edit. Adopt whatever it emits
-// during this window after opening a post as the clean baseline.
-const INIT_SETTLE_MS = 600;
-
-// The dev server is bound to every interface for LAN access, so the file API is
-// key-gated (see src/integrations/editor.ts). The key is printed by the dev
-// server and handed over once as `?key=`; keep it in sessionStorage (per tab,
-// gone when the tab closes) and strip it from the URL so it does not linger in
-// the address bar or get copied into a shared link.
-const KEY_STORAGE = "meese-editor-key";
-
-function readKey(): string {
-  const url = new URL(window.location.href);
-  const fromUrl = url.searchParams.get("key");
-  if (!fromUrl) return sessionStorage.getItem(KEY_STORAGE) ?? "";
-  sessionStorage.setItem(KEY_STORAGE, fromUrl);
-  url.searchParams.delete("key");
-  window.history.replaceState(null, "", url.toString());
-  return fromUrl;
+function metadataOf(frontmatter: string): Record<string, unknown> {
+  try {
+    const data = parseDocument(frontmatter).toJS();
+    return data && typeof data === "object" && !Array.isArray(data) ? data : {};
+  } catch {
+    return {};
+  }
 }
 
-async function getJson<T>(url: string, key: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: { ...init?.headers, "x-editor-key": key },
+function slugify(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",", 2)[1] ?? "");
+    reader.onerror = () => reject(new Error("image could not be read"));
+    reader.readAsDataURL(file);
   });
-  const data = (await res.json()) as T & { error?: string };
-  if (!res.ok) throw new Error(data.error ?? `${res.status} ${res.statusText}`);
-  return data;
+}
+
+function fitTitle(field: HTMLTextAreaElement | null): void {
+  if (!field) return;
+  field.style.height = "auto";
+  field.style.height = `${field.scrollHeight + field.offsetHeight - field.clientHeight}px`;
 }
 
 export default function Editor() {
+  const [key] = useState(readKey);
   const [files, setFiles] = useState<string[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
   const [frontmatter, setFrontmatter] = useState("");
   const [body, setBody] = useState("");
-  const [message, setMessage] = useState("Loading posts...");
+  const [message, setMessage] = useState("Loading posts…");
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [key] = useState(readKey);
+  const [creating, setCreating] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [slugEdited, setSlugEdited] = useState(false);
+  const [newPost, setNewPost] = useState<NewPostForm>({
+    title: "",
+    slug: "",
+    description: "",
+    type: "note",
+    topics: "",
+  });
+  const [privateMode, setPrivateMode] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [review, setReview] = useState<PublicationReview | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [pullRequest, setPullRequest] = useState("");
 
-  // Working copy and last-persisted snapshot, kept in refs so the debounced
-  // saver reads live values without stale closures or extra re-renders.
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const currentRef = useRef<string | null>(null);
   const bodyRef = useRef("");
   const frontmatterRef = useRef("");
   const savedBodyRef = useRef("");
   const savedFrontmatterRef = useRef("");
+  const revisionRef = useRef("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initializingRef = useRef(false);
   const initTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initializingRef = useRef(false);
+  const inFlightRef = useRef<Promise<boolean> | null>(null);
 
+  const meta = useMemo(() => metadataOf(frontmatter), [frontmatter]);
+  useLayoutEffect(() => fitTitle(titleRef.current), [current, preview, meta.title]);
+  useEffect(() => {
+    const onResize = () => fitTitle(titleRef.current);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const isDirty = useCallback(
     () =>
       bodyRef.current !== savedBodyRef.current ||
@@ -170,34 +274,45 @@ export default function Editor() {
     [],
   );
 
-  // Persist the working copy. Never writes editor content back (that would reset
-  // the cursor mid-edit); the file on disk is prettier-canonical regardless.
-  const persist = useCallback(async (): Promise<void> => {
-    const file = currentRef.current;
-    if (!file || !isDirty()) return;
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    const body = bodyRef.current;
-    const frontmatter = frontmatterRef.current;
-    setSaveState("saving");
+  const persist = useCallback(async (): Promise<boolean> => {
+    if (inFlightRef.current) return inFlightRef.current;
+    if (!currentRef.current || !isDirty()) return true;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const task = (async () => {
+      while (currentRef.current && isDirty()) {
+        const file = currentRef.current;
+        const body = bodyRef.current;
+        const fm = frontmatterRef.current;
+        setSaveState("saving");
+        try {
+          const saved = await getJson<PostPayload>("/api/editor/save", key, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ file, frontmatter: fm, body, revision: revisionRef.current }),
+          });
+          revisionRef.current = saved.revision;
+          savedBodyRef.current = body;
+          savedFrontmatterRef.current = fm;
+        } catch (error) {
+          setSaveState("error");
+          setMessage(`Save failed: ${(error as Error).message}`);
+          return false;
+        }
+      }
+      setSaveState("saved");
+      setMessage("Saved to workspace");
+      return true;
+    })();
+    inFlightRef.current = task;
     try {
-      await getJson<PostPayload>("/api/editor/save", key, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ file, frontmatter, body }),
-      });
-      savedBodyRef.current = body;
-      savedFrontmatterRef.current = frontmatter;
-      setSaveState(isDirty() ? "dirty" : "saved");
-    } catch (err) {
-      setSaveState("error");
-      setMessage(`Save failed: ${(err as Error).message}`);
+      return await task;
+    } finally {
+      inFlightRef.current = null;
     }
   }, [isDirty, key]);
 
   const scheduleSave = useCallback(() => {
+    setReview(null);
     setSaveState("dirty");
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -206,41 +321,72 @@ export default function Editor() {
     }, AUTOSAVE_DELAY_MS);
   }, [persist]);
 
+  const setFrontmatterValue = useCallback(
+    (value: string) => {
+      frontmatterRef.current = value;
+      setFrontmatter(value);
+      if (value !== savedFrontmatterRef.current) scheduleSave();
+    },
+    [scheduleSave],
+  );
+
+  const updateField = useCallback(
+    (field: string, value: unknown) => {
+      const document = parseDocument(frontmatterRef.current);
+      if (document.errors.length) {
+        setMessage("Fix the YAML in Advanced metadata before editing fields.");
+        return;
+      }
+      document.set(field, value);
+      setFrontmatterValue(document.toString());
+    },
+    [setFrontmatterValue],
+  );
+
   useEffect(() => {
-    if (!key) {
-      setMessage("No editor key. Open the /editor?key=... URL printed by the dev server.");
-      return;
-    }
     getJson<string[]>("/api/editor/posts", key)
       .then((list) => {
         setFiles(list);
-        setMessage(`${list.length} posts.`);
+        setMessage(`${list.length} posts`);
       })
-      .catch((err) => setMessage(`Failed to list posts: ${err.message}`));
-  }, [key]);
-
-  // Last-ditch flush if the tab closes with unsaved changes.
-  useEffect(() => {
-    const flush = () => {
-      const file = currentRef.current;
-      if (!file || !isDirty()) return;
-      // sendBeacon cannot set headers, so the key rides in the query string.
-      navigator.sendBeacon(
-        `/api/editor/save?key=${encodeURIComponent(key)}`,
-        new Blob(
-          [
-            JSON.stringify({
-              file,
-              frontmatter: frontmatterRef.current,
-              body: bodyRef.current,
-            }),
-          ],
-          { type: "application/json" },
+      .catch((error) =>
+        setMessage(
+          `Could not open posts: ${error.message}. Open the /editor?key=… URL printed by the dev server.`,
         ),
       );
+    getJson<{ privateAuthoring: boolean }>("/api/editor/config", key)
+      .then((config) => setPrivateMode(config.privateAuthoring))
+      .catch((error) => setMessage(`Could not check authoring mode: ${error.message}`));
+  }, [key]);
+
+  useEffect(() => {
+    if (!privateMode || !current) return;
+    const poll = () =>
+      void getJson<SyncStatus>(`/api/editor/sync?file=${encodeURIComponent(current)}`, key)
+        .then(setSyncStatus)
+        .catch((error) => setSyncStatus({ state: "error", message: error.message }));
+    poll();
+    const id = window.setInterval(poll, 5000);
+    return () => window.clearInterval(id);
+  }, [current, key, privateMode]);
+
+  useEffect(() => {
+    const flush = () => {
+      if (!currentRef.current || !isDirty()) return;
+      void fetch("/api/editor/save", {
+        method: "POST",
+        keepalive: true,
+        headers: { "content-type": "application/json", "x-editor-key": key },
+        body: JSON.stringify({
+          file: currentRef.current,
+          frontmatter: frontmatterRef.current,
+          body: bodyRef.current,
+          revision: revisionRef.current,
+        }),
+      });
     };
-    window.addEventListener("beforeunload", flush);
-    return () => window.removeEventListener("beforeunload", flush);
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
   }, [isDirty, key]);
 
   useEffect(
@@ -251,204 +397,557 @@ export default function Editor() {
     [],
   );
 
+  const loadPost = useCallback((post: PostPayload) => {
+    currentRef.current = post.file;
+    bodyRef.current = post.body;
+    frontmatterRef.current = post.frontmatter;
+    savedBodyRef.current = post.body;
+    savedFrontmatterRef.current = post.frontmatter;
+    revisionRef.current = post.revision;
+    setCurrent(post.file);
+    setBody(post.body);
+    setFrontmatter(post.frontmatter);
+    setSaveState("saved");
+    setMessage(`Editing ${post.file}`);
+    setCreating(false);
+    setPreview(false);
+    setReview(null);
+    setPullRequest("");
+    setSyncStatus(null);
+    initializingRef.current = true;
+    if (initTimerRef.current) clearTimeout(initTimerRef.current);
+    initTimerRef.current = setTimeout(() => {
+      initializingRef.current = false;
+    }, INIT_SETTLE_MS);
+  }, []);
+
   const openFile = useCallback(
     async (file: string) => {
-      if (file === currentRef.current) return;
-      // Flush the outgoing post before loading the next one: switching articles
-      // must never silently drop edits.
-      await persist();
-      setMessage(`Opening ${file}...`);
+      if (file === currentRef.current && !creating) return;
+      if (!(await persist())) return;
       try {
-        const post = await getJson<PostPayload>(
-          `/api/editor/post?file=${encodeURIComponent(file)}`,
-          key,
+        setMessage(`Opening ${file}…`);
+        loadPost(
+          await getJson<PostPayload>(`/api/editor/post?file=${encodeURIComponent(file)}`, key),
         );
-        currentRef.current = post.file;
-        bodyRef.current = post.body;
-        frontmatterRef.current = post.frontmatter;
-        savedBodyRef.current = post.body;
-        savedFrontmatterRef.current = post.frontmatter;
-        setCurrent(post.file);
-        setBody(post.body);
-        setFrontmatter(post.frontmatter);
-        setSaveState("saved");
-        setMessage(`Editing ${file}`);
-        // Absorb MDXEditor's initial re-serialization as the baseline.
-        initializingRef.current = true;
-        if (initTimerRef.current) clearTimeout(initTimerRef.current);
-        initTimerRef.current = setTimeout(() => {
-          initializingRef.current = false;
-        }, INIT_SETTLE_MS);
-      } catch (err) {
-        setMessage(`Failed to open ${file}: ${(err as Error).message}`);
+      } catch (error) {
+        setMessage(`Failed to open ${file}: ${(error as Error).message}`);
       }
     },
-    [persist, key],
+    [creating, key, loadPost, persist],
   );
+
+  const startNew = useCallback(async () => {
+    if (!(await persist())) return;
+    currentRef.current = null;
+    setCurrent(null);
+    setCreating(true);
+    setPreview(false);
+    setNewPost({ title: "", slug: "", description: "", type: "note", topics: "" });
+    setSlugEdited(false);
+  }, [persist]);
+
+  const create = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      const post = await getJson<PostPayload>("/api/editor/create", key, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...newPost,
+          topics: newPost.topics
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        }),
+      });
+      setFiles((previous) => [...previous, post.file].sort());
+      loadPost(post);
+    } catch (error) {
+      setMessage(`Could not create post: ${(error as Error).message}`);
+    }
+  };
 
   const onBodyChange = useCallback(
-    (md: string) => {
-      bodyRef.current = md;
-      // During the settle window, adopt the editor's serialization as baseline
-      // rather than treating it as a change.
+    (markdown: string) => {
+      bodyRef.current = markdown;
       if (initializingRef.current) {
-        savedBodyRef.current = md;
+        savedBodyRef.current = markdown;
         return;
       }
-      if (md !== savedBodyRef.current) scheduleSave();
+      if (markdown !== savedBodyRef.current) scheduleSave();
     },
     [scheduleSave],
   );
 
-  const onFrontmatterChange = useCallback(
-    (value: string) => {
-      frontmatterRef.current = value;
-      setFrontmatter(value);
-      if (value !== savedFrontmatterRef.current) scheduleSave();
+  const upload = useCallback(
+    async (file: File): Promise<string> => {
+      if (!currentRef.current) throw new Error("Open a post first");
+      const slug = currentRef.current.replace(/\.mdx$/, "");
+      const result = await getJson<{ src: string }>("/api/editor/asset", key, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slug, filename: file.name, base64: await fileToBase64(file) }),
+      });
+      return result.src;
     },
-    [scheduleSave],
+    [key],
   );
 
-  const saveLabel: Record<SaveState, string> = {
-    idle: "",
-    dirty: "Unsaved changes",
-    saving: "Saving...",
-    saved: "Saved",
-    error: "Save failed",
+  const showPreview = async () => {
+    if (preview) {
+      setPreview(false);
+      return;
+    }
+    if (await persist()) setPreview(true);
+  };
+
+  const syncNow = async () => {
+    if (!current || !(await persist())) return;
+    setSyncStatus({ state: "syncing" });
+    try {
+      const result = await getJson<SyncStatus>("/api/editor/sync", key, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ file: current }),
+      });
+      setSyncStatus(result);
+      if (result.state === "error") setMessage(`Private sync failed: ${result.message}`);
+    } catch (error) {
+      setSyncStatus({ state: "error", message: (error as Error).message });
+    }
+  };
+
+  const prepare = async () => {
+    if (!current || !(await persist())) return;
+    setPublishing(true);
+    setMessage("Checking content and preparing public PR review…");
+    try {
+      setReview(
+        await getJson<PublicationReview>("/api/editor/prepare", key, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ file: current }),
+        }),
+      );
+      setMessage("Review the files below before opening the public PR.");
+    } catch (error) {
+      setMessage(`Cannot prepare PR: ${(error as Error).message}`);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const publish = async () => {
+    if (!review || !current) return;
+    setPublishing(true);
+    setMessage("Opening public pull request…");
+    try {
+      const result = await getJson<{ url: string }>("/api/editor/publish", key, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ file: current, fingerprint: review.fingerprint }),
+      });
+      setPullRequest(result.url);
+      setReview(null);
+      setMessage("Public PR opened. The site changes after that PR is merged.");
+    } catch (error) {
+      setMessage(`Could not open PR: ${(error as Error).message}`);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      <aside
-        style={{
-          width: 260,
-          borderRight: "1px solid #ddd",
-          overflowY: "auto",
-          padding: "0.5rem",
-        }}
-      >
-        <strong style={{ display: "block", padding: "0.5rem" }}>Posts</strong>
-        {files.map((file) => (
-          <button
-            key={file}
-            onClick={() => openFile(file)}
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              padding: "0.4rem 0.5rem",
-              border: "none",
-              background: file === current ? "#eef" : "transparent",
-              cursor: "pointer",
-              fontSize: "0.8rem",
-            }}
-          >
-            {file}
+    <div className="editor-workspace">
+      <aside className="editor-sidebar" aria-label="Posts">
+        <div className="editor-sidebar__head">
+          <strong>Posts</strong>
+          <button type="button" onClick={startNew}>
+            New post
           </button>
-        ))}
+        </div>
+        <div className="editor-post-list">
+          {files.map((file) => (
+            <button
+              type="button"
+              key={file}
+              className={file === current ? "is-current" : ""}
+              onClick={() => void openFile(file)}
+            >
+              {file.replace(/\.mdx$/, "")}
+            </button>
+          ))}
+        </div>
       </aside>
 
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-            padding: "0.5rem 1rem",
-            borderBottom: "1px solid #ddd",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: 500,
-              color: saveState === "error" ? "#b00" : saveState === "dirty" ? "#a60" : "#2a7",
-            }}
-          >
-            {saveLabel[saveState]}
+      <div className="editor-main">
+        <div className="editor-bar">
+          <span className={`editor-save editor-save--${saveState}`} role="status">
+            {saveState === "dirty"
+              ? "Unsaved changes"
+              : saveState === "saving"
+                ? "Saving…"
+                : saveState === "saved"
+                  ? "Saved to workspace"
+                  : saveState === "error"
+                    ? "Save failed"
+                    : ""}
           </span>
-          <span style={{ fontSize: "0.85rem", color: "#777" }}>{message}</span>
-        </header>
+          <span className="editor-message">{message}</span>
+          {current && (
+            <div className="editor-bar__actions">
+              {privateMode && (
+                <span
+                  className={`editor-sync editor-sync--${syncStatus?.state ?? "unknown"}`}
+                  title={syncStatus?.message}
+                >
+                  Private: {syncStatus?.state ?? "unknown"}
+                </span>
+              )}
+              {privateMode && (
+                <button type="button" onClick={() => void syncNow()}>
+                  Sync now
+                </button>
+              )}
+              {privateMode && (
+                <button type="button" disabled={publishing} onClick={() => void prepare()}>
+                  Prepare public PR
+                </button>
+              )}
+              {saveState === "error" && (
+                <button type="button" onClick={() => void persist()}>
+                  Retry save
+                </button>
+              )}
+              <button type="button" onClick={() => void showPreview()}>
+                {preview ? "Edit" : "Exact preview"}
+              </button>
+              <a href={`/posts/${current.replace(/\.mdx$/, "")}/`} target="_blank" rel="noreferrer">
+                Open post ↗
+              </a>
+            </div>
+          )}
+        </div>
+
+        {creating && (
+          <form
+            className="editor-new shell post post--solo"
+            onSubmit={(event) => void create(event)}
+          >
+            <span className="sys-label">// new draft</span>
+            <label>
+              Title
+              <input
+                autoFocus
+                required
+                value={newPost.title}
+                onChange={(event) => {
+                  const title = event.target.value;
+                  setNewPost((previous) => ({
+                    ...previous,
+                    title,
+                    slug: slugEdited ? previous.slug : slugify(title),
+                  }));
+                }}
+              />
+            </label>
+            <label>
+              Slug
+              <input
+                required
+                pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                value={newPost.slug}
+                onChange={(event) => {
+                  setSlugEdited(true);
+                  setNewPost((previous) => ({ ...previous, slug: event.target.value }));
+                }}
+              />
+            </label>
+            <label>
+              Description
+              <textarea
+                required
+                value={newPost.description}
+                onChange={(event) =>
+                  setNewPost((previous) => ({ ...previous, description: event.target.value }))
+                }
+              />
+            </label>
+            <div className="editor-new__row">
+              <label>
+                Type
+                <select
+                  value={newPost.type}
+                  onChange={(event) =>
+                    setNewPost((previous) => ({ ...previous, type: event.target.value }))
+                  }
+                >
+                  {TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Topics, comma separated
+                <input
+                  value={newPost.topics}
+                  onChange={(event) =>
+                    setNewPost((previous) => ({ ...previous, topics: event.target.value }))
+                  }
+                />
+              </label>
+            </div>
+            <button type="submit">Create draft</button>
+          </form>
+        )}
 
         {current && (
           <>
-            <details style={{ borderBottom: "1px solid #eee" }}>
-              <summary style={{ padding: "0.5rem 1rem", cursor: "pointer" }}>
-                Frontmatter (raw)
-              </summary>
-              <textarea
-                value={frontmatter}
-                onChange={(e) => onFrontmatterChange(e.target.value)}
-                spellCheck={false}
-                style={{
-                  width: "100%",
-                  minHeight: 160,
-                  border: "none",
-                  padding: "0.5rem 1rem",
-                  fontFamily: "ui-monospace, monospace",
-                  fontSize: "0.8rem",
-                  boxSizing: "border-box",
-                }}
+            {pullRequest && (
+              <p className="editor-publication-link">
+                Public pull request:{" "}
+                <a href={pullRequest} target="_blank" rel="noreferrer">
+                  {pullRequest}
+                </a>
+              </p>
+            )}
+            {review && (
+              <section className="editor-review" aria-label="Public PR review">
+                <h2>Review public PR</h2>
+                <p>
+                  This will make these files public as soon as the PR opens. The live site changes
+                  after merge.
+                </p>
+                <p>
+                  Visibility after merge: <strong>{review.visibility}</strong>
+                </p>
+                <ul>
+                  {review.warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+                <h3>Files to publish</h3>
+                <ul>
+                  {review.files.map((file) => (
+                    <li key={file.path}>
+                      {file.path} ({file.bytes.toLocaleString()} bytes)
+                    </li>
+                  ))}
+                </ul>
+                {review.files
+                  .filter((file) => file.kind === "post")
+                  .map((file) => (
+                    <div className="editor-review__compare" key={file.path}>
+                      <details>
+                        <summary>Current public source</summary>
+                        <pre>{file.before ?? "New post"}</pre>
+                      </details>
+                      <details open>
+                        <summary>Proposed public source</summary>
+                        <pre>{file.after}</pre>
+                      </details>
+                    </div>
+                  ))}
+                <div className="editor-review__actions">
+                  <button type="button" disabled={publishing} onClick={() => setReview(null)}>
+                    Cancel
+                  </button>
+                  <button type="button" disabled={publishing} onClick={() => void publish()}>
+                    Open public PR
+                  </button>
+                </div>
+              </section>
+            )}
+            {preview ? (
+              <iframe
+                className="editor-preview"
+                title={`Preview of ${current}`}
+                src={`/posts/${current.replace(/\.mdx$/, "")}/`}
               />
-            </details>
+            ) : (
+              <article className="shell post post--solo editor-article">
+                <header className="post__header">
+                  <div className="post__meta">
+                    <span className="sys-label">
+                      [ {String(meta.type ?? "POST").toUpperCase()} ]
+                    </span>
+                    <span className="post__meta-date">
+                      {String(meta.date ?? "")} ·{" "}
+                      {meta.draft ? "PRIVATE DRAFT" : "PUBLISHED SOURCE"}
+                    </span>
+                  </div>
+                  <textarea
+                    ref={titleRef}
+                    className="post__title editor-title"
+                    aria-label="Post title"
+                    value={String(meta.title ?? "")}
+                    onChange={(event) =>
+                      updateField("title", event.target.value.replace(/\s*\r?\n\s*/g, " "))
+                    }
+                    rows={1}
+                  />
+                  <textarea
+                    className="post__lead editor-lead"
+                    aria-label="Post description"
+                    value={String(meta.description ?? "")}
+                    onChange={(event) => updateField("description", event.target.value)}
+                    rows={2}
+                  />
+                  <div className="post__topics">
+                    {(Array.isArray(meta.topics) ? meta.topics : []).map((topic) => (
+                      <span className="tag" key={String(topic)}>
+                        {String(topic)}
+                      </span>
+                    ))}
+                  </div>
+                </header>
 
-            <div style={{ flex: 1, overflowY: "auto" }}>
-              <MDXEditor
-                key={current}
-                markdown={body}
-                onChange={onBodyChange}
-                plugins={[
-                  headingsPlugin(),
-                  listsPlugin(),
-                  quotePlugin(),
-                  thematicBreakPlugin(),
-                  linkPlugin(),
-                  linkDialogPlugin(),
-                  tablePlugin(),
-                  codeBlockPlugin({
-                    defaultCodeBlockLanguage: "",
-                    codeBlockEditorDescriptors: [
-                      {
-                        priority: 100,
-                        match: (lang) => lang === "mdxcomment",
-                        Editor: CommentBlock,
-                      },
-                    ],
-                  }),
-                  codeMirrorPlugin({
-                    codeBlockLanguages: CODE_LANGUAGES,
-                    // All supported grammars are declared explicitly, so skip the
-                    // dynamic auto-load (it was flaky under Vite and left unlisted
-                    // languages like graphql attempting a failing import). Unlisted
-                    // languages simply render plain.
-                    autoLoadLanguageSupport: false,
-                  }),
-                  jsxPlugin({ jsxComponentDescriptors }),
-                  markdownShortcutPlugin(),
-                  softBreakPlugin(),
-                  toolbarPlugin({
-                    toolbarContents: () => (
-                      <>
-                        <UndoRedo />
-                        <Separator />
-                        <BoldItalicUnderlineToggles />
-                        <CodeToggle />
-                        <Separator />
-                        <ListsToggle />
-                        <BlockTypeSelect />
-                        <Separator />
-                        <CreateLink />
-                        <InsertCodeBlock />
-                        <InsertComment />
-                      </>
-                    ),
-                  }),
-                ]}
-              />
-            </div>
+                <details className="editor-metadata">
+                  <summary>Post metadata</summary>
+                  <div className="editor-metadata__grid">
+                    <label>
+                      Type
+                      <select
+                        value={String(meta.type ?? "note")}
+                        onChange={(event) => updateField("type", event.target.value)}
+                      >
+                        {TYPES.map((type) => (
+                          <option key={type}>{type}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Publication date
+                      <input
+                        type="date"
+                        value={String(meta.date ?? "")}
+                        onChange={(event) => updateField("date", event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Topics
+                      <input
+                        value={Array.isArray(meta.topics) ? meta.topics.join(", ") : ""}
+                        onChange={(event) =>
+                          updateField(
+                            "topics",
+                            event.target.value
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          )
+                        }
+                      />
+                    </label>
+                    <label>
+                      Tags
+                      <input
+                        value={Array.isArray(meta.tags) ? meta.tags.join(", ") : ""}
+                        onChange={(event) =>
+                          updateField(
+                            "tags",
+                            event.target.value
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="editor-check">
+                      <input
+                        type="checkbox"
+                        checked={meta.draft === true}
+                        onChange={(event) => updateField("draft", event.target.checked)}
+                      />{" "}
+                      Draft
+                    </label>
+                    <label className="editor-check">
+                      <input
+                        type="checkbox"
+                        checked={meta.unlisted === true}
+                        onChange={(event) => updateField("unlisted", event.target.checked)}
+                      />{" "}
+                      Unlisted
+                    </label>
+                    <label className="editor-check">
+                      <input
+                        type="checkbox"
+                        checked={meta.hideFromFeed === true}
+                        onChange={(event) => updateField("hideFromFeed", event.target.checked)}
+                      />{" "}
+                      Hide from feed and newsletter
+                    </label>
+                  </div>
+                  <details className="editor-raw">
+                    <summary>Advanced YAML</summary>
+                    <textarea
+                      spellCheck={false}
+                      value={frontmatter}
+                      onChange={(event) => setFrontmatterValue(event.target.value)}
+                    />
+                  </details>
+                </details>
+
+                <div className="prose editor-prose">
+                  <MDXEditor
+                    key={current}
+                    markdown={body}
+                    onChange={onBodyChange}
+                    plugins={[
+                      headingsPlugin(),
+                      listsPlugin(),
+                      quotePlugin(),
+                      thematicBreakPlugin(),
+                      linkPlugin(),
+                      linkDialogPlugin(),
+                      tablePlugin(),
+                      codeBlockPlugin({
+                        defaultCodeBlockLanguage: "",
+                        codeBlockEditorDescriptors: [
+                          {
+                            priority: 100,
+                            match: (lang) => lang === "mdxcomment",
+                            Editor: CommentBlock,
+                          },
+                        ],
+                      }),
+                      codeMirrorPlugin({
+                        codeBlockLanguages: CODE_LANGUAGES,
+                        autoLoadLanguageSupport: false,
+                      }),
+                      jsxPlugin({ jsxComponentDescriptors }),
+                      markdownShortcutPlugin(),
+                      softBreakPlugin(),
+                      toolbarPlugin({
+                        toolbarContents: () => (
+                          <>
+                            <UndoRedo />
+                            <Separator />
+                            <BoldItalicUnderlineToggles />
+                            <CodeToggle />
+                            <Separator />
+                            <ListsToggle />
+                            <BlockTypeSelect />
+                            <Separator />
+                            <CreateLink />
+                            <InsertCodeBlock />
+                            <InsertComment />
+                            <UploadFigure upload={upload} />
+                          </>
+                        ),
+                      }),
+                    ]}
+                  />
+                </div>
+              </article>
+            )}
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }

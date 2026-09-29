@@ -1,0 +1,29 @@
+{
+  "name": "meese.rs private authoring",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/sshd:1": {}
+  },
+  "forwardPorts": [4321],
+  "portsAttributes": {
+    "4321": {
+      "label": "Private blog editor",
+      "onAutoForward": "notify"
+    }
+  },
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "ajmeese7/meese.rs": {
+          "permissions": {
+            "contents": "write",
+            "pull_requests": "write"
+          }
+        }
+      }
+    }
+  },
+  "postCreateCommand": "pnpm install --frozen-lockfile",
+  "postStartCommand": "bash -lc 'bash .devcontainer/start-editor.sh'"
+}

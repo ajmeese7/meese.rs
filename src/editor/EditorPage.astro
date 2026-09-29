@@ -1,88 +1,28 @@
 ---
-// Dev-only host page for the visual MDX editor. This route is injected only
-// under `astro dev` (see src/integrations/editor.ts), so it never builds into
-// the static Cloudflare output and its React/MDXEditor deps never ship.
+// Injected only by the development integration; never part of the static build.
+import BaseLayout from "../layouts/BaseLayout.astro";
 import Editor from "./Editor.tsx";
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MDX editor (dev)</title>
-    <!--
-      Autosave writes to the content dir, which makes Astro broadcast a Vite
-      `full-reload` to every open tab. That is what live-refreshes a preview tab,
-      but on this editor tab it would wipe the cursor mid-edit. This inline
-      classic script runs before Vite's deferred client module, patches the HMR
-      WebSocket, and swallows only `full-reload` frames (module `update` frames
-      still apply), so the editor stays put while previews still refresh live.
-    -->
-    <script is:inline>
-      (function () {
-        const OrigWS = window.WebSocket;
-        function PatchedWS(url, protocols) {
-          const ws = protocols ? new OrigWS(url, protocols) : new OrigWS(url);
-          ws.addEventListener(
-            "message",
-            function (event) {
-              try {
-                const msg = JSON.parse(event.data);
-                if (msg && msg.type === "full-reload") {
-                  event.stopImmediatePropagation();
-                }
-              } catch (_) {
-                /* non-JSON frame, ignore */
-              }
-            },
-            true,
-          );
-          return ws;
-        }
-        PatchedWS.prototype = OrigWS.prototype;
-        Object.setPrototypeOf(PatchedWS, OrigWS);
-        window.WebSocket = PatchedWS;
-      })();
-    </script>
-    <style>
-      html,
-      body {
-        margin: 0;
-        height: 100%;
-        font-family:
-          ui-sans-serif, system-ui, -apple-system, sans-serif;
+<BaseLayout title="Post editor" description="Private post authoring workspace" noindex footer={false}>
+  <!-- Save triggers Astro's full reload. Keep the editor island mounted while
+       letting a separate preview tab receive the normal refresh. -->
+  <script is:inline>
+    (function () {
+      const Original = window.WebSocket;
+      function EditorSocket(url, protocols) {
+        const socket = protocols ? new Original(url, protocols) : new Original(url);
+        socket.addEventListener("message", function (event) {
+          try {
+            if (JSON.parse(event.data)?.type === "full-reload") event.stopImmediatePropagation();
+          } catch (_) { /* not a Vite JSON frame */ }
+        }, true);
+        return socket;
       }
-    </style>
-    <!--
-      Display fixes on the MDXEditor content, is:global because that DOM is
-      rendered by React, outside this component's scoped styles.
-      Note: never override white-space on the contenteditable. Lexical sets
-      pre-wrap inline and depends on it; under `normal` the browser collapses a
-      just-typed space at a text-node boundary and Lexical drops it from the
-      model, so a space could not be typed after an inline format (`_word_ `).
-      The hard-wrapped source line breaks are collapsed on import instead, see
-      softBreakPlugin.ts.
-    -->
-    <style is:global>
-      /* The site's 72ch reading measure (--content-width), so line lengths
-         approximate what a reader sees. */
-      .mdxeditor [contenteditable="true"] {
-        max-width: 72ch;
-        margin-inline: auto;
-      }
-      /* MDX comment/expression nodes render as an auto-sizing widget: a
-         single-line input stacked over a pre-wrap ghost, both visible. On a
-         long, wrapping comment the input's one line overlaps the ghost's
-         wrapped lines. Hide the input's text (keep its caret) so only the
-         wrapping ghost shows. */
-      .mdxeditor [class*="inputSizer"] input {
-        color: transparent !important;
-        caret-color: #0d74ce;
-      }
-    </style>
-  </head>
-  <body>
-    <Editor client:only="react" />
-  </body>
-</html>
+      EditorSocket.prototype = Original.prototype;
+      Object.setPrototypeOf(EditorSocket, Original);
+      window.WebSocket = EditorSocket;
+    })();
+  </script>
+  <Editor client:only="react" />
+</BaseLayout>
