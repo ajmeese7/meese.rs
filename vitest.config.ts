@@ -1,4 +1,4 @@
-import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import { cloudflareTest } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
 
 // Two suites with genuinely different needs, so they run as separate projects.
@@ -17,6 +17,8 @@ export default defineConfig({
         plugins: [cloudflareTest({ wrangler: { configPath: "./wrangler.jsonc" } })],
         test: {
           name: "worker",
+          // workerd cannot read Vitest's Node-side filesystem module cache.
+          fsModuleCache: false,
           include: ["worker/**/*.test.ts"],
           globalSetup: ["./test/resend-stub.ts"],
           // One stub server serves the whole run, so files can't send to it

@@ -6,7 +6,7 @@ Self-owned email newsletter, no third-party subscription platform. Readers subsc
 
 - `src/components/layout/NewsletterSignup.astro`, the form + progressive-enhancement script, rendered at the end of `PostLayout`.
 - `worker/newsletter/`, the module: `handlers.ts` (subscribe/confirm/unsubscribe), `send.ts` (cron digest), `db.ts` (D1), `email.ts` (Resend + templates), `pages.ts` (landing pages), `validation.ts` (pure helpers).
-- `worker/newsletter/*.test.ts`, the tests. They run inside workerd against real bindings (real D1, real rate limiter) via `@cloudflare/vitest-pool-workers`, so they exercise the runtime production uses. `pnpm test`.
+- `worker/newsletter/*.test.ts`, the tests. They run inside workerd against real bindings (real D1, real rate limiter) via `@cloudflare/vitest-plugin`, so they exercise the runtime production uses. `pnpm test`.
 - `test/resend-stub.ts`, a real local HTTP server standing in for Resend and for `feed.json` during tests, plus `test/env.ts`, which rebuilds the database from `migrations/` and supplies an env that can't reach the live API.
 - `migrations/`, the D1 schema as an ordered migration chain, applied with `wrangler d1 migrations apply`. The tests build their database from these same files, so a migration that doesn't produce a working schema fails the suite.
 - `wrangler.jsonc`, D1 binding, subscribe rate limiter, hourly cron, `/newsletter/*` routes, and `SITE_URL` / `NEWSLETTER_FROM` vars.

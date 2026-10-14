@@ -1716,5 +1716,5 @@ Self-owned email list, no third-party subscription platform. Originally out of s
 * Abuse protection is a per-IP rate limiter plus a per-address cooldown on confirmation resends, since the endpoint is unauthenticated and makes us send mail. A honeypot field returns a no-op success.
 * No tracking pixels and no webfont requests in the email templates, so opening one reports nothing back.
 * Sender logo (BIMI) is set up on the free, certificate-less path, which reaches Yahoo/AOL and Fastmail. Gmail and Apple Mail require a paid VMC/CMC; Proton Mail does not implement BIMI and renders the site favicon instead.
-* Worker tests run inside workerd against real bindings (real D1, real rate limiter) via `@cloudflare/vitest-pool-workers`, with a local HTTP stand-in for Resend rather than a mock. `pnpm test`.
+* Worker tests run inside workerd against real bindings (real D1, real rate limiter) via `@cloudflare/vitest-plugin`, with a local HTTP stand-in for Resend rather than a mock. `pnpm test`.
 * Operational details, local testing, and the deploy checklist: `docs/newsletter-setup.md` and `docs/bimi.md`.
