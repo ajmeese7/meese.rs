@@ -162,6 +162,13 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
     Editor: GenericJsxEditor,
   },
   {
+    name: "*",
+    kind: "flow",
+    hasChildren: false,
+    props: [],
+    Editor: GenericJsxEditor,
+  },
+  {
     name: "CodeCaption",
     kind: "flow",
     hasChildren: false,
@@ -180,15 +187,13 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
     "SpeciesChart",
     "WindCalculator",
     "WindSandbox",
-  ].map(
-    (name): JsxComponentDescriptor => ({
-      name,
-      kind: "flow",
-      hasChildren: false,
-      props: [],
-      Editor: GenericJsxEditor,
-    }),
-  ),
+  ].map((name): JsxComponentDescriptor => ({
+    name,
+    kind: "flow",
+    hasChildren: false,
+    props: [],
+    Editor: GenericJsxEditor,
+  })),
 ];
 
 function metadataOf(frontmatter: string): Record<string, unknown> {
