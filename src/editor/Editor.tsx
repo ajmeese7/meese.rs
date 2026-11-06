@@ -342,7 +342,11 @@ export default function Editor() {
         setMessage("Fix the YAML in Advanced metadata before editing fields.");
         return;
       }
-      document.set(field, value);
+      if (field === "aiModel" && typeof value === "string" && !value.trim()) {
+        document.delete(field);
+      } else {
+        document.set(field, value);
+      }
       setFrontmatterValue(document.toString());
     },
     [setFrontmatterValue],
@@ -474,12 +478,11 @@ export default function Editor() {
   };
 
   const onBodyChange = useCallback(
-    (markdown: string) => {
+    (markdown: string, initialMarkdownNormalize: boolean) => {
+      // Keep source imports and formatting on metadata-only saves. The editor's
+      // initial normalization is not an author edit.
+      if (initialMarkdownNormalize || initializingRef.current) return;
       bodyRef.current = markdown;
-      if (initializingRef.current) {
-        savedBodyRef.current = markdown;
-        return;
-      }
       if (markdown !== savedBodyRef.current) scheduleSave();
     },
     [scheduleSave],
@@ -885,6 +888,17 @@ export default function Editor() {
                         onChange={(event) => updateField("hideFromFeed", event.target.checked)}
                       />{" "}
                       Hide from feed and newsletter
+                    </label>
+                    <label>
+                      AI assistance model
+                      <input
+                        value={String(meta.aiModel ?? "")}
+                        placeholder="GPT-6.1-Sol"
+                        maxLength={80}
+                        aria-describedby="ai-model-help"
+                        onChange={(event) => updateField("aiModel", event.target.value)}
+                      />
+                      <small id="ai-model-help">Leave blank to hide the credit.</small>
                     </label>
                   </div>
                   <details className="editor-raw">

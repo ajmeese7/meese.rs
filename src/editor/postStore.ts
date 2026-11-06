@@ -115,6 +115,12 @@ export function validateFrontmatter(raw: string): Record<string, unknown> {
     throw new EditorError("frontmatter must be a YAML object");
   }
   const fields = data as Record<string, unknown>;
+  if (fields.aiModel !== undefined) {
+    if (typeof fields.aiModel !== "string") throw new EditorError("aiModel must be text");
+    if (fields.aiModel.trim().length > 80) {
+      throw new EditorError("aiModel must be 80 characters or fewer");
+    }
+  }
   for (const field of ["title", "description"]) {
     if (typeof fields[field] !== "string" || !fields[field].trim()) {
       throw new EditorError(`${field} is required`);
@@ -148,7 +154,14 @@ export function validateFrontmatter(raw: string): Record<string, unknown> {
 }
 
 async function formattedPost(frontmatter: string, body: string, path: string): Promise<string> {
-  validateFrontmatter(frontmatter);
+  const fields = validateFrontmatter(frontmatter);
+  if (typeof fields.aiModel === "string") {
+    const document = parseDocument(frontmatter);
+    const aiModel = fields.aiModel.trim();
+    if (aiModel) document.set("aiModel", aiModel);
+    else document.delete("aiModel");
+    frontmatter = document.toString();
+  }
   const combined = `---\n${frontmatter.trim()}\n---\n\n${codeBlockToComments(body).trim()}\n`;
   const config = await resolveConfig(path);
   return format(combined, { ...config, filepath: path });

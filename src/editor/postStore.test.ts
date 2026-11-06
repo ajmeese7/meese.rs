@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import sharp from "sharp";
+import { parseDocument } from "yaml";
 import { createPost, EditorError, readPost, saveAsset, savePost } from "./postStore";
 
 let dir: string;
@@ -65,6 +66,65 @@ describe("post file operations", () => {
       await rm(outside, { force: true });
     }
   });
+
+  it("adds, normalizes, and clears the AI model without changing the MDX body", async () => {
+    const created = await createPost(
+      {
+        title: "Model credit",
+        slug: "model-credit",
+        description: "Lead",
+        type: "note",
+        topics: [],
+      },
+      dir,
+    );
+    const post = await savePost(
+      {
+        ...created,
+        frontmatter: `${created.frontmatter}\n# Keep this editorial note\ncustomField: preserved`,
+        body: `import Widget from "../../components/Widget.astro";\n\nOpening paragraph.\n\n<Widget title="Keep this" count={3} options={{ mode: "full" }} />\n\nThe complete ending.`,
+      },
+      dir,
+    );
+    const saved = await savePost(
+      { ...post, frontmatter: `${post.frontmatter}\naiModel: "  GPT-6.1-Sol  "` },
+      dir,
+    );
+    expect(parseDocument(saved.frontmatter).get("aiModel")).toBe("GPT-6.1-Sol");
+    expect(saved.frontmatter).toContain("# Keep this editorial note");
+    expect(saved.frontmatter).toContain("customField: preserved");
+    expect(saved.body).toBe(post.body);
+    const document = parseDocument(saved.frontmatter);
+    document.set("aiModel", "   ");
+    const cleared = await savePost({ ...saved, frontmatter: document.toString() }, dir);
+    expect(cleared.frontmatter).not.toContain("aiModel:");
+    expect(cleared.body).toBe(post.body);
+    expect((await readPost(post.file, dir)).body).toBe(post.body);
+  });
+
+  it.each([false, 42, [], {}, null, "x".repeat(81)])(
+    "rejects an invalid AI model (%j) without changing the file",
+    async (aiModel) => {
+      const post = await createPost(
+        {
+          title: "Model credit",
+          slug: "model-credit",
+          description: "Lead",
+          type: "note",
+          topics: [],
+        },
+        dir,
+      );
+      const before = await readFile(join(dir, post.file), "utf8");
+      await expect(
+        savePost(
+          { ...post, frontmatter: `${post.frontmatter}\naiModel: ${JSON.stringify(aiModel)}` },
+          dir,
+        ),
+      ).rejects.toBeInstanceOf(EditorError);
+      expect(await readFile(join(dir, post.file), "utf8")).toBe(before);
+    },
+  );
 });
 
 describe("asset uploads", () => {

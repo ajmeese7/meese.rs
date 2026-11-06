@@ -979,11 +979,17 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
 /* ============================================================
    Author byline, links to the About hub (§13.5, §20)
    ============================================================ */
+.author-byline-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 14px;
+}
 .author-byline {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 14px;
   padding: 4px 9px 4px 4px;
   border: 1px solid var(--line-1);
   border-radius: var(--radius-pill);
@@ -999,6 +1005,57 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   color: var(--ink-3);
 }
 .author-byline__by strong { color: var(--ink-1); font-weight: 500; }
+.author-byline-group--assisted { margin-bottom: 8px; }
+.author-byline-group--assisted .author-byline { padding-right: 20px; }
+.author-assistance {
+  position: absolute;
+  left: calc(100% - 12px);
+  top: calc(100% - 12px);
+  z-index: 2;
+}
+.author-assistance__summary {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  width: max-content;
+  max-width: 18px;
+  min-height: 18px;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  box-shadow: 0 0 0 2px var(--color-bg);
+  color: var(--text-body);
+  font: 10px/12px var(--font-mono);
+  list-style: none;
+  cursor: pointer;
+  transition: max-width var(--dur-2) var(--ease-out);
+}
+.author-assistance__summary::-webkit-details-marker { display: none; }
+.author-assistance__summary::after { content: ""; position: absolute; inset: -5px; }
+.author-assistance__icon {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: var(--text-muted);
+  background: currentColor;
+  mask: url("/icons/codex.svg") center / contain no-repeat;
+}
+.author-assistance__text {
+  min-width: 0;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out), margin-left var(--dur-2) var(--ease-out);
+}
+.author-assistance__text > span { overflow-wrap: anywhere; }
+.author-assistance:is([open], :has(:focus-visible)) .author-assistance__summary { max-width: min(310px, calc(100vw - 170px)); padding-right: 8px; }
+.author-assistance:is([open], :has(:focus-visible)) .author-assistance__text { max-width: min(280px, calc(100vw - 200px)); margin-left: 6px; opacity: 1; white-space: normal; }
+@media (hover: hover) {
+  .author-assistance:hover .author-assistance__summary { max-width: min(310px, calc(100vw - 170px)); padding-right: 8px; }
+  .author-assistance:hover .author-assistance__text { max-width: min(280px, calc(100vw - 200px)); margin-left: 6px; opacity: 1; white-space: normal; }
+}
 
 /* ============================================================
    About page, author + site credibility hub (§13.5)

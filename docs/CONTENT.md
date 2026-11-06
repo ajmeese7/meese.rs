@@ -124,6 +124,26 @@ Two traps when the subject is a rendered artifact rather than a live page:
 
 ---
 
+## 7. AI assistance
+
+`aiModel` records optional AI assistance for a post:
+
+```yaml
+aiModel: GPT-6.1-Sol
+```
+
+The post byline shows a small Codex icon attached to its lower-right border.
+Hover or keyboard focus expands the credit to “GPT-6.1-Sol assisted.” A tap toggles the credit on touch devices.
+The author name remains clear, and the disclosure works without JavaScript.
+
+The model name accepts up to 80 characters of free text. The visual editor exposes this field under **Post metadata → AI assistance model**.
+An empty field removes the credit. The editor trims surrounding whitespace when it saves the post.
+
+An absent or whitespace-only value shows the ordinary byline. It means that no disclosure is recorded, rather than a claim that no AI was used.
+Existing posts receive no automatic credit. This field credits assistance through Codex; it does not add the model as an author.
+
+---
+
 ## Quick frontmatter example
 
 ```yaml

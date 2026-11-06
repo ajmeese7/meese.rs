@@ -80,7 +80,7 @@ if (supersededTarget) {
       </div>
       <h1 class="post__title">{d.title}</h1>
       <p class="post__lead">{d.description}</p>
-      <AuthorByline />
+      <AuthorByline aiModel={d.aiModel} />
       <div class="post__topics">
         {d.topics.map((t) => <Tag name={t} href={topicUrl(t)} />)}
       </div>

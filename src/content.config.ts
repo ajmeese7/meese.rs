@@ -20,6 +20,12 @@ const posts = defineCollection({
   schema: z.object({
     title: z.string().min(1),
     description: z.string().min(1),
+    aiModel: z
+      .string()
+      .trim()
+      .max(80)
+      .optional()
+      .transform((value) => value || undefined),
     date: z.coerce.date(),
     updated: z.coerce.date().optional(),
     type: z.enum(POST_TYPES),
