@@ -60,6 +60,10 @@ search, and graph.
 label means: the three label systems (type, status, topics/tags), which
 frontmatter field drives each, and how they differ.
 
+For the private Codespaces editor, see [`docs/authoring.md`](./docs/authoring.md):
+how to pull site and dependency updates into `meese-rs-authoring`, restart the
+workspace, and retrieve the `/editor?key=…` access link.
+
 ## Structure
 
 ```
@@ -82,6 +86,7 @@ public/                   robots.txt · llms.txt · AGENTS.md · _headers · ico
 docs/
   SPEC.md                 the product specification (source of truth)
   CONTENT.md              writer reference: types, statuses, topics/tags
+  authoring.md            private repo updates and Codespaces editor access
   ANALYTICS.md            first-party analytics via the /relay proxy
   newsletter-setup.md     D1 + Resend + cron setup, local testing, deploy checklist
   bimi.md                 sender logo: the SVG Tiny PS asset and the DNS record
