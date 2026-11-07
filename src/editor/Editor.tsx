@@ -34,6 +34,7 @@ import {
 import { CommentBlock } from "./CommentBlock.tsx";
 import { CODE_LANGUAGES } from "./codeLanguages.ts";
 import { softBreakPlugin } from "./softBreakPlugin.ts";
+import { isLinkUrl, selectionToolbarPlugin } from "./selectionToolbarPlugin.tsx";
 
 type PostPayload = { file: string; frontmatter: string; body: string; revision: string };
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -921,8 +922,9 @@ export default function Editor() {
                       listsPlugin(),
                       quotePlugin(),
                       thematicBreakPlugin(),
-                      linkPlugin(),
+                      linkPlugin({ validateUrl: isLinkUrl }),
                       linkDialogPlugin(),
+                      selectionToolbarPlugin(),
                       tablePlugin(),
                       codeBlockPlugin({
                         defaultCodeBlockLanguage: "",
