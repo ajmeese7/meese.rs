@@ -1045,16 +1045,20 @@ button.tag:hover { border-color: var(--line-3); background: var(--surface-2); co
   min-width: 0;
   max-width: 0;
   overflow: hidden;
-  white-space: nowrap;
   opacity: 0;
   transition: max-width var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out), margin-left var(--dur-2) var(--ease-out);
 }
-.author-assistance__text > span { overflow-wrap: anywhere; }
+.author-assistance__text > span {
+  display: block;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 200px));
+  overflow-wrap: anywhere;
+}
 .author-assistance:is([open], :has(:focus-visible)) .author-assistance__summary { max-width: min(310px, calc(100vw - 170px)); padding-right: 8px; }
-.author-assistance:is([open], :has(:focus-visible)) .author-assistance__text { max-width: min(280px, calc(100vw - 200px)); margin-left: 6px; opacity: 1; white-space: normal; }
+.author-assistance:is([open], :has(:focus-visible)) .author-assistance__text { max-width: min(280px, calc(100vw - 200px)); margin-left: 6px; opacity: 1; }
 @media (hover: hover) {
   .author-assistance:hover .author-assistance__summary { max-width: min(310px, calc(100vw - 170px)); padding-right: 8px; }
-  .author-assistance:hover .author-assistance__text { max-width: min(280px, calc(100vw - 200px)); margin-left: 6px; opacity: 1; white-space: normal; }
+  .author-assistance:hover .author-assistance__text { max-width: min(280px, calc(100vw - 200px)); margin-left: 6px; opacity: 1; }
 }
 
 /* ============================================================
