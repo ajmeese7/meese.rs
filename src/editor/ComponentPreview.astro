@@ -1,0 +1,56 @@
+---
+// Injected by the dev integration only. The glob is the component allowlist;
+// neither a filesystem path nor executable MDX comes from the request.
+import BaseHead from "../components/layout/BaseHead.astro";
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+
+const modules = import.meta.glob<{ default: AstroComponentFactory }>(
+  "../components/mdx/*.astro",
+);
+const name = Astro.url.searchParams.get("name") ?? "";
+const load = modules[`../components/mdx/${name}.astro`];
+let props: Record<string, unknown> = {};
+let error = "";
+try {
+  const raw = Astro.url.searchParams.get("props") ?? "{}";
+  if (raw.length > 16_000) throw new Error("Too many component properties.");
+  const parsed: unknown = JSON.parse(raw);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Component properties must be an object.");
+  }
+  props = parsed as Record<string, unknown>;
+} catch {
+  error = "These component properties cannot be previewed.";
+}
+if (!load) error = `No inline preview is available for ${name || "this component"}.`;
+const Component = !error && load ? (await load()).default : null;
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("X-Content-Type-Options", "nosniff");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`${name} preview`} description="Inline component preview" noindex />
+    <script is:inline>
+      try {
+        document.documentElement.dataset.theme =
+          parent.document.documentElement.dataset.theme || "neon-violet";
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <main class="prose" data-component-preview>
+      {Component ? <Component {...props} /> : <p role="status">{error}</p>}
+    </main>
+  </body>
+</html>
+
+<style>
+  html, body { min-height: 0; background: transparent; }
+  body { margin: 0; }
+  main { display: flow-root; width: 100%; max-width: none; }
+  main > :global(:first-child) { margin-top: 0; }
+  main > :global(:last-child) { margin-bottom: 0; }
+  :global(astro-dev-toolbar) { display: none; }
+</style>

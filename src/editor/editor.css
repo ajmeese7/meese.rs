@@ -355,6 +355,16 @@
   border: 0;
   background: var(--color-bg);
 }
+.editor-component {
+  margin: var(--space-6) 0;
+}
+.editor-component__preview {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+}
+.editor-component__fallback { color: var(--text-muted); }
 .editor-new {
   display: grid;
   gap: 18px;

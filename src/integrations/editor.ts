@@ -91,6 +91,11 @@ export default function editor(): AstroIntegration {
           entrypoint: "./src/editor/EditorPage.astro",
           prerender: false,
         });
+        injectRoute({
+          pattern: "/editor/component",
+          entrypoint: "./src/editor/ComponentPreview.astro",
+          prerender: false,
+        });
         updateConfig({
           vite: {
             plugins: [

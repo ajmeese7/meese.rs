@@ -5,7 +5,6 @@ import { parseDocument } from "yaml";
 import {
   MDXEditor,
   type JsxComponentDescriptor,
-  GenericJsxEditor,
   headingsPlugin,
   listsPlugin,
   quotePlugin,
@@ -32,6 +31,7 @@ import {
   insertJsx$,
 } from "@mdxeditor/editor";
 import { CommentBlock } from "./CommentBlock.tsx";
+import { ComponentEditor } from "./ComponentEditor.tsx";
 import { CODE_LANGUAGES } from "./codeLanguages.ts";
 import { softBreakPlugin } from "./softBreakPlugin.ts";
 import { isLinkUrl, selectionToolbarPlugin } from "./selectionToolbarPlugin.tsx";
@@ -56,6 +56,7 @@ type PublicationReview = {
 };
 
 const KEY_STORAGE = "meese-editor-key";
+const POST_STORAGE = "meese-editor-post";
 const AUTOSAVE_DELAY_MS = 1000;
 const INIT_SETTLE_MS = 600;
 const TYPES = ["guide", "note", "devlog", "essay", "lab", "reference"];
@@ -148,7 +149,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
       { name: "type", type: "string" },
       { name: "title", type: "string" },
     ],
-    Editor: GenericJsxEditor,
+    Editor: ComponentEditor,
   },
   {
     name: "Figure",
@@ -160,21 +161,42 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
       { name: "caption", type: "string" },
       { name: "kind", type: "string" },
     ],
-    Editor: GenericJsxEditor,
+    Editor: ComponentEditor,
   },
   {
     name: "*",
     kind: "flow",
     hasChildren: false,
     props: [],
-    Editor: GenericJsxEditor,
+    Editor: ComponentEditor,
+  },
+  {
+    name: "DeepSeekLabDiagram",
+    kind: "flow",
+    source: "../../components/mdx/DeepSeekLabDiagram.astro",
+    defaultExport: true,
+    hasChildren: false,
+    props: [{ name: "kind", type: "string" }],
+    Editor: ComponentEditor,
+  },
+  {
+    name: "DeepSeekSpeedChart",
+    kind: "flow",
+    source: "../../components/mdx/DeepSeekSpeedChart.astro",
+    defaultExport: true,
+    hasChildren: false,
+    props: [
+      { name: "alt", type: "string" },
+      { name: "caption", type: "string" },
+    ],
+    Editor: ComponentEditor,
   },
   {
     name: "CodeCaption",
     kind: "flow",
     hasChildren: false,
     props: [{ name: "title", type: "string" }],
-    Editor: GenericJsxEditor,
+    Editor: ComponentEditor,
   },
   ...[
     "Aside",
@@ -193,7 +215,7 @@ const jsxComponentDescriptors: JsxComponentDescriptor[] = [
     kind: "flow",
     hasChildren: false,
     props: [],
-    Editor: GenericJsxEditor,
+    Editor: ComponentEditor,
   })),
 ];
 
@@ -256,6 +278,7 @@ export default function Editor() {
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const currentRef = useRef<string | null>(null);
+  const postRequestRef = useRef(0);
   const bodyRef = useRef("");
   const frontmatterRef = useRef("");
   const savedBodyRef = useRef("");
@@ -354,22 +377,6 @@ export default function Editor() {
   );
 
   useEffect(() => {
-    getJson<string[]>("/api/editor/posts", key)
-      .then((list) => {
-        setFiles(list);
-        setMessage(`${list.length} posts`);
-      })
-      .catch((error) =>
-        setMessage(
-          `Could not open posts: ${error.message}. Open the /editor?key=… URL printed by the dev server.`,
-        ),
-      );
-    getJson<{ privateAuthoring: boolean }>("/api/editor/config", key)
-      .then((config) => setPrivateMode(config.privateAuthoring))
-      .catch((error) => setMessage(`Could not check authoring mode: ${error.message}`));
-  }, [key]);
-
-  useEffect(() => {
     if (!privateMode || !current) return;
     const poll = () =>
       void getJson<SyncStatus>(`/api/editor/sync?file=${encodeURIComponent(current)}`, key)
@@ -408,6 +415,11 @@ export default function Editor() {
   );
 
   const loadPost = useCallback((post: PostPayload) => {
+    try {
+      sessionStorage.setItem(POST_STORAGE, post.file);
+    } catch {
+      // A browser that blocks storage can still open and edit posts.
+    }
     currentRef.current = post.file;
     bodyRef.current = post.body;
     frontmatterRef.current = post.frontmatter;
@@ -431,24 +443,79 @@ export default function Editor() {
     }, INIT_SETTLE_MS);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    const request = postRequestRef.current;
+    getJson<string[]>("/api/editor/posts", key)
+      .then(async (list) => {
+        if (cancelled) return;
+        setFiles(list);
+        if (request !== postRequestRef.current) return;
+        setMessage(`${list.length} posts`);
+        let remembered: string | null = null;
+        try {
+          remembered = sessionStorage.getItem(POST_STORAGE);
+          if (remembered && !list.includes(remembered)) {
+            sessionStorage.removeItem(POST_STORAGE);
+            remembered = null;
+          }
+        } catch {
+          return;
+        }
+        if (!remembered) return;
+        setMessage(`Opening ${remembered}…`);
+        const post = await getJson<PostPayload>(
+          `/api/editor/post?file=${encodeURIComponent(remembered)}`,
+          key,
+        );
+        if (!cancelled && request === postRequestRef.current) loadPost(post);
+      })
+      .catch((error) => {
+        if (cancelled || request !== postRequestRef.current) return;
+        setMessage(
+          `Could not open posts: ${error.message}. Open the /editor?key=… URL printed by the dev server.`,
+        );
+      });
+    getJson<{ privateAuthoring: boolean }>("/api/editor/config", key)
+      .then((config) => {
+        if (!cancelled) setPrivateMode(config.privateAuthoring);
+      })
+      .catch((error) => {
+        if (!cancelled) setMessage(`Could not check authoring mode: ${error.message}`);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [key, loadPost]);
+
   const openFile = useCallback(
     async (file: string) => {
+      const request = ++postRequestRef.current;
       if (file === currentRef.current && !creating) return;
       if (!(await persist())) return;
       try {
         setMessage(`Opening ${file}…`);
-        loadPost(
-          await getJson<PostPayload>(`/api/editor/post?file=${encodeURIComponent(file)}`, key),
+        const post = await getJson<PostPayload>(
+          `/api/editor/post?file=${encodeURIComponent(file)}`,
+          key,
         );
+        if (request === postRequestRef.current) loadPost(post);
       } catch (error) {
-        setMessage(`Failed to open ${file}: ${(error as Error).message}`);
+        if (request === postRequestRef.current)
+          setMessage(`Failed to open ${file}: ${(error as Error).message}`);
       }
     },
     [creating, key, loadPost, persist],
   );
 
   const startNew = useCallback(async () => {
+    ++postRequestRef.current;
     if (!(await persist())) return;
+    try {
+      sessionStorage.removeItem(POST_STORAGE);
+    } catch {
+      // Storage is optional for authoring.
+    }
     currentRef.current = null;
     setCurrent(null);
     setCreating(true);
