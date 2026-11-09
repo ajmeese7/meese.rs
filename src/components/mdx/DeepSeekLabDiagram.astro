@@ -1,0 +1,116 @@
+---
+interface Props {
+  kind: "memory" | "network";
+}
+
+const { kind } = Astro.props;
+const arrowId = `deepseek-${kind}-arrow`;
+const titleId = `deepseek-${kind}-title`;
+const descriptionId = `deepseek-${kind}-description`;
+---
+
+<figure class="figure deepseek-diagram">
+  <div class="deepseek-diagram__frame" tabindex="0" role="region" aria-label="Scrollable technical diagram">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={kind === "memory" ? "0 0 600 350" : "0 0 600 500"}
+      role="img"
+      aria-labelledby={`${titleId} ${descriptionId}`}
+    >
+      <title id={titleId}>
+        {kind === "memory" ? "A model larger than GPU memory" : "Inference and tool execution boundaries"}
+      </title>
+      <desc id={descriptionId}>
+        {kind === "memory"
+          ? "The RTX 5090 holds dense weights and resident experts. A 34 GB RAM store caches experts, with uncached data read from SSD. The required model files total about 249 GB: 138 GB of backbone weights and 111 GB of Engram data. The Proxmox VMs do not supply inference memory."
+          : "The trusted WSL controller calls isolated Strata inference and dispatches shell and editor calls to rootless runc containers in a dedicated Proxmox tools VM. All tool egress passes through a separate gateway VM with firewall enforcement, packet capture and an external audit collector. Loss of capture or audit health closes egress. Allowed destinations depend on the selected mode."}
+      </desc>
+      <defs>
+        <marker id={arrowId} viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="6" orient="auto">
+          <path d="M0 0 L10 4 L0 8 Z" class="arrowhead" />
+        </marker>
+      </defs>
+      {kind === "memory" ? (
+        <>
+          <text class="label" x="24" y="30">GPU WORKSTATION · WSL2 / STRATA</text>
+          <path class="connector" d="M 300 230 V 190" marker-end={`url(#${arrowId})`} />
+          <path class="connector" d="M 220 110 H 176" marker-end={`url(#${arrowId})`} />
+          <rect class="box accent" x="24" y="64" width="150" height="110" rx="6" />
+          <text class="name" x="99" y="98" text-anchor="middle">RTX 5090</text>
+          <text class="detail" x="99" y="124" text-anchor="middle">32 GB VRAM</text>
+          <text class="detail" x="99" y="148" text-anchor="middle">Dense + experts</text>
+          <rect class="box" x="220" y="64" width="356" height="110" rx="6" />
+          <text class="name" x="242" y="98">Expert RAM store</text>
+          <text class="detail" x="242" y="124">34 GB configured cache</text>
+          <text class="detail" x="242" y="148">Weights remain larger than RAM + VRAM</text>
+          <text class="detail" x="320" y="207">Uncached data from SSD</text>
+          <rect class="box" x="24" y="230" width="552" height="84" rx="6" />
+          <text class="name" x="46" y="263">Read-only model files · ext4 virtual disk</text>
+          <text class="detail" x="46" y="290">138 GB backbone + 111 GB Engram ≈ 249 GB</text>
+          <text class="label" x="24" y="337">LEGEND</text>
+          <text class="detail" x="90" y="337">Arrows show data movement; sizes are schematic.</text>
+        </>
+      ) : (
+        <>
+          <path class="connector" d="M 256 75 H 342" marker-end={`url(#${arrowId})`} />
+          <path class="connector" d="M 140 120 V 210" marker-end={`url(#${arrowId})`} />
+          <path class="connector" d="M 256 255 H 342" marker-end={`url(#${arrowId})`} />
+          <path class="connector" d="M 460 300 V 398" marker-end={`url(#${arrowId})`} />
+          <text class="label" x="24" y="28">GPU WORKSTATION · WSL2</text>
+          <rect class="box" x="24" y="48" width="232" height="72" rx="6" />
+          <text class="name" x="44" y="77">Trusted controller</text>
+          <text class="detail" x="44" y="101">Inspect AI · private transcripts</text>
+          <text class="label" x="299" y="58" text-anchor="middle">API</text>
+          <rect class="box accent" x="344" y="48" width="232" height="72" rx="6" />
+          <text class="name" x="364" y="77">Isolated inference</text>
+          <text class="detail" x="364" y="101">Strata · RTX 5090</text>
+          <text class="detail" x="156" y="158">Shell/editor calls over SSH</text>
+          <text class="label" x="300" y="191" text-anchor="middle">PROXMOX · TWO DEDICATED VMS</text>
+          <rect class="box" x="24" y="210" width="232" height="90" rx="6" />
+          <text class="name" x="44" y="242">Tools VM</text>
+          <text class="detail" x="44" y="265">Rootless Docker · runc</text>
+          <text class="detail" x="44" y="286">Unprivileged · no host mounts</text>
+          <text class="label" x="299" y="235" text-anchor="middle">EGRESS</text>
+          <rect class="box accent" x="344" y="210" width="232" height="90" rx="6" />
+          <text class="name" x="364" y="242">Gateway VM</text>
+          <text class="detail" x="364" y="265">nftables · packet capture</text>
+          <text class="detail" x="364" y="286">External audit collector</text>
+          <text class="detail" x="24" y="337">Audit also flows tools → gateway over mTLS.</text>
+          <text class="detail" x="24" y="365">Capture/audit health gates forwarding.</text>
+          <rect class="box" x="344" y="400" width="232" height="62" rx="6" />
+          <text class="name" x="364" y="426">Allowed destinations</text>
+          <text class="detail" x="364" y="449">Policy depends on run mode</text>
+          <text class="label" x="24" y="487">LEGEND</text>
+          <text class="detail" x="90" y="487">Arrows show API calls, tool dispatch and egress.</text>
+        </>
+      )}
+    </svg>
+  </div>
+  <figcaption>
+    {kind === "memory"
+      ? "Local inference spans storage tiers. The remote VMs supply tool isolation, not model memory. Sizes use decimal GB."
+      : "The model proposes tool calls; the controller dispatches them. Network enforcement and retained evidence live outside the tools VM."}
+    <span class="scroll-hint">Scroll horizontally to see the full diagram.</span>
+  </figcaption>
+</figure>
+
+<style>
+  .deepseek-diagram__frame {
+    overflow-x: auto;
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+  }
+  .deepseek-diagram__frame:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .scroll-hint { display: none; }
+  @media (max-width: 520px) { .scroll-hint { display: block; margin-top: var(--space-2); } }
+  svg { display: block; width: 100%; min-width: 480px; height: auto; }
+  .box { fill: var(--surface-card); stroke: var(--border-default); stroke-width: 1.5; }
+  .accent { stroke: var(--accent); }
+  .connector { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+  .arrowhead { fill: var(--accent); }
+  text { font-family: var(--font-body); fill: var(--text-body); }
+  .name { font-size: 16px; font-weight: 600; fill: var(--text-heading); }
+  .detail { font-size: 13px; }
+  .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; fill: var(--accent); }
+</style>

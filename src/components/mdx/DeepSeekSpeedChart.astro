@@ -1,0 +1,35 @@
+---
+import chart from "../../../public/images/posts/running-deepseek-in-a-local-security-lab/generation-speed.svg?raw";
+
+interface Props {
+  alt: string;
+  caption?: string;
+}
+
+const { alt, caption } = Astro.props;
+const markup = chart
+  .slice(chart.indexOf("<svg"))
+  .replace(
+    'role="img" aria-labelledby="speed-title speed-description"',
+    'aria-hidden="true" focusable="false"',
+  );
+---
+
+<figure class="figure deepseek-speed-chart">
+  <div class="deepseek-speed-chart__graphic" role="img" aria-label={alt} set:html={markup} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .deepseek-speed-chart__graphic {
+    overflow: hidden;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+  }
+  .deepseek-speed-chart__graphic :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>

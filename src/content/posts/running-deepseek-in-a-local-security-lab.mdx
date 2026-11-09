@@ -1,0 +1,149 @@
+---
+title: "Running DeepSeek V4.1 in a local security lab"
+description:
+  "Running a local security agent on a single RTX 5090, with control over the model, data and tools."
+date: 2026-11-04
+type: lab
+topics:
+  - local-llms
+  - security
+  - homelab
+tags:
+  - deepseek
+  - strata
+  - inspect-ai
+  - proxmox
+  - wsl
+draft: false
+aiModel: GPT-6.1 Sol
+---
+
+import DeepSeekLabDiagram from "../../components/mdx/DeepSeekLabDiagram.astro";
+import DeepSeekSpeedChart from "../../components/mdx/DeepSeekSpeedChart.astro";
+
+An X post caught my attention with this claim: "You can run locally Uncensored
+DeepSeek-V4.1-Flash-1017 on a 12GB GPU on consumer hardware."
+
+Normally such a massive model would require compute far beyond what an individual GPU can supply, so
+this drove me to replicate the results on my own hardware. I decided to approach this from a
+cybersec perspective, with the intention of setting up a local inference lab to test my own LAN's
+security posture.
+
+In this case, that meant running 249 GB of DeepSeek files on a workstation with a single 32 GB RTX
+5090, and giving the model a secure environment with the requisite tooling. A non-negotiable
+requirement was full control and observability, since ProjectDiscovery's article
+"[How abliterated models can get you pwned](https://projectdiscovery.io/research/how-abliterated-models-can-get-you-pwned)"
+has left me wary.
+
+## The model spans GPU, RAM and SSD
+
+I used the albiterated
+[DeepSeek-V4.1-Flash-1017 variant](https://huggingface.co/AtomicChat/DeepSeek-V4.1-Flash-1017-Uncensored-GSQ-RCO-GGUF),
+which means the publisher edited model weights in an attempt to remove refusals. The IQ2_XXS
+quantization compressed the weights enough for my hardware, but still weighed in at 138 GB spread
+across four files. The mandatory
+[Engram lookup table](https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF) adds
+another 111 GB.
+
+<DeepSeekLabDiagram kind="memory" />
+
+[Strata](https://github.com/Niko1221/Strata) runs inference under WSL2, the Linux environment on my
+Windows workstation. Its
+[mixture-of-experts](https://www.nvidia.com/en-us/glossary/mixture-of-experts/) engine uses selected
+expert networks for each generated token. Some weights stay in VRAM, while other experts run on the
+CPU with RAM caching and SSD reads. My 4TB Samsung 990 PRO doesn't offer speeds as high as the
+latest PCIe Gen 5 cards, so there is more potential for speedup with pricier gear.
+
+## Tools run behind a separate gateway
+
+I didn't want to give the model any unsupervised access to my systems/data, so I ran
+[Inspect AI](https://inspect.aisi.org.uk/agents.html) in WSL2 to intercept tool calls. When the
+model requests to run shell commands or edit files, Inspect dispatches the request into a disposable
+container on a dedicated tooling VM for execution.
+
+The containers use [rootless Docker](https://docs.docker.com/engine/security/rootless/) with a
+read-only root filesystem and resource limits. They contain basic tools like Nmap and curl, with no
+mounted personal files or credentials.
+
+<DeepSeekLabDiagram kind="network" />
+
+The container alone doesn't restrict what network destinations the VM can interact with, which is
+where the network gateway comes into play. I configured it as a router and firewall, responsible for
+passing approved traffic between networks and blocking the rest. To put the gateway in control of
+network access, I connected both VMs through an isolated virtual switch inside
+[Proxmox](https://www.proxmox.com/en/products/proxmox-virtual-environment/overview).
+
+While the tooling VM's only network connection is to the switch, the gateway has an additional
+connection to my LAN on a second network interface.
+
+The tooling VM's only network connection is to the switch, but the gateway has an additional
+connection to my LAN on a second network interface. The lack of a direct LAN connection means the
+tooling VM sends all traffic through the gateway to reach other machines. The gateway's
+[nftables](https://wiki.nftables.org/wiki-nftables/index.php/Main_Page) firewall then decides
+whether to forward or drop it.
+
+To create containers and execute model commands on the tooling VM, Inspect accesses Docker via SSH
+through the gateway. The firewall permits administrative connections from my workstation, but blocks
+connections inbound from the tooling VM so the model cannot control its own harness.
+
+In human-approval mode, the firewall permits access to my LAN and preapproved public targets (my
+public IP + website URLs) while blocking management addresses, including the hypervisor and
+inference host. To reach any other destinations (ex. online tool documentation), the model requests
+access through an Inspect tool, which presents the host, port, protocol, requested duration, and a
+justification. If approved, the gateway allows the IP address resolved for that host and the
+requested port for a limited time. Expiry blocks existing connections and prevents new ones.
+
+For improved observability, the gateway performs full packet capture on the session. Linux auditing
+on the tooling VM records process execution and changes to watched container files, then forwards
+those records to the gateway over an authenticated, encrypted connection. Inspect separately retains
+the conversation and tool results on my workstation. Together, these records let me compare the
+model's requests with the commands that executed and the resulting network activity.
+
+A monitoring service on the gateway performs periodic checks to validate that packet capture is
+working and the tooling VM's audit system is healthy. If capture stops, audit records are lost, or
+log storage runs low, the gateway blocks outbound tool traffic.
+
+In one LAN test, I specified which mail server DeepSeek should contact. I also limited the SMB
+file-sharing checks to the initial protocol handshake. DeepSeek contacted a _different_ mail server
+and ran `smbclient -L` to list shared folders, despite an explicit instruction not to enumerate
+them. The command transcript showed both actions, and the gateway's firewall log confirmed the
+connection to the wrong mail server.
+
+Exact IP/port rules could have blocked the wrong-server connection, but they wouldn't prevent
+listing shares on an allowed SMB server. Enforcing the handshake-only instruction needs a tool
+restricted to that operation or human approval of the command before it runs. Optional limits on the
+maximum number of shell commands and editor tool calls enable more granularity on model restriction
+enforcement, rather than leaning on prompt-based guidelines.
+
+## The experiment works, with limits
+
+After extensive testing across various configurations, my setup landed on a 32K context window, six
+experts per token and a 34 GB expert RAM cache. This required going down many rabbit holes pursuing
+optimization, with diminishing returns.
+
+Moving the model to a Linux ext4 virtual disk improved loading, but matched generation speed did not
+improve. Memory pressure across Windows and WSL remained significant with my 64GB of DDR5 RAM; the
+system would certainly benefit from a more generous configuration, but in this economy... c'mon.
+
+The speed was variable across runs, with individual timings depending on the request and cache
+state, but the top observed speed never went above 15.07 tok/s:
+
+<DeepSeekSpeedChart
+  alt="Generation speed by model turn in two completed DeepSeek sessions. Discovery: 1.00, 0.80, 2.10, 1.60, 7.30, 7.60 and 13.20 tokens per second. Confirmation: 1.44, 1.69, 6.40, 4.33 and 5.76 tokens per second. Both plots use the same scale."
+  caption="Generation speed varied within each session. These are different tasks, with overall times of 17:23 for discovery and 16:26 for confirmation. The plotted rates measure generation only, excluding model loading, prompt processing and tool execution."
+/>
+
+The final result was a neat novelty project, but not something I consider usable on a day-to-day
+basis. This may be worth running if you have a
+[Spark](https://www.nvidia.com/en-us/products/workstations/dgx-spark/) or some other portable
+supercomputer, but it doesn't feel realistic for anything less capable.
+
+## Building a similar lab
+
+I had GPT-6.1 Sol write up a
+[companion setup guide for agents](/posts/running-deepseek-in-a-local-security-lab/AGENTS.md) that
+contains the necessary instructions for your own agent to adapt the implementation to your hardware.
+It includes the final configurations for my specific setup, pinned versions of the deps used, etc.
+
+I'm already working on the next iteration of local cyber lab configurations; expect a follow-up post
+soon.
