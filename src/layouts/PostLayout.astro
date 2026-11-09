@@ -42,11 +42,11 @@ let banner: { kind: string; note: string; href?: string } | null = null;
 if (supersededTarget) {
   banner = {
     kind: "superseded",
-    note: ",  a newer piece replaces this one.",
+    note: "A newer piece replaces this one.",
     href: postUrl(supersededTarget),
   };
 } else if (d.updated) {
-  banner = { kind: "updated", note: ",  revised since first publish." };
+  banner = { kind: "updated", note: "Revised since first publish." };
 }
 ---
 
@@ -109,14 +109,19 @@ if (supersededTarget) {
           banner && (
             <div class="update-banner" data-kind={banner.kind}>
               <Icon name="refresh-cw" size={15} />
-              <span>{banner.kind.toUpperCase()} {d.updated && isoDate(d.updated)}</span>
-              <span class="note">
-                {banner.href ? (
-                  <a href={banner.href}>{banner.note}</a>
-                ) : (
-                  banner.note
-                )}
-              </span>
+              <div class="update-banner__content">
+                <span class="update-banner__meta">
+                  {banner.kind.toUpperCase()}
+                  {d.updated && <> <time datetime={isoDate(d.updated)}>{isoDate(d.updated)}</time></>}
+                </span>
+                <span class="note">
+                  {banner.href ? (
+                    <a href={banner.href}>{banner.note}</a>
+                  ) : (
+                    banner.note
+                  )}
+                </span>
+              </div>
             </div>
           )
         }
